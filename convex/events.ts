@@ -68,11 +68,29 @@ export const getEventAvailability = query({
               .then((entries) => entries.filter((e) => (e.offerExpiresAt ?? 0) <= now));
             
             // Mark expired offers as expired
-            for (const offer of expiredOffers) {
-              await ctx.db.patch(offer._id, {
-                status: WAITING_LIST_STATUS.EXPIRED,
-              });
-            }
+            const expireExpiredOffers = mutation({
+            args: { eventId: v.id("events") },
+            handler: async (ctx, { eventId }) => {
+            const now = Date.now();
+
+            const expiredOffers = await ctx.db
+          .query("waitingList")
+         .withIndex("by_event_status", (q) =>
+         q.eq("eventId", eventId).eq("status", WAITING_LIST_STATUS.OFFERED)
+         )
+         .collect()
+         .then((entries) => entries.filter((e) => (e.offerExpiresAt ?? 0) <= now));
+
+        for (const offer of expiredOffers) {
+        await ctx.db.patch(offer._id, {
+        status: WAITING_LIST_STATUS.EXPIRED,
+      });
+    }
+
+    return { expiredCount: expiredOffers.length };
+  },
+});
+
             
             const activeOffers = await ctx.db
             .query("waitingList")

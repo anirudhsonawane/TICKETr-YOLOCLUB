@@ -2,7 +2,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
+import { ClerkProvider, ClerkLoaded } from "@clerk/nextjs";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import Header from "@/components/Header";
 import SyncUserWithConvex  from "../components/SyncUserWithConvex";
@@ -41,12 +41,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ConvexClientProvider>
-        <ClerkProvider>
-          <Header />
-          <SyncUserWithConvex />
-          {children}
-          
-          <Toaster />
+          <ClerkProvider>
+            <Header />
+            <SyncUserWithConvex />
+            <ClerkLoaded>
+              {children}
+            </ClerkLoaded>
+            <Toaster />
           </ClerkProvider>
         </ConvexClientProvider>
       </body>

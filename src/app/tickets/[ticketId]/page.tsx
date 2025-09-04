@@ -2,8 +2,8 @@
 
 import { use } from "react";
 import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import { Id } from "../../../../convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
 import { QRCodeSVG } from "qrcode.react";
 import { CalendarDays, MapPin, Ticket, User, CreditCard, Download, Printer } from "lucide-react";

@@ -37,7 +37,7 @@ export default function GroupTicketsPage({
     );
   }
 
-  const totalAmount = passTickets.reduce((sum, ticket) => sum + (ticket.price || 0), 0);
+  const totalAmount = passTickets.reduce((sum, ticket) => sum + (ticket.amount || 0), 0);
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 sm:py-8 px-4">
@@ -85,7 +85,7 @@ export default function GroupTicketsPage({
                 </div>
                 
                 <div className="text-left sm:text-right">
-                  <div className="text-xl font-bold text-gray-900">₹{(ticket.price || 0).toFixed(2)}</div>
+                  <div className="text-xl font-bold text-gray-900">₹{(ticket.amount || 0).toFixed(2)}</div>
                   <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-2 ${
                     ticket.status === 'valid' ? 'bg-green-100 text-green-800' : 
                     ticket.status === 'used' ? 'bg-gray-100 text-gray-800' : 
