@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as constants from "../constants.js";
+import type * as coupons from "../coupons.js";
 import type * as events from "../events.js";
 import type * as passes from "../passes.js";
 import type * as purchaseComplete from "../purchaseComplete.js";
@@ -33,6 +34,7 @@ import type * as waitingList from "../waitingList.js";
  */
 declare const fullApi: ApiFromModules<{
   constants: typeof constants;
+  coupons: typeof coupons;
   events: typeof events;
   passes: typeof passes;
   purchaseComplete: typeof purchaseComplete;

@@ -107,9 +107,9 @@ function TicketPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-10 px-4">
       <div
-        className={`bg-white rounded-xl overflow-hidden shadow-xl border ${
+        className={`bg-white rounded-2xl overflow-hidden shadow-2xl border ${
           event.is_cancelled ? "border-red-200" : theme.border
-        } w-full mx-auto`}
+        } w-full max-w-3xl sm:max-w-4xl mx-auto`}
       >
         <div className="relative mb-2">
           {imageUrl && (
@@ -143,7 +143,7 @@ function TicketPage() {
           </div>
         </div>
 
-        <div className="px-6 sm:px-8 py-6">
+        <div className="px-6 sm:px-10 py-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4 sm:space-y-5">
               <div className="flex items-center text-gray-600">
@@ -212,10 +212,10 @@ function TicketPage() {
                 <div>
                   <p className="text-sm text-gray-500">{selectedPass ? 'Pass Type' : 'Ticket Price'}</p>
                   {selectedPass && <p className="font-medium">{selectedPass.name}</p>}
-                  <p className="font-medium">₹{selectedPass?.price?.toFixed(2) || event.price}</p>
-                  {userTickets && userTickets.length > 0 && selectedPass?.price && (
+                  <p className="font-medium">₹{(ticket.amount ?? selectedPass?.price ?? event.price).toFixed(2)}</p>
+                  {userTickets && userTickets.length > 0 && (
                     <p className="text-sm text-gray-500">
-                      {totalCount > 1 ? `₹${(selectedPass?.price ?? 0).toFixed(2)} each` : `₹${selectedPass?.price?.toFixed(2) ?? '0.00'}`}
+                      {totalCount > 1 ? `₹${(ticket.amount ?? selectedPass?.price ?? 0).toFixed(2)} each` : `₹${(ticket.amount ?? selectedPass?.price ?? 0).toFixed(2)}`}
                     </p>
                   )}
                   {ticket.passId && (
@@ -241,7 +241,7 @@ function TicketPage() {
             </div>
           </div>
 
-          <div className="mt-5 pt-4 border-t border-gray-200 px-6 sm:px-8 pb-4">
+          <div className="mt-5 pt-4 border-t border-gray-200 px-6 sm:px-10 pb-4">
             <h3 className="text-sm font-medium text-gray-900 mb-2">Important Information</h3>
             {event.is_cancelled ? (
               <p className="text-sm text-red-600">
@@ -261,7 +261,7 @@ function TicketPage() {
         <div
           className={`${
             event.is_cancelled ? "bg-red-50" : isScanned ? "bg-green-50" : "bg-red-50"
-          } px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 ${isScanned ? "border-green-200" : "border-red-200"} border-t text-xs sm:text-sm`}
+          } px-4 sm:px-8 py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 ${isScanned ? "border-green-200" : "border-red-200"} border-t text-xs sm:text-sm`}
         >
           <span className="text-gray-500">
             Purchase Date:{" "}
@@ -270,6 +270,9 @@ function TicketPage() {
               : "—"}
           </span>
           <div className="text-left sm:text-right">
+            <div className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
+              Paid: ₹{(ticket.amount ?? selectedPass?.price ?? event.price).toFixed(2)}
+            </div>
             <span
               className={`text-sm font-medium ${
                 event.is_cancelled

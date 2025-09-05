@@ -71,4 +71,18 @@ export default defineSchema({
     name: v.string(),
     stripeConnectId: v.optional(v.string()),
   }).index("by_user_id", ["userId"]),
+
+  coupons: defineTable({
+    userId: v.optional(v.string()),
+    code: v.string(),
+    // Relax required fields to allow legacy documents to load; we'll default in code
+    discountPercentage: v.optional(v.number()),
+    isActive: v.optional(v.boolean()),
+    validFrom: v.optional(v.number()),
+    validUntil: v.optional(v.number()),
+    maxUses: v.optional(v.number()),
+    currentUses: v.optional(v.number()),
+    description: v.optional(v.string()),
+    usedByUsers: v.optional(v.array(v.string())),
+  }).index("by_code", ["code"]),
 });

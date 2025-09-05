@@ -113,6 +113,11 @@ export default function TicketCard({ ticketId }: { ticketId: Id<"tickets"> }) {
             View Ticket <ArrowRight className="w-4 h-4 ml-1" />
           </span>
         </div>
+        <div className={`border-t ${ticket.status === 'used' ? 'bg-green-500 border-green-600 text-white' : 'bg-red-500 border-red-600 text-white'}`}>
+          <span className="text-xs sm:text-sm">
+            {ticket.status === 'used' ? 'Scanned' : 'Not Scanned'}
+          </span>
+        </div>
       </div>
     </Link>
   );

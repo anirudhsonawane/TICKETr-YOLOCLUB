@@ -2,13 +2,14 @@
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "convex/react";
-import { api } from "../../../../../convex/_generated/api";
-import { Id } from "../../../../../convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, Plus, Minus, Tag, Check } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
+import CouponInput from "@/components/CouponInput";
 
 declare global {
   interface Window {
@@ -30,10 +31,22 @@ export default function PurchasePage() {
   
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discountPercentage: number;
+    discountAmount: number;
+    finalAmount: number;
+    couponId?: string;
+  } | null>(null);
 
   const selectedPass = pass?.find(p => p._id === passId);
-  const totalAmount = selectedPass ? selectedPass.price * quantity : 0;
+  const originalAmount = selectedPass ? selectedPass.price * quantity : 0;
+  const totalAmount = useMemo(() => {
+    return appliedCoupon ? appliedCoupon.finalAmount : originalAmount;
+  }, [appliedCoupon, originalAmount]);
   const availableQuantity = selectedPass ? selectedPass.totalQuantity - selectedPass.soldQuantity : 0;
+  
+  // Removed initial coupon seeding to avoid calling a non-deployed Convex function
 
   if (!event || !pass || !selectedPass) {
     return (
@@ -71,6 +84,8 @@ export default function PurchasePage() {
           userId: user.id,
           quantity: quantity,
           passId: passId,
+          couponCode: appliedCoupon?.code || null,
+          couponId: appliedCoupon?.couponId || null,
         }),
       });
       
@@ -95,6 +110,26 @@ export default function PurchasePage() {
           localStorage.setItem('lastQuantity', quantity.toString());
           localStorage.setItem('lastAmount', totalAmount.toString());
           localStorage.setItem('lastPassId', passId);
+          if (appliedCoupon) {
+            localStorage.setItem('lastCouponCode', appliedCoupon.code);
+            localStorage.setItem('lastCouponId', appliedCoupon.couponId || '');
+            
+            // Mark coupon as used by this user
+            try {
+              fetch('/api/mark-coupon-used', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  code: appliedCoupon.code,
+                  couponId: appliedCoupon.couponId,
+                  userId: user.id
+                })
+              });
+            } catch (error) {
+              console.error("Error marking coupon as used:", error);
+              // Continue with purchase even if marking coupon fails
+            }
+          }
           router.push(`/tickets/purchase-success?payment_id=${response.razorpay_payment_id}`);
         },
         prefill: {
@@ -210,15 +245,46 @@ export default function PurchasePage() {
             </div>
           </div>
 
+          {/* Coupon Code */}
+          <div className="p-4 sm:p-6 border-b border-gray-200">
+            <CouponInput
+              originalAmount={originalAmount}
+              onCouponApplied={(discountInfo) => setAppliedCoupon(discountInfo)}
+              onCouponRemoved={() => setAppliedCoupon(null)}
+            />
+          </div>
+
           {/* Total & Purchase */}
           <div className="p-4 sm:p-6">
-            <div className="flex justify-between items-center mb-6">
-              <span className="text-lg font-semibold text-gray-900">
-                Total Amount:
-              </span>
-              <span className="text-2xl font-bold text-gray-900">
-                ₹{totalAmount.toFixed(2)}
-              </span>
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">
+                  Subtotal:
+                </span>
+                <span className="text-gray-900">
+                  ₹{originalAmount.toFixed(2)}
+                </span>
+              </div>
+              
+              {appliedCoupon && (
+                <div className="flex justify-between items-center text-green-600">
+                  <span>
+                    Discount ({appliedCoupon.discountPercentage}%):
+                  </span>
+                  <span>
+                    -₹{appliedCoupon.discountAmount.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              
+              <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                <span className="text-lg font-semibold text-gray-900">
+                  Total Amount:
+                </span>
+                <span className="text-2xl font-bold text-gray-900">
+                  ₹{totalAmount.toFixed(2)}
+                </span>
+              </div>
             </div>
 
             <Button
