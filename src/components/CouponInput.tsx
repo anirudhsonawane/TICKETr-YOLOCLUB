@@ -10,6 +10,7 @@ import { Tag, Check, X, Loader2 } from "lucide-react";
 
 interface CouponInputProps {
   originalAmount: number;
+  eventId?: string;
   onCouponApplied: (discountInfo: {
     code: string;
     discountPercentage: number;
@@ -22,6 +23,7 @@ interface CouponInputProps {
 
 export default function CouponInput({
   originalAmount,
+  eventId,
   onCouponApplied,
   onCouponRemoved,
 }: CouponInputProps) {
@@ -35,6 +37,7 @@ export default function CouponInput({
   
   // Ensure coupon exists (useful for dev/demo codes like YOLO15)
   const ensureCouponExists = useMutation(api.coupons.ensureCouponExists);
+  const createYoloClubCoupon = useMutation(api.coupons.createYoloClubCoupon);
 
   // Query for discount calculation when a coupon is applied
   const discountInfo = useQuery(
@@ -43,7 +46,8 @@ export default function CouponInput({
       ? {
           code: appliedCoupon,
           amount: originalAmount,
-          userId: user.id
+          userId: user.id,
+          eventId: eventId as any
         }
       : "skip"
   );
@@ -75,7 +79,7 @@ export default function CouponInput({
       setAppliedCoupon(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [discountInfo, appliedCoupon, user]);
+  }, [discountInfo, appliedCoupon, user, originalAmount]);
 
   // Handle coupon code input change
   const handleCouponChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,7 +105,11 @@ export default function CouponInput({
     try {
       // Best-effort ensure code exists in dev, then apply
       try {
-        await ensureCouponExists({ code: couponCode });
+        if (couponCode === "YOLO-CLUB") {
+          await createYoloClubCoupon();
+        } else {
+          await ensureCouponExists({ code: couponCode });
+        }
       } catch {}
       setAppliedCoupon(couponCode);
     } catch (err) {

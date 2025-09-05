@@ -43,6 +43,9 @@ export async function POST(req: NextRequest) {
         userId: notes.userId,
         paymentIntentId: event.payload.payment.entity.id,
         amount: event.payload.payment.entity.amount,
+        quantity: notes.quantity ? parseInt(notes.quantity) : 1,
+        passId: notes.passId || undefined,
+        selectedDate: notes.selectedDate || undefined,
       });
       
       console.log("✅ Ticket created successfully:", result);

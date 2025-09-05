@@ -129,7 +129,12 @@ function TicketDetails({ ticket, ticketStatus }: { ticket: any; ticketStatus: an
               <div>
                 <p className="text-sm text-gray-500">{selectedPass ? 'Pass Type' : 'Ticket Price'}</p>
                 <p className="font-medium">{selectedPass?.name || 'General Admission'}</p>
-                <p className="text-sm text-gray-500">₹{selectedPass?.price?.toFixed(2) || event.price.toFixed(2)}</p>
+                {/* Show the actual amount paid (after discounts) as the main bold amount */}
+                <p className="text-2xl font-bold text-gray-900">₹{(ticket.amount ?? selectedPass?.price ?? event.price).toFixed(2)}</p>
+                {/* Show breakdown below */}
+                <p className="text-sm text-gray-500">
+                  ₹{(ticket.amount ?? selectedPass?.price ?? event.price).toFixed(2)} each
+                </p>
                 <p className="text-xs text-gray-400">Pass ID: {ticket.passId || 'None'}</p>
               </div>
             </div>

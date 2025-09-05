@@ -9,6 +9,7 @@ export const createPass = mutation({
     price: v.number(),
     totalQuantity: v.number(),
     benefits: v.array(v.string()),
+    category: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("passes", {
@@ -36,6 +37,7 @@ export const updatePass = mutation({
     price: v.number(),
     totalQuantity: v.number(),
     benefits: v.array(v.string()),
+    category: v.optional(v.string()),
   },
   handler: async (ctx, { passId, ...updates }) => {
     await ctx.db.patch(passId, updates);

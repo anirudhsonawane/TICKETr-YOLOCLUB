@@ -56,6 +56,32 @@ function TicketPage() {
   );
 
   const imageUrl = useStorageUrl(event?.imageStorageId);
+  
+  // Calculate total amount for all tickets in the same purchase group
+  const getTotalAmount = () => {
+    if (!userTickets || !ticket) return ticket?.amount || 0;
+    
+    // Find all tickets with the same purchase timestamp (same purchase group)
+    const samePurchaseTickets = userTickets.filter(t => 
+      t.purchasedAt === ticket.purchasedAt && 
+      t.passId === ticket.passId
+    );
+    
+    return samePurchaseTickets.reduce((sum, t) => sum + (t.amount || 0), 0);
+  };
+  
+  const totalAmount = getTotalAmount();
+const individualAmount = ticket?.amount ?? 0;
+
+const ticketCount =
+  ticket && userTickets
+    ? userTickets.filter(
+        (t) =>
+          t.purchasedAt === ticket.purchasedAt &&
+          t.passId === ticket.passId
+      ).length || 1
+    : 1;
+
 
   if (!isLoaded || ticket === undefined) {
     return (
@@ -212,10 +238,16 @@ function TicketPage() {
                 <div>
                   <p className="text-sm text-gray-500">{selectedPass ? 'Pass Type' : 'Ticket Price'}</p>
                   {selectedPass && <p className="font-medium">{selectedPass.name}</p>}
-                  <p className="font-medium">₹{(ticket.amount ?? selectedPass?.price ?? event.price).toFixed(2)}</p>
-                  {userTickets && userTickets.length > 0 && (
+                  {/* Show the total amount paid (after discounts) as the main bold amount */}
+                  <p className="text-2xl font-bold text-gray-900">₹{totalAmount.toFixed(2)}</p>
+                  {/* Show breakdown below - only show "each" if there are multiple tickets */}
+                  {ticketCount > 1 ? (
                     <p className="text-sm text-gray-500">
-                      {totalCount > 1 ? `₹${(ticket.amount ?? selectedPass?.price ?? 0).toFixed(2)} each` : `₹${(ticket.amount ?? selectedPass?.price ?? 0).toFixed(2)}`}
+                      ₹{individualAmount.toFixed(2)} each
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500">
+                      ₹{individualAmount.toFixed(2)}
                     </p>
                   )}
                   {ticket.passId && (
@@ -271,7 +303,7 @@ function TicketPage() {
           </span>
           <div className="text-left sm:text-right">
             <div className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
-              Paid: ₹{(ticket.amount ?? selectedPass?.price ?? event.price).toFixed(2)}
+              Paid: ₹{totalAmount.toFixed(2)}
             </div>
             <span
               className={`text-sm font-medium ${
@@ -294,7 +326,7 @@ function TicketPage() {
               </div>
             )}
             <div className="text-xs text-gray-500 mt-1">
-              {scannedCount}/{totalCount} tickets scanned
+              {scannedCount}/{ticketCount} tickets scanned
             </div>
           </div>
         </div>

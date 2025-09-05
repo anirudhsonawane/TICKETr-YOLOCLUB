@@ -24,6 +24,7 @@ export default defineSchema({
     totalQuantity: v.number(),
     soldQuantity: v.number(),
     benefits: v.array(v.string()),
+    category: v.optional(v.string()), // e.g., "Seasonal Pass", "General", "VIP"
   }).index("by_event", ["eventId"]),
 
   tickets: defineTable({
@@ -44,6 +45,7 @@ export default defineSchema({
     ticketType: v.optional(v.string()), // e.g. "VIP", "Standard"
     ticketTier: v.optional(v.string()), // e.g. "Gold", "Silver"
     scanLimit: v.optional(v.number()), // how many times ticket can be scanned
+    selectedDate: v.optional(v.string()), // selected date for Seasonal Pass
   })
     .index("by_user", ["userId"])
     .index("by_event", ["eventId"])
@@ -83,6 +85,11 @@ export default defineSchema({
     maxUses: v.optional(v.number()),
     currentUses: v.optional(v.number()),
     description: v.optional(v.string()),
-    usedByUsers: v.optional(v.array(v.string())),
+    usedByUsers: v.optional(v.array(v.string())), // Keep for backward compatibility
+    usedByUserEvent: v.optional(v.array(v.object({
+      userId: v.string(),
+      eventId: v.id("events"),
+      usedAt: v.number()
+    }))), // New field for per-event usage tracking
   }).index("by_code", ["code"]),
 });

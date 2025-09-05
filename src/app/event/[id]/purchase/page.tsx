@@ -10,6 +10,7 @@ import { ArrowLeft, Plus, Minus, Tag, Check } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
 import CouponInput from "@/components/CouponInput";
+import DateSelector from "@/components/DateSelector";
 
 declare global {
   interface Window {
@@ -25,12 +26,14 @@ export default function PurchasePage() {
   
   const eventId = params.id as Id<"events">;
   const passId = searchParams.get("passId") as Id<"passes">;
+  const urlSelectedDates = searchParams.get("selectedDates");
 
   const event = useQuery(api.events.getById, { eventId });
   const pass = useQuery(api.passes.getEventPasses, { eventId });
   
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedDates, setSelectedDates] = useState<string[]>(urlSelectedDates ? urlSelectedDates.split(',') : []);
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
     discountPercentage: number;
@@ -40,7 +43,26 @@ export default function PurchasePage() {
   } | null>(null);
 
   const selectedPass = pass?.find(p => p._id === passId);
-  const originalAmount = selectedPass ? selectedPass.price * quantity : 0;
+  
+  // Debug: Log pass details
+  console.log("Selected Pass:", selectedPass?.name, "Category:", selectedPass?.category);
+  console.log("All Passes:", pass?.map(p => ({ name: p.name, category: p.category })));
+  
+  // Calculate original amount based on selected dates for Seasonal Pass
+  const getOriginalAmount = () => {
+    if (!selectedPass) return 0;
+    
+    // For Seasonal Pass, multiply by number of selected dates
+    if (selectedPass.category === "Seasonal Pass" || selectedPass.name?.toLowerCase().includes("seasonal")) {
+      const dateMultiplier = selectedDates.length > 0 ? selectedDates.length : 1;
+      return selectedPass.price * quantity * dateMultiplier;
+    }
+    
+    // For other passes, use normal calculation
+    return selectedPass.price * quantity;
+  };
+  
+  const originalAmount = getOriginalAmount();
   const totalAmount = useMemo(() => {
     return appliedCoupon ? appliedCoupon.finalAmount : originalAmount;
   }, [appliedCoupon, originalAmount]);
@@ -67,6 +89,12 @@ export default function PurchasePage() {
   const handlePurchase = async () => {
     if (!user || !event || !selectedPass) return;
 
+    // Validate date selection for Seasonal Pass
+    if ((selectedPass.category === "Seasonal Pass" || selectedPass.name?.toLowerCase().includes("seasonal")) && selectedDates.length === 0) {
+      alert("Please select at least one date for your seasonal pass");
+      return;
+    }
+
     try {
       setIsLoading(true);
       
@@ -86,6 +114,7 @@ export default function PurchasePage() {
           passId: passId,
           couponCode: appliedCoupon?.code || null,
           couponId: appliedCoupon?.couponId || null,
+          selectedDates: selectedDates,
         }),
       });
       
@@ -114,7 +143,7 @@ export default function PurchasePage() {
             localStorage.setItem('lastCouponCode', appliedCoupon.code);
             localStorage.setItem('lastCouponId', appliedCoupon.couponId || '');
             
-            // Mark coupon as used by this user
+            // Mark coupon as used by this user for this event
             try {
               fetch('/api/mark-coupon-used', {
                 method: 'POST',
@@ -122,7 +151,8 @@ export default function PurchasePage() {
                 body: JSON.stringify({
                   code: appliedCoupon.code,
                   couponId: appliedCoupon.couponId,
-                  userId: user.id
+                  userId: user.id,
+                  eventId: eventId
                 })
               });
             } catch (error) {
@@ -186,10 +216,20 @@ export default function PurchasePage() {
                 </p>
                 <div className="text-2xl font-bold text-gray-900">
                   ₹{selectedPass.price.toFixed(2)} per ticket
+                  {(selectedPass.category === "Seasonal Pass" || selectedPass.name?.toLowerCase().includes("seasonal")) && selectedDates.length > 1 && (
+                    <span className="text-sm text-blue-600 ml-2">
+                      × {selectedDates.length} dates
+                    </span>
+                  )}
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
                   {selectedPass.totalQuantity} / {availableQuantity} available
                 </div>
+                {(selectedPass.category === "Seasonal Pass" || selectedPass.name?.toLowerCase().includes("seasonal")) && selectedDates.length > 1 && (
+                  <div className="text-sm text-blue-600 mt-1">
+                    Total: ₹{(selectedPass.price * selectedDates.length).toFixed(2)} for {selectedDates.length} dates
+                  </div>
+                )}
               </div>
             </div>
 
@@ -213,6 +253,17 @@ export default function PurchasePage() {
               </div>
             )}
           </div>
+
+          {/* Date Selector for Seasonal Pass */}
+          {(selectedPass?.category === "Seasonal Pass" || selectedPass?.name?.toLowerCase().includes("seasonal")) && (
+            <div className="p-4 sm:p-6 border-b border-gray-200">
+              <DateSelector
+                selectedDates={selectedDates}
+                onDateChange={setSelectedDates}
+                disabled={isLoading}
+              />
+            </div>
+          )}
 
           {/* Quantity Selector */}
           <div className="p-4 sm:p-6 border-b border-gray-200">
@@ -249,6 +300,7 @@ export default function PurchasePage() {
           <div className="p-4 sm:p-6 border-b border-gray-200">
             <CouponInput
               originalAmount={originalAmount}
+              eventId={eventId}
               onCouponApplied={(discountInfo) => setAppliedCoupon(discountInfo)}
               onCouponRemoved={() => setAppliedCoupon(null)}
             />
@@ -257,14 +309,44 @@ export default function PurchasePage() {
           {/* Total & Purchase */}
           <div className="p-4 sm:p-6">
             <div className="space-y-3 mb-6">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">
-                  Subtotal:
-                </span>
-                <span className="text-gray-900">
-                  ₹{originalAmount.toFixed(2)}
-                </span>
-              </div>
+              {/* Show breakdown for Seasonal Pass with multiple dates */}
+              {(selectedPass?.category === "Seasonal Pass" || selectedPass?.name?.toLowerCase().includes("seasonal")) && selectedDates.length > 1 ? (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">
+                      Pass Price (×{quantity}):
+                    </span>
+                    <span className="text-gray-900">
+                      ₹{(selectedPass.price * quantity).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">
+                      Dates Selected (×{selectedDates.length}):
+                    </span>
+                    <span className="text-gray-900">
+                      ₹{(selectedPass.price * quantity * selectedDates.length).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                    <span className="text-gray-600 font-medium">
+                      Subtotal:
+                    </span>
+                    <span className="text-gray-900 font-medium">
+                      ₹{originalAmount.toFixed(2)}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">
+                    Subtotal:
+                  </span>
+                  <span className="text-gray-900">
+                    ₹{originalAmount.toFixed(2)}
+                  </span>
+                </div>
+              )}
               
               {appliedCoupon && (
                 <div className="flex justify-between items-center text-green-600">

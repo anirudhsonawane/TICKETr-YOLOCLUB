@@ -15,7 +15,7 @@ export const getUserTickets = query({
       ))
       .collect();
 
-    // Get event details for each ticket
+    // Get event details offf each ticket e
     const ticketsWithEvents = await Promise.all(
       tickets.map(async (ticket) => {
         const event = await ctx.db.get(ticket.eventId);
@@ -39,7 +39,7 @@ export const getUserTicketForEvent = query({
     userId: v.string(),
   },
   handler: async (ctx, { eventId, userId }) => {
-    // Return first ticket for backward compatibility
+    // Return Ticket for scanning status to update
     const ticket = await ctx.db
       .query("tickets")
       .withIndex("by_user_event", (q) =>
@@ -86,7 +86,7 @@ export const getUserTicketsForEvent = query({
 export const scanTicket = mutation({
   args: { 
     ticketId: v.id("tickets"),
-    scannerId: v.string() // User ID of the person scanning
+    scannerId: v.string() // Scanners User ID (Copy from Convex Table Laudya)
   },
   handler: async (ctx, { ticketId, scannerId }) => {
     const ticket = await ctx.db.get(ticketId);
@@ -204,8 +204,9 @@ export const issueAfterPayment = mutation({
     amount: v.number(),
     quantity: v.optional(v.number()),
     passId: v.optional(v.id("passes")),
+    selectedDate: v.optional(v.string()),
   },
-  handler: async (ctx, { eventId, userId, paymentIntentId, amount, quantity = 1, passId }) => {
+  handler: async (ctx, { eventId, userId, paymentIntentId, amount, quantity = 1, passId, selectedDate }) => {
     const event = await ctx.db.get(eventId);
     if (!event) throw new ConvexError("Event not found");
 
@@ -253,6 +254,7 @@ export const issueAfterPayment = mutation({
         paymentIntentId,
         amount: amount / ticketQuantity,
         passId,
+        selectedDate,
       });
       ticketIds.push(ticketId);
     }

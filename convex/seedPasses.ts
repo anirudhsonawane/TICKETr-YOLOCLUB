@@ -4,7 +4,7 @@ import { v } from "convex/values";
 export const createDefaultPasses = mutation({
   args: { eventId: v.id("events") },
   handler: async (ctx, { eventId }) => {
-    // Check if passes already exist for this event
+    // If exist passes
     const existingPasses = await ctx.db
       .query("passes")
       .withIndex("by_event", (q) => q.eq("eventId", eventId))
@@ -14,7 +14,7 @@ export const createDefaultPasses = mutation({
       return { message: "Passes already exist for this event" };
     }
 
-    // Create 3 default pass types
+    // Passes Type Default
     const passes = [
       {
         eventId,

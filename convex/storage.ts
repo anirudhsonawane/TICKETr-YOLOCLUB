@@ -9,7 +9,7 @@ export const getUrl = query({
   },
 });
 
-// Generate upload URL for file uploads
+// File Url
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
@@ -17,7 +17,7 @@ export const generateUploadUrl = mutation({
   },
 });
 
-// Update event image
+// Edit Event Image
 export const updateEventImage = mutation({
   args: {
     eventId: v.id("events"),
@@ -30,7 +30,7 @@ export const updateEventImage = mutation({
   },
 });
 
-// Delete image from storage
+// Delete image 
 export const deleteImage = mutation({
   args: {
     storageId: v.id("_storage"),

@@ -5,9 +5,11 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
+import { useState } from "react";
 import { Check, ArrowLeft, Tag } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
+import DateSelector from "@/components/DateSelector";
 
 export default function PassSelectionPage() {
   const { user } = useUser();
@@ -18,6 +20,8 @@ export default function PassSelectionPage() {
   const event = useQuery(api.events.getById, { eventId });
   const passes = useQuery(api.passes.getEventPasses, { eventId });
   const createDefaultPasses = useMutation(api.seedPasses.createDefaultPasses);
+
+  const [selectedDates, setSelectedDates] = useState<Record<string, string[]>>({});
 
   // Auto-create default passes if none exist
   if (event && passes && passes.length === 0) {
@@ -32,8 +36,27 @@ export default function PassSelectionPage() {
     );
   }
 
-  const handlePassSelect = (passId: Id<"passes">) => {
-    router.push(`/event/${eventId}/purchase?passId=${passId}`);
+  const handlePassSelect = (passId: Id<"passes">, pass: any) => {
+    // For Seasonal Pass, validate date selection
+    if ((pass.category === "Seasonal Pass" || pass.name?.toLowerCase().includes("seasonal")) && (!selectedDates[passId] || selectedDates[passId].length === 0)) {
+      alert("Please select at least one date for your seasonal pass");
+      return;
+    }
+    
+    // Pass selected dates as query parameter
+    const dates = selectedDates[passId] || [];
+    const url = dates.length > 0 
+      ? `/event/${eventId}/purchase?passId=${passId}&selectedDates=${dates.join(',')}`
+      : `/event/${eventId}/purchase?passId=${passId}`;
+    
+    router.push(url);
+  };
+
+  const handleDateChange = (passId: string, dates: string[]) => {
+    setSelectedDates(prev => ({
+      ...prev,
+      [passId]: dates
+    }));
   };
 
   return (
@@ -60,6 +83,9 @@ export default function PassSelectionPage() {
             const isPopular = index === 1;
             const availableQuantity = pass.totalQuantity - pass.soldQuantity;
             const isAvailable = availableQuantity > 0;
+            
+            // Debug: Log pass details
+            console.log("Pass:", pass.name, "Category:", pass.category);
 
             return (
               <div
@@ -85,6 +111,11 @@ export default function PassSelectionPage() {
                       <h3 className="text-xl font-bold text-gray-900">
                         {pass.name}
                       </h3>
+                      {pass.category && (
+                        <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                          {pass.category}
+                        </span>
+                      )}
                     </div>
                     <p className="text-gray-600 text-sm mb-4">
                       {pass.description}
@@ -116,8 +147,19 @@ export default function PassSelectionPage() {
                     </div>
                   )}
 
+                  {/* Date Selector for Seasonal Pass */}
+                  {(pass.category === "Seasonal Pass" || pass.name?.toLowerCase().includes("seasonal")) && (
+                    <div className="mb-6">
+                      <DateSelector
+                        selectedDates={selectedDates[pass._id] || []}
+                        onDateChange={(dates) => handleDateChange(pass._id, dates)}
+                        disabled={!isAvailable || !user}
+                      />
+                    </div>
+                  )}
+
                   <Button
-                    onClick={() => handlePassSelect(pass._id)}
+                    onClick={() => handlePassSelect(pass._id, pass)}
                     disabled={!isAvailable || !user}
                     className={`w-full py-3 rounded-lg font-semibold transition-colors duration-200 ${
                       isPopular

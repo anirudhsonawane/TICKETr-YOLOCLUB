@@ -8,7 +8,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "");
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { code, userId, couponId } = body;
+    const { code, userId, couponId, eventId } = body;
     
     if (!code || !userId) {
       return NextResponse.json({ 
@@ -16,13 +16,14 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
     
-    console.log("Marking coupon as used:", { code, userId, couponId });
+    console.log("Marking coupon as used:", { code, userId, couponId, eventId });
 
     // Call the Convex function to mark the coupon as used
     await convex.mutation(api.coupons.incrementCouponUsage, { 
       code, 
       userId,
-      couponId
+      couponId,
+      eventId
     });
 
     return NextResponse.json({ success: true });

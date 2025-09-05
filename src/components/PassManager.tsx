@@ -27,6 +27,7 @@ export default function PassManager({ eventId }: PassManagerProps) {
     price: 0,
     totalQuantity: 1,
     benefits: [""],
+    category: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,6 +59,7 @@ export default function PassManager({ eventId }: PassManagerProps) {
       price: 0,
       totalQuantity: 1,
       benefits: [""],
+      category: "",
     });
     setShowForm(false);
     setEditingPass(null);
@@ -70,6 +72,7 @@ export default function PassManager({ eventId }: PassManagerProps) {
       price: pass.price,
       totalQuantity: pass.totalQuantity,
       benefits: pass.benefits.length > 0 ? pass.benefits : [""],
+      category: pass.category || "",
     });
     setEditingPass(pass);
     setShowForm(true);
@@ -117,6 +120,11 @@ export default function PassManager({ eventId }: PassManagerProps) {
                 <div className="flex items-center gap-2 mb-2">
                   <Tag className="w-4 h-4 text-blue-600" />
                   <h4 className="font-semibold">{pass.name}</h4>
+                  {pass.category && (
+                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                      {pass.category}
+                    </span>
+                  )}
                   <span className="text-lg font-bold text-green-600">£{pass.price}</span>
                 </div>
                 <p className="text-gray-600 mb-2">{pass.description}</p>
@@ -205,6 +213,21 @@ export default function PassManager({ eventId }: PassManagerProps) {
                   min="1"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Category</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select Category</option>
+                  <option value="General">General</option>
+                  <option value="VIP">VIP</option>
+                  <option value="Seasonal Pass">Seasonal Pass</option>
+                  <option value="Premium">Premium</option>
+                </select>
               </div>
 
               <div>

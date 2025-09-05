@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     console.log("Request body:", body);
     
-    const { amount, eventId, userId, waitingListId, quantity = 1, passId, couponCode } = body;
+    const { amount, eventId, userId, waitingListId, quantity = 1, passId, couponCode, selectedDate } = body;
     
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
       console.error("Missing Razorpay credentials");
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
         quantity: String(quantity),
         passId: passId ? String(passId) : "",
         couponCode: couponCode || "",
+        selectedDate: selectedDate || "",
       },
     };
     
