@@ -5,16 +5,10 @@ import { api, internal } from "./_generated/api";
 
 
 export const get = query({
-    args: {},
-    handler: async (ctx) => {
-        return await ctx.db
-            .query("events")
-            .filter((q) => q.or(
-                q.eq(q.field("is_cancelled"), undefined),
-                q.eq(q.field("is_cancelled"), false)
-            ))
-            .collect();
-    },
+  args: {}, 
+  handler: async (ctx) => {
+    return await ctx.db.query("events").collect();
+  },
 });        
 
 
@@ -37,14 +31,43 @@ export const getByUserId = query({
 
 export const getEventAvailability = query({
     args: { eventId: v.id("events") },
-    handler: async (ctx, { eventId }) => {
-        const events = await ctx.db.get(eventId);
-        if (!events) throw new Error("Event not found");
+    handler: async (ctx, args) => {
+        const [tickets, passes] = await Promise.all([
+            ctx.db.query("tickets")
+                .withIndex("by_event", q => q.eq("eventId", args.eventId))
+                .collect(),
+            ctx.db.query("passes")
+                .withIndex("by_event", q => q.eq("eventId", args.eventId))
+                .collect()
+        ]);
+    
+        const purchasedTickets = tickets.filter(t => 
+    [TICKET_STATUS.VALID, TICKET_STATUS.USED].includes(t.status) && !t.passId
+);
+    
+        // Calculate total reserved tickets including pass sales and active offers
+const passSales = passes.reduce((sum, pass) => sum + pass.soldQuantity, 0);
+const activeOffersCount = await ctx.db
+    .query("waitingList")
+    .withIndex("by_event_status", q => 
+        q.eq("eventId", args.eventId).eq("status", WAITING_LIST_STATUS.OFFERED)
+    )
+    .collect()
+    .then(entries => entries.filter(e => (e.offerExpiresAt ?? 0) > Date.now()).length);
+const reservedTickets = purchasedTickets.length + passSales + activeOffersCount;
+
+// Calculate remaining tickets
+const event = await ctx.db.get(args.eventId);
+if (!event) throw new Error("Event not found");
+const remainingTickets = Math.max(0, event.totalTickets - reservedTickets);
+    
+        // Event was already fetched above, no need to fetch again
+        if (!event) throw new Error("Event not found");
 
         //Count total purchased tickets 
         const purchasedCount = await ctx.db
             .query("tickets")
-            .withIndex("by_event", (q) => q.eq("eventId", eventId))
+            .withIndex("by_event", (q) => q.eq("eventId", args.eventId))
             .collect()
             .then(
                 (tickets) => 
@@ -62,7 +85,7 @@ export const getEventAvailability = query({
             const expiredOffers = await ctx.db
               .query("waitingList")
               .withIndex("by_event_status", (q) =>
-                q.eq("eventId", eventId).eq("status", WAITING_LIST_STATUS.OFFERED)
+                q.eq("eventId", args.eventId).eq("status", WAITING_LIST_STATUS.OFFERED)
               )
               .collect()
               .then((entries) => entries.filter((e) => (e.offerExpiresAt ?? 0) <= now));
@@ -95,7 +118,7 @@ export const getEventAvailability = query({
             const activeOffers = await ctx.db
             .query("waitingList")
             .withIndex("by_event_status", (q) =>
-                q.eq("eventId", eventId).eq("status", WAITING_LIST_STATUS.OFFERED)
+                q.eq("eventId", args.eventId).eq("status", WAITING_LIST_STATUS.OFFERED)
             )
             .collect()
             .then(
@@ -105,11 +128,12 @@ export const getEventAvailability = query({
             const totalReserved  = purchasedCount + activeOffers;
 
             return {
-                isSoldOut: totalReserved >= events.totalTickets,
-                totalTickets: events.totalTickets,
+                isSoldOut: totalReserved >= event.totalTickets,
+                totalTickets: event.totalTickets,
                 purchasedCount,
                 activeOffers,
-                remainingTickets: Math.max(0, events.totalTickets - totalReserved),
+                remainingTickets,
+    passesAvailable: passes.reduce((sum, pass) => sum + (pass.totalQuantity - pass.soldQuantity), 0),
             };
     },
 });    

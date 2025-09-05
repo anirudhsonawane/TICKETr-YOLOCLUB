@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useStorageUrl } from "@/lib/utils";
+import { useState, useEffect } from "react";
 import { CalendarDays, Check, CircleArrowRight, LoaderCircle, MapPin, PencilIcon, QrCode, StarIcon, Ticket, XCircle } from "lucide-react";
 import { SignInButton } from "@clerk/nextjs";
 import PurchaseTicket from "./PurchaseTicket";
@@ -15,12 +16,17 @@ export default function EventCard({ eventId, hideBuyButton = false }: { eventId:
   const { user } = useUser();
   const router = useRouter();
   const event = useQuery(api.events.getById, { eventId });
-  const availability = useQuery(api.events.getEventAvailability, { eventId });
+  
+  const availability = useQuery(api.events.getEventAvailability, { 
+    eventId,
+    
+  });
+  
   const userTickets = useQuery(api.tickets.getUserTicketsForEvent, {
     eventId,
     userId: user?.id ?? "",
   });
-  const userTicket = userTickets?.[0]; // For backward compatibility
+  const userTicket = userTickets?.[0]; 
   const queuePosition = useQuery(api.waitingList.getQueuePosition, {
     eventId,
     userId: user?.id ?? "",
@@ -220,14 +226,18 @@ export default function EventCard({ eventId, hideBuyButton = false }: { eventId:
     >
       <div className="relative w-full h-40 sm:h-56 md:h-72 overflow-hidden">
         <Image
-          src={`${imageUrl}?t=${Date.now()}`}
+          src={imageUrl || '/placeholder-image.jpg'}
           alt={event.name}
           fill
           className="object-cover group-hover:scale-110 transition-transform duration-500"
           priority
-          loading="eager"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
+          placeholder="blur"
+          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmMWYxZjEiLz48L3N2Zz4="
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           key={imageUrl} // Ensures the image component re-renders when the source changes
-          unoptimized // Disable Next.js optimization for immediate loading
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent group-hover:from-black/60 transition-all duration-300" />
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -301,7 +311,16 @@ export default function EventCard({ eventId, hideBuyButton = false }: { eventId:
           <div className="flex items-center text-gray-600">
             <Ticket className="w-4 h-4 mr-2" />
             <span>
-              {availability.purchasedCount} tickets sold ({isPastEvent || availability.remainingTickets === 0 ? 'Sold Out' : `${availability.remainingTickets} available`})
+              {isEventOwner ? (
+                <>
+                  {availability.purchasedCount} tickets sold ({isPastEvent || availability.remainingTickets === 0 ? 'Sold Out' : `${availability.remainingTickets} available`})
+                </>
+              ) : (
+                <>
+                  {isPastEvent || availability.remainingTickets === 0 ? 'Sold Out' : `${availability.remainingTickets} available`}
+                  {availability.passesAvailable > 0 && ` (+${availability.passesAvailable} passes)`}
+                </>
+              )}
               {!isPastEvent && availability.remainingTickets > 0 && availability.activeOffers > 0 && !userTicket && (
                 <span className="text-amber-600 text-sm ml-2">
                   ({availability.activeOffers}{" "}

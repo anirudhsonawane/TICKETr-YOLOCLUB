@@ -74,7 +74,7 @@ export default function MyTicketsPage() {
             return Object.values(groupedTickets).map((ticketGroup) => {
               const firstTicket = ticketGroup[0];
               const passInfo = passes?.find(p => p._id === firstTicket.passId);
-              const totalPrice = ticketGroup.reduce((sum, t) => sum + t.price, 0);
+              const totalPrice = ticketGroup.reduce((sum, t) => sum + Number(t.amount || t.price), 0);
               const ticketCount = ticketGroup.length;
               
               return (
@@ -116,7 +116,7 @@ export default function MyTicketsPage() {
                     <div className="text-left sm:text-right">
                       <div className="text-base sm:text-lg font-bold text-gray-900">₹{totalPrice.toFixed(2)}</div>
                       <div className="text-xs text-gray-500">
-                        {ticketCount > 1 ? `₹${(totalPrice/ticketCount).toFixed(2)} each` : ''}
+                        {ticketCount > 1 ? `₹${(totalPrice/ticketCount).toFixed(2)} each` : `₹${totalPrice.toFixed(2)}`}
                       </div>
                       <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${
                         firstTicket.status === 'valid' ? 'bg-green-100 text-green-800' : 

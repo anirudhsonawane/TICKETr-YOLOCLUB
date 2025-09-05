@@ -7,6 +7,8 @@ export default defineSchema({
     description: v.string(),
     location: v.string(),
     eventDate: v.number(),
+    endDate: v.optional(v.number()), // NEW: end date of the event
+    eventType: v.optional(v.string()), // NEW: type (Concert, Workshop, etc.)
     price: v.number(),
     totalTickets: v.number(),
     userId: v.string(),
@@ -28,11 +30,20 @@ export default defineSchema({
     eventId: v.id("events"),
     userId: v.string(),
     purchasedAt: v.number(),
-    status: v.union(v.literal("valid"), v.literal("used"), v.literal("refunded")),
+    status: v.union(
+      v.literal("valid"),
+      v.literal("used"),
+      v.literal("refunded")
+    ),
     paymentIntentId: v.string(),
     amount: v.number(),
     scannedAt: v.optional(v.number()),
     passId: v.optional(v.id("passes")),
+
+    // ✅ NEW fields
+    ticketType: v.optional(v.string()), // e.g. "VIP", "Standard"
+    ticketTier: v.optional(v.string()), // e.g. "Gold", "Silver"
+    scanLimit: v.optional(v.number()), // how many times ticket can be scanned
   })
     .index("by_user", ["userId"])
     .index("by_event", ["eventId"])

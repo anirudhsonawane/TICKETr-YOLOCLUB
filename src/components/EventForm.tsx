@@ -330,6 +330,8 @@ export default function EventForm({ mode, initialData }: EventFormProps) {
                     alt="Preview"
                     fill
                     className="object-contain rounded-lg"
+                    priority
+                    sizes="128px"
                   />
                   <button
                     type="button"

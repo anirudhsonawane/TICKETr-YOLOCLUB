@@ -24,7 +24,7 @@ export const getUserTickets = query({
           eventName: event?.name || "Unknown Event",
           eventDate: event?.eventDate || 0,
           eventLocation: event?.location || "Unknown Location",
-          price: ticket.amount || 0,
+          price: ticket.amount,
         };
       })
     );
@@ -251,7 +251,7 @@ export const issueAfterPayment = mutation({
         purchasedAt: baseTime + i,
         status: TICKET_STATUS.VALID,
         paymentIntentId,
-        amount: passId ? Math.round(amount / ticketQuantity) : event.price,
+        amount: amount / ticketQuantity,
         passId,
       });
       ticketIds.push(ticketId);
@@ -261,11 +261,23 @@ export const issueAfterPayment = mutation({
     if (passId) {
       const pass = await ctx.db.get(passId);
       if (pass) {
-        const newSoldQuantity = pass.soldQuantity + ticketQuantity;
+        // Atomic update to ensure accurate sold quantity tracking
+const newSoldQuantity = pass.soldQuantity + ticketQuantity;
+
+// Verify we don't oversell the pass
+if (newSoldQuantity > pass.totalQuantity) {
+throw new ConvexError(`Cannot sell ${ticketQuantity} tickets for pass ${passId} - only ${pass.totalQuantity - pass.soldQuantity} remaining`);
+}
         console.log(`Updating pass ${passId}: ${pass.soldQuantity} + ${ticketQuantity} = ${newSoldQuantity}`);
-        await ctx.db.patch(passId, {
-          soldQuantity: newSoldQuantity,
-        });
+        // Update pass and ensure immediate consistency
+await ctx.db.patch(passId, {
+  soldQuantity: newSoldQuantity,
+});
+
+// Refresh event availability data
+await ctx.scheduler.runAfter(0, internal.waitingList.processQueue, {
+  eventId
+});
         console.log(`Pass ${passId} updated successfully`);
       } else {
         console.log(`Pass ${passId} not found`);

@@ -1,169 +1,303 @@
 "use client";
 
-import { use } from "react";
-import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { useQuery } from "convex/react";
+import {
+  CalendarDays,
+  IdCard,
+  MapPin,
+  Ticket as TicketIcon,
+  User,
+  
+} from "lucide-react";
+import QRCode from "react-qr-code";
+import Image from "next/image";
 import { useUser } from "@clerk/nextjs";
-import { QRCodeSVG } from "qrcode.react";
-import { CalendarDays, MapPin, Ticket, User, CreditCard, Download, Printer } from "lucide-react";
+import { useStorageUrl } from "@/lib/utils";
+import { useParams } from "next/navigation";
 
-export default function TicketPage({ params }: { params: Promise<{ ticketId: string }> }) {
-  const { user } = useUser();
-  const { ticketId } = use(params);
-  const ticketIdTyped = ticketId as Id<"tickets">;
-  
-  const ticket = useQuery(api.tickets.getById, { ticketId: ticketIdTyped });
-  const event = useQuery(api.events.getById, ticket?.eventId ? { eventId: ticket.eventId } : "skip");
-  
-  // Remove userTickets query to focus on single ticket
-  
-  if (!ticket || !event) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">Loading...</div>
-    </div>;
+const theme = {
+  bg: "bg-gradient-to-br from-white-500 to-yellow-600",
+  accent: "text-white-600",
+  border: "border-white-200",
+  light: "bg-red-50",
+};
+
+function TicketPage() {
+  const { isLoaded, user } = useUser();
+  const params = useParams<{ ticketId: string }>();
+
+  const ticketId = params?.ticketId as Id<"tickets"> | undefined;
+
+  const ticket = useQuery(
+    api.tickets.getById,
+    ticketId ? { ticketId } : "skip"
+  );
+
+  const event = useQuery(
+    api.events.getById,
+    ticket?.eventId ? { eventId: ticket.eventId as Id<"events"> } : "skip"
+  );
+
+  const selectedPass = useQuery(
+    api.passes.getPassById,
+    ticket?.passId ? { passId: ticket.passId as Id<"passes"> } : "skip"
+  );
+
+  const userTickets = useQuery(
+    api.tickets.getUserTicketsForEvent,
+    ticket?.eventId && user?.id
+      ? {
+          eventId: ticket.eventId as Id<"events">,
+          userId: user.id,
+        }
+      : "skip"
+  );
+
+  const imageUrl = useStorageUrl(event?.imageStorageId);
+
+  if (!isLoaded || ticket === undefined) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">Loading...</div>
+      </div>
+    );
   }
-  
-  // Use single ticket data
-  const ticketCount = 1;
-  const totalAmount = ticket.amount || 0;
 
-  if (ticket.userId !== user?.id) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center text-red-600">Access denied</div>
-    </div>;
+  if (ticket === null) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center text-red-600">Ticket not found</div>
+      </div>
+    );
   }
 
-  const qrData = JSON.stringify({
-    ticketId: ticket._id,
-    eventId: ticket.eventId,
-    userId: ticket.userId,
-    timestamp: Date.now()
-  });
+  if (event === undefined) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">Loading event...</div>
+      </div>
+    );
+  }
 
+  if (event === null) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center text-red-600">Event not found</div>
+      </div>
+    );
+  }
 
+  if (user && ticket.userId && ticket.userId !== user.id) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center text-red-600">Access denied</div>
+      </div>
+    );
+  }
+
+  const isScanned = Boolean(ticket.scannedAt);
+  const scannedAt: number | null = ticket.scannedAt ?? null;
+  // Filter tickets by passId to ensure counts are per category
+  const filteredTickets = (userTickets ?? []).filter(t => t.passId === ticket.passId);
+  const scannedCount = filteredTickets.filter((t) => t?.scannedAt).length ?? 0;
+  const totalCount = filteredTickets.length ?? 0;
 
   return (
-    <>
-      <style jsx global>{`
-        @media print {
-          body { margin: 0; background: white !important; }
-          .no-print { display: none !important; }
-          .print-ticket { 
-            width: 100% !important; 
-            max-width: none !important;
-            margin: 0 !important;
-            box-shadow: none !important;
-            border: 2px solid #000 !important;
-          }
-        }
-      `}</style>
-      <div className="min-h-screen bg-gradient-to-br from-orange-100 to-red-100 py-4 sm:py-8 px-4">
-      <div className="w-full max-w-[450px] h-auto mx-auto bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col border-2 sm:border-4 border-orange-200 print-ticket">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-red-600 p-4 sm:p-6 text-white relative overflow-hidden">
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-2 left-2 w-4 h-4 bg-yellow-300 rounded-full animate-pulse"></div>
-            <div className="absolute top-4 right-6 w-3 h-3 bg-yellow-200 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-3 left-8 w-2 h-2 bg-yellow-400 rounded-full animate-pulse delay-700"></div>
-            <div className="absolute bottom-2 right-4 w-3 h-3 bg-yellow-300 rounded-full animate-pulse delay-500"></div>
-          </div>
-          <div className="relative z-10 text-center">
-            <div className="text-3xl sm:text-4xl mb-2">🎭</div>
-            <h1 className="text-lg sm:text-xl font-bold mb-1">E-Ticket</h1>
-            <h2 className="text-base sm:text-lg font-semibold">{event.name}</h2>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-10 px-4">
+      <div
+        className={`bg-white rounded-xl overflow-hidden shadow-xl border ${
+          event.is_cancelled ? "border-red-200" : theme.border
+        } w-full mx-auto`}
+      >
+        <div className="relative mb-2">
+          {imageUrl && (
+            <div className="relative w-full aspect-[21/9]">
+              <Image
+                src={imageUrl}
+                alt={event.name}
+                fill
+                className={`object-cover object-center ${
+                  event.is_cancelled ? "opacity-50" : ""
+                }`}
+                priority
+                sizes="100vw"
+              />
+              <div className={`absolute inset-0 ${theme.bg} opacity-80`} />
+            </div>
+          )}
+          <div
+            className={`px-4 sm:px-6 py-3 sm:py-4 ${
+              imageUrl
+                ? "absolute bottom-0 left-0 right-0 bg-transparent"
+                : event.is_cancelled
+                ? "bg-red-600"
+                : theme.bg
+            }`}
+          >
+            <h2 className="text-xl sm:text-2xl font-bold text-white">{event.name}</h2>
+            {event.is_cancelled && (
+              <p className="text-red-300 mt-1">This event has been cancelled</p>
+            )}
           </div>
         </div>
 
-        {/* QR Code */}
-        <div className="p-4 sm:p-6 text-center bg-gradient-to-b from-orange-50 to-white">
-          <div className="bg-white p-4 rounded-2xl inline-block shadow-lg border-2 border-orange-100 hover:shadow-xl transition-shadow duration-300">
-            <QRCodeSVG value={qrData} size={120} className="sm:w-[150px] sm:h-[150px]" level="H" />
+        <div className="px-6 sm:px-8 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4 sm:space-y-5">
+              <div className="flex items-center text-gray-600">
+                <CalendarDays
+                  className={`w-4 sm:w-5 h-4 sm:h-5 mr-3 ${
+                    event.is_cancelled ? "text-red-600" : theme.accent
+                  }`}
+                />
+                <div>
+                  <p className="text-sm text-gray-500">Date</p>
+                  <p className="font-medium">
+                    {new Date(event.eventDate).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center text-gray-600">
+                <MapPin
+                  className={`w-4 sm:w-5 h-4 sm:h-5 mr-3 ${
+                    event.is_cancelled ? "text-red-600" : theme.accent
+                  }`}
+                />
+                <div>
+                  <p className="text-sm text-gray-500">Location</p>
+                  <p className="font-medium">{event.location}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center text-gray-600">
+                <User
+                  className={`w-4 sm:w-5 h-4 sm:h-5 mr-3 ${
+                    event.is_cancelled ? "text-red-600" : theme.accent
+                  }`}
+                />
+                <div>
+                  <p className="text-sm text-gray-500">Ticket Holder</p>
+                  <p className="font-medium">{user?.fullName || "Guest"}</p>
+                  {user?.primaryEmailAddress && (
+                    <p className="text-sm text-gray-500">
+                      {user.primaryEmailAddress.emailAddress}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center text-gray-600 break-all">
+                <IdCard
+                  className={`w-4 sm:w-5 h-4 sm:h-5 mr-3 ${
+                    event.is_cancelled ? "text-red-600" : theme.accent
+                  }`}
+                />
+                <div>
+                  <p className="text-sm text-gray-500">Ticket ID</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{ticket._id}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center text-gray-600">
+                <TicketIcon
+                  className={`w-4 sm:w-5 h-4 sm:h-5 mr-3 ${
+                    event.is_cancelled ? "text-red-600" : theme.accent
+                  }`}
+                />
+                <div>
+                  <p className="text-sm text-gray-500">{selectedPass ? 'Pass Type' : 'Ticket Price'}</p>
+                  {selectedPass && <p className="font-medium">{selectedPass.name}</p>}
+                  <p className="font-medium">₹{selectedPass?.price?.toFixed(2) || event.price}</p>
+                  {userTickets && userTickets.length > 0 && selectedPass?.price && (
+                    <p className="text-sm text-gray-500">
+                      {totalCount > 1 ? `₹${(selectedPass?.price ?? 0).toFixed(2)} each` : `₹${selectedPass?.price?.toFixed(2) ?? '0.00'}`}
+                    </p>
+                  )}
+                  {ticket.passId && (
+                    <p className="text-xs text-gray-400">Pass ID: {ticket.passId}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center justify-center lg:border-l border-t lg:border-t-0 border-gray-200 pt-6 lg:pt-0 lg:pl-8">
+              <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                <QRCode
+                  value={ticket._id}
+                  size={180}
+                  style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                  viewBox="0 0 180 180"
+                  className={event.is_cancelled ? "opacity-50" : ""}
+                />
+              </div>
+              <p className="mt-2 text-xs sm:text-sm text-gray-500 break-all text-center max-w-[200px] md:max-w-full">
+                Ticket ID: {ticket._id}
+              </p>
+            </div>
           </div>
-          <p className="text-base text-orange-700 mt-3 font-medium">✨ Scan at venue entrance ✨</p>
+
+          <div className="mt-5 pt-4 border-t border-gray-200 px-6 sm:px-8 pb-4">
+            <h3 className="text-sm font-medium text-gray-900 mb-2">Important Information</h3>
+            {event.is_cancelled ? (
+              <p className="text-sm text-red-600">
+                This event has been cancelled. A refund will be processed if it
+                hasn't been already.
+              </p>
+            ) : (
+              <ul className="text-xs sm:text-sm text-gray-600 space-y-1">
+                <li>• Please arrive at least 30 minutes before the event</li>
+                <li>• Have your ticket QR code ready for scanning</li>
+                <li>• This ticket is non-transferable</li>
+              </ul>
+            )}
+          </div>
         </div>
 
-        {/* Ticket Details */}
-        <div className="p-4 sm:p-6 bg-gradient-to-t from-orange-50 to-white">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-base mb-4">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-orange-100 h-20 flex flex-col justify-between">
-              <div className="flex items-center gap-2">
-                <Ticket className="w-5 h-5 text-orange-500" />
-                <span className="text-gray-600 font-medium text-sm">Tickets</span>
-              </div>
-              <p className="font-medium text-gray-800 text-sm">{ticketCount}</p>
-            </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-orange-100 h-20 flex flex-col justify-between">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="w-5 h-5 text-orange-500" />
-                <span className="text-gray-600 font-medium text-sm">Event Date</span>
-              </div>
-              <p className="font-medium text-gray-800 text-sm">{new Date(event.eventDate).toLocaleDateString()}</p>
-            </div>
-            <div className="bg-white p-3 rounded-xl shadow-sm border border-orange-100 h-auto min-h-20 flex flex-col justify-between">
-              <div className="flex items-center gap-2 mb-1">
-                <MapPin className="w-5 h-5 text-orange-500" />
-                <span className="text-gray-600 font-medium text-sm">Location</span>
-              </div>
-              <p className="font-medium text-gray-800 text-xs leading-tight break-words">{event.location}</p>
-            </div>
-            <div className="bg-white p-3 rounded-xl shadow-sm border border-orange-100 h-auto min-h-20 flex flex-col justify-between">
-              <div className="flex items-center gap-2 mb-1">
-                <User className="w-5 h-5 text-orange-500" />
-                <span className="text-gray-600 font-medium text-sm">Holder</span>
-              </div>
-              <p className="font-medium text-gray-800 text-xs leading-tight break-words">{user?.fullName || user?.emailAddresses[0]?.emailAddress || 'N/A'}</p>
-            </div>
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-orange-100 h-20 flex flex-col justify-between">
-              <div className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-orange-500" />
-                <span className="text-gray-600 font-medium text-sm">Amount</span>
-              </div>
-              <p className="font-medium text-gray-800 text-sm">₹{totalAmount}</p>
-            </div>
-          </div>
-          
-          {/* Status */}
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-gray-600 font-medium">Status:</span>
-            <span className={`px-4 py-2 rounded-full text-sm font-medium shadow-sm ${
-              ticket.status === 'used' 
-                ? 'bg-green-100 text-green-800 border border-green-200' 
-                : 'bg-red-100 text-red-800 border border-red-200'
-            }`}>
-              {ticket.status === 'used' ? '✅ Scanned' : '❌ Not Scanned'}
+        <div
+          className={`${
+            event.is_cancelled ? "bg-red-50" : isScanned ? "bg-green-50" : "bg-red-50"
+          } px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 ${isScanned ? "border-green-200" : "border-red-200"} border-t text-xs sm:text-sm`}
+        >
+          <span className="text-gray-500">
+            Purchase Date:{" "}
+            {ticket?.purchasedAt
+              ? new Date(ticket.purchasedAt).toLocaleString()
+              : "—"}
+          </span>
+          <div className="text-left sm:text-right">
+            <span
+              className={`text-sm font-medium ${
+                event.is_cancelled
+                  ? "text-red-600"
+                  : isScanned
+                  ? "text-green-600"
+                  : theme.accent
+              }`}
+            >
+              {event.is_cancelled
+                ? "Cancelled"
+                : isScanned
+                ? "Scanned"
+                : "Valid Ticket"}
             </span>
+            {isScanned && scannedAt && (
+              <div className="text-xs text-gray-500 mt-1">
+                Scanned: {new Date(scannedAt).toLocaleString()}
+              </div>
+            )}
+            <div className="text-xs text-gray-500 mt-1">
+              {scannedCount}/{totalCount} tickets scanned
+            </div>
           </div>
-          
-          {/* Download/Print Buttons */}
-          <div className="flex flex-col sm:flex-row gap-2 mt-4 no-print">
-            <button
-              onClick={() => window.print()}
-              className="flex-1 bg-orange-500 text-white px-4 py-3 rounded-xl font-medium hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
-            >
-              <Printer className="w-4 h-4" />
-              Print Ticket
-            </button>
-            <button
-              onClick={() => window.print()}
-              className="flex-1 bg-green-500 text-white px-4 py-3 rounded-xl font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Save as PDF
-            </button>
-          </div>
-
-
         </div>
       </div>
-      
-      {/* Decorative Elements */}
-      <div className="fixed top-10 left-10 w-8 h-8 bg-yellow-300 rounded-full opacity-20 animate-bounce no-print"></div>
-      <div className="fixed top-20 right-16 w-6 h-6 bg-orange-300 rounded-full opacity-30 animate-bounce delay-300 no-print"></div>
-      <div className="fixed bottom-20 left-20 w-4 h-4 bg-red-300 rounded-full opacity-25 animate-bounce delay-700 no-print"></div>
-      <div className="fixed bottom-32 right-12 w-5 h-5 bg-yellow-400 rounded-full opacity-20 animate-bounce delay-500 no-print"></div>
-      </div>
-    </>
-      
+    </div>
   );
 }
+
+export default TicketPage;

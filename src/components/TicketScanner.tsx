@@ -15,6 +15,7 @@ interface TicketScannerProps {
 export default function TicketScanner({ eventId }: TicketScannerProps) {
   const { user } = useUser();
   const [ticketId, setTicketId] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [scanResult, setScanResult] = useState<{
     success: boolean;
     message: string;
@@ -32,8 +33,26 @@ export default function TicketScanner({ eventId }: TicketScannerProps) {
 
   if (!event || !tickets) return <Spinner />;
 
-  const validTickets = tickets.filter(t => t.status === "valid");
-  const scannedTickets = tickets.filter(t => t.status === "used");
+  // Group tickets by passId
+  const ticketsByPass = tickets.reduce((acc, ticket) => {
+    const passId = ticket.passId;
+    if (!passId || !(passId in acc)) {
+      acc[passId as string] = [];
+    }
+    acc[passId as string].push(ticket);
+    return acc;
+  }, {} as Record<string, typeof tickets>);
+  
+  // Get unique pass IDs
+  const passIds = Object.keys(ticketsByPass);
+  
+  // Default to showing all tickets if no pass is selected
+  const [selectedPassId, setSelectedPassId] = useState<string | null>(null);
+  
+  // Filter tickets by selected pass or show all if none selected
+  const filteredTickets = selectedPassId ? ticketsByPass[selectedPassId] : tickets;
+  const validTickets = filteredTickets.filter(t => t.status === "valid");
+  const scannedTickets = filteredTickets.filter(t => t.status === "used");
 
   const handleScan = async () => {
     if (!ticketId.trim() || !user?.id) return;
@@ -116,6 +135,20 @@ export default function TicketScanner({ eventId }: TicketScannerProps) {
               </button>
             </div>
           </div>
+          
+          {/* Search by User Name */}
+          <div className="max-w-md mx-auto mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Search by User Name
+            </label>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name or email"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
           {/* Scan Result */}
           {scanResult && (
@@ -140,12 +173,34 @@ export default function TicketScanner({ eventId }: TicketScannerProps) {
           )}
         </div>
 
+        {/* Pass Filter */}
+        <div className="p-6 border-t border-gray-200">
+          <h3 className="text-lg font-semibold mb-4">Filter by Ticket Category</h3>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedPassId(null)}
+              className={`px-4 py-2 rounded-md text-sm ${!selectedPassId ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+            >
+              All Categories
+            </button>
+            {passIds.map(passId => (
+              <button
+                key={passId}
+                onClick={() => setSelectedPassId(passId)}
+                className={`px-4 py-2 rounded-md text-sm ${selectedPassId === passId ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+              >
+                {passId}
+              </button>
+            ))}
+          </div>
+        </div>
+        
         {/* Statistics */}
         <div className="p-6 bg-gray-50">
-          <h3 className="text-lg font-semibold mb-4">Scan Statistics</h3>
+          <h3 className="text-lg font-semibold mb-4">Scan Statistics {selectedPassId ? `(Category: ${selectedPassId})` : '(All Categories)'}</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600">{tickets.length}</div>
+              <div className="text-2xl font-bold text-blue-600">{filteredTickets.length}</div>
               <div className="text-sm text-gray-600">Total Tickets</div>
             </div>
             <div className="bg-white p-4 rounded-lg text-center">
@@ -158,42 +213,68 @@ export default function TicketScanner({ eventId }: TicketScannerProps) {
             </div>
             <div className="bg-white p-4 rounded-lg text-center">
               <div className="text-2xl font-bold text-gray-600">
-                {tickets.length > 0 ? Math.round((scannedTickets.length / tickets.length) * 100) : 0}%
+                {filteredTickets.length > 0 ? Math.round((scannedTickets.length / filteredTickets.length) * 100) : 0}%
               </div>
               <div className="text-sm text-gray-600">Completion</div>
             </div>
           </div>
 
           {/* Tickets List */}
-          {tickets.length > 0 && (
+          {filteredTickets.length > 0 && (
             <div>
-              <h4 className="text-md font-semibold mb-3">All Tickets</h4>
-              <div className="space-y-2">
-                {tickets.map((ticket) => (
-                  <div key={ticket._id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
-                    <div className="text-sm text-gray-600">
-                      ID: {ticket._id.slice(0,8)}... 
-                      User: {ticket.user?.name || 'Unknown'} ({ticket.user?.email || 'No email'})
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        ticket.status === 'used' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-orange-100 text-orange-800'
-                      }`}>
-                        {ticket.status === 'used' ? 'Scanned' : 'Pending'}
-                      </span>
-                      {ticket.scannedAt && (
-                        <div className="text-xs text-gray-500">
-                          {new Date(ticket.scannedAt).toLocaleTimeString()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <h4 className="text-md font-semibold mb-3">Tickets {selectedPassId ? `(Category: ${selectedPassId})` : '(All Categories)'}</h4>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket ID</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredTickets
+                      .filter(ticket => {
+                        if (!searchQuery) return true;
+                        const query = searchQuery.toLowerCase();
+                        const userName = (ticket.user?.name || '').toLowerCase();
+                        const userEmail = (ticket.user?.email || '').toLowerCase();
+                        const ticketId = ticket._id.toLowerCase();
+                        return userName.includes(query) || userEmail.includes(query) || ticketId.includes(query);
+                      })
+                      .map((ticket) => (
+                        <tr 
+                          key={ticket._id} 
+                          className="hover:bg-blue-50 cursor-pointer transition-colors"
+                          onClick={() => setTicketId(ticket._id)}
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{ticket._id}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{ticket.user?.name || 'Unknown'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{ticket.user?.email || 'No email'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{ticket.passId || 'Default'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              ticket.status === 'used' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {ticket.status === 'used' ? 'Scanned' : 'Pending'}
+                        </span>
+                        {ticket.scannedAt && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {new Date(ticket.scannedAt).toLocaleTimeString()}
+                          </div>
+                        )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       </div>
     </div>
