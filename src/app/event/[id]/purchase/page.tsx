@@ -5,12 +5,12 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
-import { useState, useEffect, useMemo } from "react";
+import { useState,  useMemo } from "react";
 import { ArrowLeft, Plus, Minus, Tag, Check } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
+// Remove DateSelector import
 import CouponInput from "@/components/CouponInput";
-import DateSelector from "@/components/DateSelector";
 
 declare global {
   interface Window {
@@ -48,17 +48,9 @@ export default function PurchasePage() {
   console.log("Selected Pass:", selectedPass?.name, "Category:", selectedPass?.category);
   console.log("All Passes:", pass?.map(p => ({ name: p.name, category: p.category })));
   
-  // Calculate original amount based on selected dates for Seasonal Pass
+  // Remove all seasonal pass date multipliers from calculations
   const getOriginalAmount = () => {
     if (!selectedPass) return 0;
-    
-    // For Seasonal Pass, multiply by number of selected dates
-    if (selectedPass.category === "Seasonal Pass" || selectedPass.name?.toLowerCase().includes("seasonal")) {
-      const dateMultiplier = selectedDates.length > 0 ? selectedDates.length : 1;
-      return selectedPass.price * quantity * dateMultiplier;
-    }
-    
-    // For other passes, use normal calculation
     return selectedPass.price * quantity;
   };
   
@@ -86,15 +78,12 @@ export default function PurchasePage() {
     }
   };
 
+  // Remove seasonal pass date validation from purchase handler
   const handlePurchase = async () => {
     if (!user || !event || !selectedPass) return;
-
-    // Validate date selection for Seasonal Pass
-    if ((selectedPass.category === "Seasonal Pass" || selectedPass.name?.toLowerCase().includes("seasonal")) && selectedDates.length === 0) {
-      alert("Please select at least one date for your seasonal pass");
-      return;
-    }
-
+  
+    // Removed date validation check
+  
     try {
       setIsLoading(true);
       
@@ -216,11 +205,6 @@ export default function PurchasePage() {
                 </p>
                 <div className="text-2xl font-bold text-gray-900">
                   ₹{selectedPass.price.toFixed(2)} per ticket
-                  {(selectedPass.category === "Seasonal Pass" || selectedPass.name?.toLowerCase().includes("seasonal")) && selectedDates.length > 1 && (
-                    <span className="text-sm text-blue-600 ml-2">
-                      × {selectedDates.length} dates
-                    </span>
-                  )}
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
                   {selectedPass.totalQuantity} / {availableQuantity} available
@@ -254,7 +238,7 @@ export default function PurchasePage() {
             )}
           </div>
 
-          {/* Date Selector for Seasonal Pass */}
+          {/* Date Selector for Seasonal Pass 
           {(selectedPass?.category === "Seasonal Pass" || selectedPass?.name?.toLowerCase().includes("seasonal")) && (
             <div className="p-4 sm:p-6 border-b border-gray-200">
               <DateSelector
@@ -263,7 +247,7 @@ export default function PurchasePage() {
                 disabled={isLoading}
               />
             </div>
-          )}
+          )} */}
 
           {/* Quantity Selector */}
           <div className="p-4 sm:p-6 border-b border-gray-200">
@@ -392,5 +376,6 @@ export default function PurchasePage() {
         </div>
       </div>
     </div>
-  );
+    
+    );
 }

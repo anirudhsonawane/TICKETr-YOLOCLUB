@@ -15,8 +15,9 @@ import Spinner from "./Spinner";
 
 export default function TicketCard({ ticketId }: { ticketId: Id<"tickets"> }) {
   const ticket = useQuery(api.tickets.getTicketWithDetails, { ticketId });
+  const ticketStatus = useQuery(api.tickets.getTicketStatus, { ticketId });
 
-  if (!ticket || !ticket.event) return <Spinner />;
+  if (!ticket || !ticket.event || !ticketStatus) return <Spinner />;
 
   const isPastEvent = ticket.event.eventDate < Date.now();
 
@@ -113,11 +114,12 @@ export default function TicketCard({ ticketId }: { ticketId: Id<"tickets"> }) {
             View Ticket <ArrowRight className="w-4 h-4 ml-1" />
           </span>
         </div>
-        <div className={`border-t ${ticket.status === 'used' ? 'bg-green-500 border-green-600 text-white' : 'bg-red-500 border-red-600 text-white'}`}>
-          <span className="text-xs sm:text-sm">
-            {ticket.status === 'used' ? 'Scanned' : 'Not Scanned'}
-          </span>
+        <div
+          className={`mt-4 p-2 ${ticket.status === "used" ? "bg-green-500 border-green-600" : "bg-red-500 border-red-600"} rounded text-white text-center`}
+        >
+          {ticket.status === "used" ? "Scanned" : `${ticketStatus?.scannedCount ?? 0}/${ticketStatus?.totalCount ?? 0} tickets scanned`}
         </div>
+
       </div>
     </Link>
   );
