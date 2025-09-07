@@ -6,7 +6,7 @@ import { Id } from "../../convex/_generated/dataModel";
 
 declare global {
   interface Window {
-    Razorpay: new (options: object) => { open: () => void };
+    Razorpay: any;
   }
 }
 

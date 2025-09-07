@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useStorageUrl } from "@/lib/utils";
-import { useState, useEffect } from "react";
+
 import { CalendarDays, Check, CircleArrowRight, LoaderCircle, MapPin, PencilIcon, QrCode, StarIcon, Ticket, XCircle } from "lucide-react";
 import { SignInButton } from "@clerk/nextjs";
 import PurchaseTicket from "./PurchaseTicket";
@@ -317,8 +317,7 @@ export default function EventCard({ eventId, hideBuyButton = false }: { eventId:
                 </>
               ) : (
                 <>
-                  {isPastEvent || availability.remainingTickets === 0 ? 'Sold Out' : `${availability.remainingTickets} available`}
-                  {availability.passesAvailable > 0 && ` (+${availability.passesAvailable} passes)`}
+                  {isPastEvent || availability.remainingTickets === 0 ? 'Sold Out' : 'Passes Are Available'}
                 </>
               )}
               {!isPastEvent && availability.remainingTickets > 0 && availability.activeOffers > 0 && !userTicket && (

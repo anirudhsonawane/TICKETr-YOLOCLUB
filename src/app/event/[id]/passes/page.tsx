@@ -124,7 +124,10 @@ export default function PassSelectionPage() {
                       ₹{pass.price.toFixed(2)}
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
-                      {pass.totalQuantity} / {availableQuantity} available
+                      {event.userId === user?.id ? 
+                        `${pass.totalQuantity} / ${availableQuantity} available` : 
+                        'Passes Are Available'
+                      }
                     </div>
                   </div>
 
