@@ -9,6 +9,7 @@ import { useState,  useMemo } from "react";
 import { ArrowLeft, Plus, Minus, Tag, Check } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
+// Removed: import Image from "next/image"; // Removed remote's Image import
 import CouponInput from "@/components/CouponInput";
 // Removed: import { useAction } from "convex/react"; // No longer needed as we removed the UPI action
 
@@ -25,6 +26,7 @@ export default function PurchasePage() {
   const params = useParams();
   const searchParams = useSearchParams();
   
+  // Correctly assign eventId from params.id and passId from searchParams
   const eventId = params.id as Id<"events">;
   const currentPassId = searchParams.get("passId") as Id<"passes">;
   const urlSelectedDates = searchParams.get("selectedDates");
@@ -43,6 +45,10 @@ export default function PurchasePage() {
     finalAmount: number;
     couponId?: string;
   } | null>(null);
+  // Removed: const [showUpiPayment, setShowUpiPayment] = useState(false); // Removed remote's UPI state
+  // Removed: const [uidInput, setUidInput] = useState(""); // Removed remote's UPI state
+
+  // Removed: const createUpiPayment = useMutation(api.upi.createUpiPayment); // Removed remote's UPI mutation
 
   const selectedPass = fetchedPass; // Now correctly refers to the specific pass fetched
   
