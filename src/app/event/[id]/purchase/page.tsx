@@ -286,7 +286,7 @@ export default function PurchasePage() {
                     className="mb-4"
                   />
                   <p className="text-lg font-semibold text-gray-900 mb-2">
-                    UPI ID: 9595961116@oksbi
+                    UPI ID: 7218343929-7@ybl
                   </p>
                   <p className="text-gray-600 text-center mb-4">
                     Scan the QR code or use the UPI ID above to make your payment.
