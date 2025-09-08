@@ -92,4 +92,12 @@ export default defineSchema({
       usedAt: v.number()
     }))), // New field for per-event usage tracking
   }).index("by_code", ["code"]),
+
+  upi_payments: defineTable({
+    uid: v.string(),
+    eventId: v.id("events"),
+    userId: v.string(),
+    amount: v.number(),
+    timestamp: v.number(),
+  }).index("by_uid", ["uid"]),
 });

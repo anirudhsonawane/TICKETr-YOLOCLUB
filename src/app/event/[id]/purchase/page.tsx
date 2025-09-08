@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
@@ -9,7 +9,7 @@ import { useState,  useMemo } from "react";
 import { ArrowLeft, Plus, Minus, Tag, Check } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
-// Remove DateSelector import
+import Image from "next/image";
 import CouponInput from "@/components/CouponInput";
 
 declare global {
@@ -41,6 +41,10 @@ export default function PurchasePage() {
     finalAmount: number;
     couponId?: string;
   } | null>(null);
+  const [showUpiPayment, setShowUpiPayment] = useState(false);
+  const [uidInput, setUidInput] = useState("");
+
+  const createUpiPayment = useMutation(api.upi.createUpiPayment);
 
   const selectedPass = pass?.find(p => p._id === passId);
   
@@ -83,91 +87,8 @@ export default function PurchasePage() {
     if (!user || !event || !selectedPass) return;
   
     // Removed date validation check
-  
-    try {
-      setIsLoading(true);
-      
-      if (typeof window.Razorpay === 'undefined') {
-        alert('Payment system not loaded. Please refresh the page.');
-        return;
-      }
-      
-      const response = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          amount: totalAmount,
-          eventId: eventId,
-          userId: user.id,
-          quantity: quantity,
-          passId: passId,
-          couponCode: appliedCoupon?.code || null,
-          couponId: appliedCoupon?.couponId || null,
-          selectedDates: selectedDates,
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error:', errorText);
-        throw new Error(`API Error: ${response.status} - ${errorText}`);
-      }
-      
-      const order = await response.json();
-      
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: order.amount,
-        currency: order.currency,
-        name: "T-System",
-        description: `${quantity} ${selectedPass.name} for ${event.name}`,
-        order_id: order.orderId,
-        handler: function (response: { razorpay_payment_id: string }) {
-          localStorage.setItem('lastEventId', eventId);
-          localStorage.setItem('lastUserId', user.id);
-          localStorage.setItem('lastQuantity', quantity.toString());
-          localStorage.setItem('lastAmount', totalAmount.toString());
-          localStorage.setItem('lastPassId', passId);
-          if (appliedCoupon) {
-            localStorage.setItem('lastCouponCode', appliedCoupon.code);
-            localStorage.setItem('lastCouponId', appliedCoupon.couponId || '');
-            
-            // Mark coupon as used by this user for this event
-            try {
-              fetch('/api/mark-coupon-used', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  code: appliedCoupon.code,
-                  couponId: appliedCoupon.couponId,
-                  userId: user.id,
-                  eventId: eventId
-                })
-              });
-            } catch (error) {
-              console.error("Error marking coupon as used:", error);
-              // Continue with purchase even if marking coupon fails
-            }
-          }
-          router.push(`/tickets/purchase-success?payment_id=${response.razorpay_payment_id}`);
-        },
-        prefill: {
-          name: user.fullName || "",
-          email: user.emailAddresses[0]?.emailAddress || "",
-        },
-        theme: {
-          color: "#f59e0b",
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (error) {
-      console.error("Error creating payment:", error);
-      alert('Payment failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    setShowUpiPayment(true);
+    return;
   };
 
   return (
@@ -353,24 +274,87 @@ export default function PurchasePage() {
               </div>
             </div>
 
-            <Button
-              onClick={handlePurchase}
-              disabled={isLoading || !user || availableQuantity === 0}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-semibold py-4 rounded-lg text-lg transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              {isLoading
-                ? "Processing Payment..."
-                : !user
-                ? "Sign in to Purchase"
-                : availableQuantity === 0
-                ? "Sold Out"
-                : `Pay ₹${totalAmount.toFixed(2)} with UPI/Card`}
-            </Button>
+            {showUpiPayment ? (
+              <div className="space-y-4">
+                <div className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">Complete your UPI Payment</h3>
+                  <Image
+                    src="/event-images/qr-code.jpg"
+                    alt="UPI QR Code"
+                    width={200}
+                    height={200}
+                    className="mb-4"
+                  />
+                  <p className="text-lg font-semibold text-gray-900 mb-2">
+                    UPI ID: 9595961116@oksbi
+                  </p>
+                  <p className="text-gray-600 text-center mb-4">
+                    Scan the QR code or use the UPI ID above to make your payment.
+                    Then, enter the 12-digit UPI Transaction ID (UID) below.
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="Enter 12-digit UPI Transaction ID"
+                    value={uidInput}
+                    onChange={(e) => setUidInput(e.target.value.replace(/[^0-9]/g, '').slice(0, 12))}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-lg"
+                    maxLength={12}
+                  />
+                  <Button
+                    onClick={async () => {
+                      if (!user || !event || !selectedPass || uidInput.length !== 12) return;
+                      setIsLoading(true);
+                      try {
+                        await createUpiPayment({
+                          uid: uidInput,
+                          eventId: eventId,
+                          userId: user.id,
+                          amount: totalAmount,
+                        });
+                        router.push(`/tickets/purchase-success?payment_id=${uidInput}`); // Use UID as payment_id for now
+                      } catch (error) {
+                        console.error("Error submitting UPI payment:", error);
+                        alert("Failed to submit UPI payment. Please try again.");
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
+                    disabled={uidInput.length !== 12 || isLoading || !user || !event || !selectedPass}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg text-lg mt-4 transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? "Submitting UID..." : "Submit UPI Transaction ID"}
+                  </Button>
+                  <Button
+                    onClick={() => setShowUpiPayment(false)}
+                    variant="ghost"
+                    className="w-full text-gray-600 mt-2"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <Button
+                  onClick={() => setShowUpiPayment(true)}
+                  disabled={isLoading || !user || availableQuantity === 0}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-semibold py-4 rounded-lg text-lg transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  {isLoading
+                    ? "Processing Payment..."
+                    : !user
+                    ? "Sign in to Purchase"
+                    : availableQuantity === 0
+                    ? "Sold Out"
+                    : `Pay ₹${totalAmount.toFixed(2)} with UPI/Card`}
+                </Button>
 
-            {user && (
-              <p className="text-xs text-gray-500 text-center mt-3">
-                Secure payment powered by Razorpay
-              </p>
+                {user && (
+                  <p className="text-xs text-gray-500 text-center mt-3">
+                    Secure payment powered by Razorpay
+                  </p>
+                )}
+              </>
             )}
           </div>
         </div>

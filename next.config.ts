@@ -9,17 +9,23 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
+      // Convex Dev
       {
-        protocol: 'https',
-        hostname: 'ceaseless-cat-661.convex.cloud',
-        port: '',
-        pathname: '/api/storage/**',
+        protocol: "https",
+        hostname: "ceaseless-cat-661.convex.cloud",
+        pathname: "/api/storage/**",
       },
+      // Convex Prod
       {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "robust-vulture-107.convex.cloud",
+        pathname: "/api/storage/**",
+      },
+      // Example images
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+        pathname: "/**",
       },
     ],
   },
