@@ -28,8 +28,9 @@ export default defineSchema({
   }).index("by_event", ["eventId"]),
 
   tickets: defineTable({
-    eventId: v.id("events"),
+    eventId: v.id('events'),
     userId: v.string(),
+    uid: v.optional(v.string()), // Made uid optional to fix schema validation
     purchasedAt: v.number(),
     status: v.union(
       v.literal("valid"),
@@ -41,7 +42,7 @@ export default defineSchema({
     scannedAt: v.optional(v.number()),
     passId: v.optional(v.id("passes")),
 
-    // ✅ NEW fields
+    
     ticketType: v.optional(v.string()), // e.g. "VIP", "Standard"
     ticketTier: v.optional(v.string()), // e.g. "Gold", "Silver"
     scanLimit: v.optional(v.number()), // how many times ticket can be scanned

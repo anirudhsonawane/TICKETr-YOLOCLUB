@@ -21,6 +21,7 @@ import type * as purchaseComplete from "../purchaseComplete.js";
 import type * as seedPasses from "../seedPasses.js";
 import type * as storage from "../storage.js";
 import type * as tickets from "../tickets.js";
+import type * as upi from "../upi.js";
 import type * as users from "../users.js";
 import type * as waitingList from "../waitingList.js";
 
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   seedPasses: typeof seedPasses;
   storage: typeof storage;
   tickets: typeof tickets;
+  upi: typeof upi;
   users: typeof users;
   waitingList: typeof waitingList;
 }>;

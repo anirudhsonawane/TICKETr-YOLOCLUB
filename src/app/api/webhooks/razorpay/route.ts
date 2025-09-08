@@ -36,19 +36,23 @@ export async function POST(req: NextRequest) {
     if (event.event === "payment.captured") {
       console.log("💰 Processing payment.captured event");
       const { notes } = event.payload.payment.entity;
-      console.log("Payment notes:", notes);
+      console.log("Payment notes received:", notes);
       
-      const result = await convex.mutation(api.tickets.issueAfterPayment, {
-        eventId: notes.eventId,
-        userId: notes.userId,
-        paymentIntentId: event.payload.payment.entity.id,
-        amount: event.payload.payment.entity.amount,
-        quantity: notes.quantity ? parseInt(notes.quantity) : 1,
-        passId: notes.passId || undefined,
-        selectedDate: notes.selectedDate || undefined,
-      });
-      
-      console.log("✅ Ticket created successfully:", result);
+      try {
+        const result = await convex.mutation(api.tickets.issueAfterPayment, {
+          eventId: notes.eventId,
+          userId: notes.userId,
+          paymentIntentId: event.payload.payment.entity.id,
+          amount: event.payload.payment.entity.amount,
+          quantity: notes.quantity ? parseInt(notes.quantity) : 1,
+          passId: notes.passId || undefined,
+          selectedDate: notes.selectedDate || undefined,
+        });
+        
+        console.log("✅ Ticket creation successful, result:", result);
+      } catch (mutationError) {
+        console.error("❌ Error calling issueAfterPayment mutation:", mutationError);
+      }
     }
 
     return NextResponse.json({ received: true });

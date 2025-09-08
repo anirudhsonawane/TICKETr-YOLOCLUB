@@ -9,8 +9,8 @@ import { useState,  useMemo } from "react";
 import { ArrowLeft, Plus, Minus, Tag, Check } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
-// Remove DateSelector import
 import CouponInput from "@/components/CouponInput";
+// Removed: import { useAction } from "convex/react"; // No longer needed as we removed the UPI action
 
 declare global {
   interface Window {
@@ -19,17 +19,19 @@ declare global {
 }
 
 export default function PurchasePage() {
+  // All hooks are called unconditionally at the top level
   const { user } = useUser();
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   
   const eventId = params.id as Id<"events">;
-  const passId = searchParams.get("passId") as Id<"passes">;
+  const currentPassId = searchParams.get("passId") as Id<"passes">;
   const urlSelectedDates = searchParams.get("selectedDates");
 
-  const event = useQuery(api.events.getById, { eventId });
-  const pass = useQuery(api.passes.getEventPasses, { eventId });
+  const event = useQuery(api.events.getById, eventId ? { eventId } : "skip");
+  const allPasses = useQuery(api.passes.getEventPasses, eventId ? { eventId } : "skip");
+  const fetchedPass = useQuery(api.passes.getPassById, currentPassId ? { passId: currentPassId } : "skip");
   
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,13 +44,8 @@ export default function PurchasePage() {
     couponId?: string;
   } | null>(null);
 
-  const selectedPass = pass?.find(p => p._id === passId);
+  const selectedPass = fetchedPass; // Now correctly refers to the specific pass fetched
   
-  // Debug: Log pass details
-  console.log("Selected Pass:", selectedPass?.name, "Category:", selectedPass?.category);
-  console.log("All Passes:", pass?.map(p => ({ name: p.name, category: p.category })));
-  
-  // Remove all seasonal pass date multipliers from calculations
   const getOriginalAmount = () => {
     if (!selectedPass) return 0;
     return selectedPass.price * quantity;
@@ -60,9 +57,8 @@ export default function PurchasePage() {
   }, [appliedCoupon, originalAmount]);
   const availableQuantity = selectedPass ? selectedPass.totalQuantity - selectedPass.soldQuantity : 0;
   
-  // Removed initial coupon seeding to avoid calling a non-deployed Convex function
-
-  if (!event || !pass || !selectedPass) {
+  // Conditional rendering based on hook results, after all hooks are called
+  if (!event || !fetchedPass || !selectedPass) { 
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner />
@@ -78,11 +74,8 @@ export default function PurchasePage() {
     }
   };
 
-  // Remove seasonal pass date validation from purchase handler
   const handlePurchase = async () => {
     if (!user || !event || !selectedPass) return;
-  
-    // Removed date validation check
   
     try {
       setIsLoading(true);
@@ -100,7 +93,7 @@ export default function PurchasePage() {
           eventId: eventId,
           userId: user.id,
           quantity: quantity,
-          passId: passId,
+          passId: currentPassId,
           couponCode: appliedCoupon?.code || null,
           couponId: appliedCoupon?.couponId || null,
           selectedDates: selectedDates,
@@ -127,7 +120,7 @@ export default function PurchasePage() {
           localStorage.setItem('lastUserId', user.id);
           localStorage.setItem('lastQuantity', quantity.toString());
           localStorage.setItem('lastAmount', totalAmount.toString());
-          localStorage.setItem('lastPassId', passId);
+          localStorage.setItem('lastPassId', currentPassId);
           if (appliedCoupon) {
             localStorage.setItem('lastCouponCode', appliedCoupon.code);
             localStorage.setItem('lastCouponId', appliedCoupon.couponId || '');
@@ -353,19 +346,15 @@ export default function PurchasePage() {
               </div>
             </div>
 
-            <Button
-              onClick={handlePurchase}
-              disabled={isLoading || !user || availableQuantity === 0}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-semibold py-4 rounded-lg text-lg transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              {isLoading
-                ? "Processing Payment..."
-                : !user
-                ? "Sign in to Purchase"
-                : availableQuantity === 0
-                ? "Sold Out"
-                : `Pay ₹${totalAmount.toFixed(2)} with UPI/Card`}
-            </Button>
+            <div className="space-y-4">
+              <Button
+                onClick={handlePurchase}
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold py-4 rounded-lg text-lg transition-all duration-200"
+              >
+                {isLoading ? "Processing..." : `Pay ₹${totalAmount.toFixed(2)} with Razorpay`}
+              </Button>
+            </div>
 
             {user && (
               <p className="text-xs text-gray-500 text-center mt-3">

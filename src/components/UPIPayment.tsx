@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createRazorpayOrder } from "../../actions/createRazorpayOrder";
+import { verifyUpiPayment } from "../../actions/verifyUpiPayment";
 import { Id } from "../../convex/_generated/dataModel";
 
 declare global {
@@ -18,54 +19,77 @@ interface UPIPaymentProps {
 
 export default function UPIPayment({ eventId, eventName, amount }: UPIPaymentProps) {
   const [loading, setLoading] = useState(false);
+  const [showQrCode, setShowQrCode] = useState(false);
+  const [uid, setUid] = useState("");
+  const [paymentSuccessful, setPaymentSuccessful] = useState(false);
 
   const handleUPIPayment = async () => {
-    setLoading(true);
-    try {
-      const order = await createRazorpayOrder({ eventId });
-      
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: order.amount,
-        currency: order.currency,
-        name: "T-System",
-        description: `Ticket for ${eventName}`,
-        order_id: order.orderId,
-        handler: function (response: { razorpay_payment_id: string }) {
-          // Handle successful payment
-          window.location.href = `/tickets/purchase-success?payment_id=${response.razorpay_payment_id}`;
-        },
-        prefill: {
-          name: "Customer Name",
-          email: "customer@example.com",
-        },
-        theme: {
-          color: "#3399cc",
-        },
-        method: {
-          upi: true,
-          card: false,
-          netbanking: false,
-          wallet: false,
-        },
-      };
+    setShowQrCode(true);
+  };
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+  const handleUidSubmit = async () => {
+    setLoading(true); // Indicate that verification is in progress
+
+    try {
+      const result = await verifyUpiPayment({ uid, eventId, amount });
+      if (result.success) {
+        setPaymentSuccessful(true);
+        // Optionally redirect to success page or show a success message
+        window.location.href = `/tickets/purchase-success?payment_id=${uid}`;
+      } else {
+        alert(result.message);
+        setPaymentSuccessful(false); // Ensure it's false on failure
+      }
     } catch (error) {
-      console.error("Payment failed:", error);
+      console.error("UPI verification failed:", error);
+      alert("An error occurred during verification. Please try again.");
+      setPaymentSuccessful(false);
     } finally {
-      setLoading(false);
+      setLoading(false); // End loading
     }
   };
 
   return (
-    <button
-      onClick={handleUPIPayment}
-      disabled={loading}
-      className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50"
-    >
-      {loading ? "Processing..." : `Pay ₹${amount} via UPI`}
-    </button>
+    <div className="flex flex-col items-center">
+      {!showQrCode && (
+        <button
+          onClick={handleUPIPayment}
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          {loading ? "Processing..." : `Pay ₹${amount} via QR Code`}
+        </button>
+      )}
+
+      {showQrCode && !paymentSuccessful && (
+        <div className="flex flex-col items-center mt-4">
+          <p className="text-lg font-semibold mb-2">Scan to Pay</p>
+          <img src="/event-images/QR .jpg" alt="QR Code" className="w-64 h-64 object-contain" />
+          <p className="text-sm text-gray-500 mt-2">Please scan the QR code to complete your payment.</p>
+          <div className="mt-4 w-full">
+            <input
+              type="text"
+              placeholder="Enter Payment UTR/Reference Number (optional)"
+              value={uid}
+              onChange={(e) => setUid(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
+            <button
+              onClick={handleUidSubmit}
+              className="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 mt-2"
+            >
+              Submit Payment UID
+            </button>
+          </div>
+        </div>
+      )}
+
+      {paymentSuccessful && (
+        <div className="mt-4 text-green-600 font-semibold">
+          Payment successful! Your UID number is: {uid || "N/A"}
+          {/* Here you would typically redirect to a success page or show further instructions */}
+        </div>
+      )}
+    </div>
   );
 }
