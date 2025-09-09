@@ -27,6 +27,12 @@ const nextConfig: NextConfig = {
         hostname: "picsum.photos",
         pathname: "/**",
       },
+      // ✅ Add your deployed domain
+      {
+        protocol: "https",
+        hostname: "ticketr.vercel.app",
+        pathname: "/**",
+      },
     ],
   },
 };

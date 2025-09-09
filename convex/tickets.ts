@@ -259,6 +259,37 @@ export const issueAfterPayment = mutation({
       ticketIds.push(ticketId);
     }
     
+    // After successfully issuing tickets, send an email to the user
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), userId))
+      .first();
+
+    if (user && user.email) {
+      const eventDetails = await ctx.db.get(eventId);
+      const subject = `Your Ticketr purchase for ${eventDetails?.name || "an event"}!`;
+      const body = `Dear ${user.name || "customer"},
+
+Thank you for your purchase! Here are your ticket details for ${eventDetails?.name || "an event"}.
+
+Your Ticket IDs: ${ticketIds.join(", ")}
+
+We look forward to seeing you there!
+
+Best regards,
+The Ticketr Team`;
+
+      await ctx.runAction(internal.actions.sendEmail.sendEmail, {
+        to: user.email,
+        subject,
+        body,
+        userId: user.clerkId,
+        ticketIds,
+        eventId,
+        purchaseId: paymentIntentId,
+      });
+    }
+
     // Update pass sold quantity if passId is provided
     if (passId) {
       const pass = await ctx.db.get(passId);

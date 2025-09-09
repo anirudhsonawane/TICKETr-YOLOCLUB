@@ -53,6 +53,24 @@ export default defineSchema({
     .index("by_user_event", ["userId", "eventId"])
     .index("by_payment_intent", ["paymentIntentId"]),
 
+  emailLogs: defineTable({
+    userId: v.string(),
+    userEmail: v.string(),
+    ticketIds: v.array(v.id("tickets")),
+    eventId: v.id("events"),
+    purchaseId: v.string(), // Correlate with payment intent or a unique purchase ID
+    sentAt: v.number(),
+    status: v.union(
+      v.literal("sent"),
+      v.literal("failed"),
+      v.literal("pending")
+    ),
+    errorMessage: v.optional(v.string()),
+  }).index("by_userId", ["userId"])
+    .index("by_userEmail", ["userEmail"])
+    .index("by_ticketId", ["ticketIds"])
+    .index("by_eventId", ["eventId"]),
+
   waitingList: defineTable({
     eventId: v.id("events"),
     userId: v.string(),

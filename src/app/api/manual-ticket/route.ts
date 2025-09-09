@@ -36,14 +36,14 @@ export async function POST(req: NextRequest) {
     
     console.log("Ticket created successfully:", result);
     
-    // Ensure user is removed from queue
-    console.log("Marking purchase complete...");
-    await convex.mutation(api.purchaseComplete.markPurchaseComplete, {
+    // Ensure user is removed from queue and email is sent
+    console.log("Completing purchase and sending email...");
+    await convex.action(api.actions.purchase.completePurchaseAndSendEmail, {
       eventId,
       userId,
     });
     
-    console.log("Purchase marked complete");
+    console.log("Purchase completed and email sent");
     
     return NextResponse.json({ 
       success: true, 
