@@ -8,7 +8,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    domains: ["ticketr-yoloclub.in", "ticketr.vercel.app"], // Added for local image optimization
     remotePatterns: [
       // Convex Dev
       {
