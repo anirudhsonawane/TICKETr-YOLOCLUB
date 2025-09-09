@@ -24,7 +24,7 @@ export default function RootLayout({
       <html lang="en">
         <body className={geistSans.className}>
           <ConvexClientProvider>
-            <ClerkProvider>
+            
               <SyncUserWithConvex />
 
               {/* 🔄 Show skeleton while Clerk is loading */}
@@ -47,7 +47,7 @@ export default function RootLayout({
               </ClerkLoaded>
 
               <Toaster />
-            </ClerkProvider>
+            
           </ConvexClientProvider>
 
           <Script src="https://checkout.razorpay.com/v1/checkout.js" />
