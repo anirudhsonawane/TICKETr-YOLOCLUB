@@ -105,10 +105,10 @@ export default function Footer() {
 
       {/* Copyright and Terms & Conditions - Centered */}
       <div className="mt-6 text-center text-sm text-gray-500 flex flex-col items-center">
-        <p>© {new Date().getFullYear()} Ticketr. All rights reserved.</p>
-        <Link href="/terms-and-conditions" className="text-gray-600 hover:text-gray-900 transition-colors mt-2 block">
+        <Link href="/terms-and-conditions" className="text-gray-600 hover:text-gray-900 transition-colors mb-2 block">
           Terms & Conditions
         </Link>
+        <p>© {new Date().getFullYear()} Ticketr. All rights reserved.</p>
       </div>
     </footer>
   );
