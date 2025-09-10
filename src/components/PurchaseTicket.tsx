@@ -145,12 +145,19 @@ export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
         description: `${quantity} Ticket${quantity > 1 ? 's' : ''} for ${event.name}`,
         order_id: order.orderId,
         handler: function (response: { razorpay_payment_id: string }) {
+          console.log('Razorpay handler triggered. Payment ID:', response.razorpay_payment_id);
           // Store data for manual ticket creation
           localStorage.setItem('lastEventId', eventId);
           localStorage.setItem('lastUserId', user.id);
           localStorage.setItem('lastQuantity', quantity.toString());
           localStorage.setItem('lastAmount', totalAmount.toString());
-          router.push(`/tickets/purchase-success?payment_id=${response.razorpay_payment_id}`);
+          try {
+            router.push(`/tickets/purchase-success?payment_id=${response.razorpay_payment_id}`);
+            console.log('Redirect initiated successfully.');
+          } catch (redirectError) {
+            console.error('Error during router.push:', redirectError);
+            alert('There was an issue redirecting after payment. Please check your tickets page.');
+          }
         },
         prefill: {
           name: user.fullName || "",
