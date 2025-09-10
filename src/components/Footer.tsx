@@ -12,8 +12,8 @@ export default function Footer() {
 
   return (
     <footer className="relative w-full bg-white border-t border-gray-200 text-gray-800 py-10 px-6 md:px-16">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center gap-6">
-        {/* Logo */}
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+        {/* Logo - Left aligned */}
         <div className="flex items-center space-x-3 mb-4 md:mb-0">
           <Image
             src={logo}
@@ -24,20 +24,22 @@ export default function Footer() {
           />
         </div>
 
-        {/* Social Media Icons */}
-        <div className="flex space-x-4 mb-4 md:mb-0 justify-center">
-          <a href="https://facebook.com" className="text-gray-400 hover:text-blue-600">
-            <Facebook size={20} />
-          </a>
-          <a href="https://twitter.com" className="text-gray-400 hover:text-sky-500">
-            <Twitter size={20} />
-          </a>
-          <a href="https://instagram.com" className="text-gray-400 hover:text-pink-500">
-            <Instagram size={20} />
-          </a>
+        {/* Middle section for Social Media (will be centered by justify-between around it) */}
+        <div className="flex-grow flex justify-center">
+          <div className="flex space-x-4 mb-4 md:mb-0">
+            <a href="https://facebook.com" className="text-gray-400 hover:text-blue-600">
+              <Facebook size={20} />
+            </a>
+            <a href="https://twitter.com" className="text-gray-400 hover:text-sky-500">
+              <Twitter size={20} />
+            </a>
+            <a href="https://instagram.com" className="text-gray-400 hover:text-pink-500">
+              <Instagram size={20} />
+            </a>
+          </div>
         </div>
 
-        {/* Contact Us Button */}
+        {/* Contact Us Button - Right aligned */}
         <div className="relative mb-4 md:mb-0">
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -101,7 +103,7 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Copyright and Terms & Conditions */}
+      {/* Copyright and Terms & Conditions - Centered */}
       <div className="mt-6 text-center text-sm text-gray-500 flex flex-col items-center">
         <p>© {new Date().getFullYear()} Ticketr. All rights reserved.</p>
         <Link href="/terms-and-conditions" className="text-gray-600 hover:text-gray-900 transition-colors mt-2 block">
