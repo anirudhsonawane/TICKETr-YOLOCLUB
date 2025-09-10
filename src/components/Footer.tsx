@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Facebook, Twitter, Instagram } from "lucide-react";
 import logo from "@/app/logo.png"; // Import logo like in Header
+import Link from "next/link"; // Added Link import
 
 export default function Footer() {
   const [showContact, setShowContact] = useState(false);
@@ -35,6 +36,11 @@ export default function Footer() {
             <Instagram size={20} />
           </a>
         </div>
+
+        {/* Terms & Conditions Link */}
+        <Link href="/terms-and-conditions" className="text-gray-600 hover:text-gray-900 transition-colors">
+          Terms & Conditions
+        </Link>
 
         {/* Contact Us Button */}
         <div className="relative">
