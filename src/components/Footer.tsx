@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Facebook, Twitter, Instagram } from "lucide-react";
+import logo from "@/app/logo.png"; // Import logo like in Header
 
 export default function Footer() {
   const [showContact, setShowContact] = useState(false);
@@ -14,7 +15,7 @@ export default function Footer() {
         {/* Logo */}
         <div className="flex items-center space-x-3">
           <Image
-            src="/logo.png"
+            src={logo}
             alt="Ticketr Logo"
             width={140}
             height={40}
