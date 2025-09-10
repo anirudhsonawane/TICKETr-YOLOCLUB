@@ -58,7 +58,7 @@ export default function Footer() {
                 animate={{ opacity: 1, y: -0 }}
                 exit={{ opacity: 0, y: 20 }}
                 transition={{ duration: 0.3 }}
-                className="absolute bottom-full mb-3 w-80 bg-white border border-gray-200 rounded-xl shadow-lg p-6"
+                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-80 bg-white border border-gray-200 rounded-xl shadow-lg p-6 z-50"
               >
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Get in Touch</h3>
 
