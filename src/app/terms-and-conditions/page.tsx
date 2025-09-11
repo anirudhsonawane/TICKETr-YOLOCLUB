@@ -5,7 +5,7 @@ export default function TermsAndConditionsPage() {
       <p className="text-gray-600 mb-6">Last updated on 09/Sep/2025 11:00:00</p>
 
       <p className="mb-4">
-        These Terms and Conditions, along with privacy policy or other terms (“Terms”) constitute a binding agreement by and between Softoria Pvt Ltd (“Website Owner” or “we” or “us” or “our”) and you (“you” or “your”) and relate to your use of our website, goods (as applicable) or services (as applicable) (collectively, “Services”).
+        These Terms and Conditions, along with privacy policy or other terms (“Terms”) constitute a binding agreement by and between MCBL (“Website Owner” or “we” or “us” or “our”) and you (“you” or “your”) and relate to your use of our website, goods (as applicable) or services (as applicable) (collectively, “Services”).
       </p>
 
       <p className="mb-4">
@@ -28,7 +28,7 @@ export default function TermsAndConditionsPage() {
         <li>You understand that upon initiating a transaction for availing the Services you are entering into a legally binding and enforceable contract with us.</li>
         <li>Notwithstanding anything contained in these Terms, the parties shall not be liable for any failure to perform an obligation under these Terms if performance is prevented or delayed by a force majeure event.</li>
         <li>These Terms and any dispute or claim relating to it, or its enforceability, shall be governed by and construed in accordance with the laws of India.</li>
-        <li>All disputes shall be subject to the exclusive jurisdiction of the courts in Karnataka , India</li>
+        <li>All disputes shall be subject to the exclusive jurisdiction of the courts in Maharashtra , India</li>
         <li>All concerns or communications relating to these Terms must be communicated to us using the contact information provided on this website.</li>
       </ul>
 
@@ -36,7 +36,7 @@ export default function TermsAndConditionsPage() {
       <p className="text-gray-600 mb-6">Last updated on 09/Sep/2025</p>
 
       <p className="mb-4">
-        This Privacy Policy outlines the practices of Sravalya Infotech (“we,” “us,” or “our”) regarding the collection, use, and disclosure of personal information when you use our services (“Services”), including our website located at https:www.gkc-tests.com/about-us and any related applications.
+        This Privacy Policy outlines the practices of MCBL (“we,” “us,” or “our”) regarding the collection, use, and disclosure of personal information when you use our services (“Services”), including our website located at https://ticketr-yoloclub.in and any related applications.
       </p>
 
       <ul className="list-disc list-inside mb-4 space-y-2">
