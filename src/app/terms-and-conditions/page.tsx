@@ -5,7 +5,7 @@ export default function TermsAndConditionsPage() {
       <p className="text-gray-600 mb-6">Last updated on 09/Sep/2025 11:00:00</p>
 
       <p className="mb-4">
-        These Terms and Conditions, along with privacy policy or other terms (“Terms”) constitute a binding agreement by and between Sravalya Infotech Pvt Ltd (“Website Owner” or “we” or “us” or “our”) and you (“you” or “your”) and relate to your use of our website, goods (as applicable) or services (as applicable) (collectively, “Services”).
+        These Terms and Conditions, along with privacy policy or other terms (“Terms”) constitute a binding agreement by and between Softoria Pvt Ltd (“Website Owner” or “we” or “us” or “our”) and you (“you” or “your”) and relate to your use of our website, goods (as applicable) or services (as applicable) (collectively, “Services”).
       </p>
 
       <p className="mb-4">
