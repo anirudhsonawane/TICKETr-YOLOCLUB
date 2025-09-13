@@ -7,34 +7,63 @@ import { useEffect, useState, Suspense } from "react";
 
 function PurchaseSuccessContent() {
   const searchParams = useSearchParams();
-  const paymentId = searchParams.get("payment_id");
+  const paymentId = searchParams.get("payment_id"); // Razorpay
+  const orderId = searchParams.get("orderId"); // PhonePe
   const [ticketCreated, setTicketCreated] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [paymentSession, setPaymentSession] = useState<any>(null);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (paymentId && !ticketCreated) {
-      // Create ticket manually since webhook isn't working
-      fetch('/api/manual-ticket', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          paymentId,
-          eventId: localStorage.getItem('lastEventId'),
-          userId: localStorage.getItem('lastUserId'),
-          quantity: parseInt(localStorage.getItem('lastQuantity') || '1'),
-          amount: parseInt(localStorage.getItem('lastAmount') || '100'),
-          passId: localStorage.getItem('lastPassId'),
-        }),
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setTicketCreated(true);
-          console.log('Ticket created:', data.ticketId);
-        }
-      })
-      .catch(err => console.error('Failed to create ticket:', err));
+    const paymentIdentifier = paymentId || orderId;
+    
+    if (paymentIdentifier && !ticketCreated && !isLoading) {
+      setIsLoading(true);
+      
+      // First, try to get payment session from database
+      fetch(`/api/payment-sessions?sessionId=${paymentIdentifier}`)
+        .then(res => res.json())
+        .then(sessionData => {
+          if (sessionData.success && sessionData.session) {
+            setPaymentSession(sessionData.session);
+            
+            // Create ticket using session data
+            return fetch('/api/manual-ticket', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                paymentId: paymentIdentifier,
+                eventId: sessionData.session.eventId,
+                userId: sessionData.session.userId,
+                quantity: sessionData.session.quantity,
+                amount: sessionData.session.amount,
+                passId: sessionData.session.passId,
+                selectedDate: sessionData.session.selectedDate,
+              }),
+            });
+          } else {
+            throw new Error('Payment session not found');
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setTicketCreated(true);
+            console.log('Ticket created:', data.ticketId);
+          } else {
+            console.error('Failed to create ticket:', data.error);
+            setSessionError(data.error || 'Failed to create ticket');
+          }
+        })
+        .catch(err => {
+          console.error('Failed to process payment:', err);
+          setSessionError(err.message || 'Failed to process payment');
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
-  }, [paymentId, ticketCreated]);
+  }, [paymentId, orderId, ticketCreated, isLoading]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -50,18 +79,42 @@ function PurchaseSuccessContent() {
         <p className="text-gray-600 mb-6">
           Your ticket purchase has been completed successfully.
           {ticketCreated && " Your ticket has been created!"}
+          {isLoading && " Creating your ticket..."}
+          {sessionError && (
+            <span className="text-red-600 block mt-2">
+              Error: {sessionError}
+            </span>
+          )}
         </p>
         
-        {paymentId && (
+        {(paymentId || orderId) && (
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-gray-500">Payment ID</p>
+            <p className="text-sm text-gray-500">
+              {paymentId ? 'Payment ID' : 'Order ID'}
+            </p>
             <p className="font-mono text-sm text-gray-900 break-all">
-              {paymentId}
+              {paymentId || orderId}
+            </p>
+          </div>
+        )}
+
+        {paymentSession && (
+          <div className="bg-blue-50 rounded-lg p-4 mb-6">
+            <p className="text-sm text-gray-500">Event Details</p>
+            <p className="font-medium text-gray-900">{paymentSession.event?.name || 'Unknown Event'}</p>
+            <p className="text-sm text-gray-600">
+              {paymentSession.quantity} ticket{paymentSession.quantity > 1 ? 's' : ''} • ₹{paymentSession.amount}
             </p>
           </div>
         )}
         
         <div className="space-y-3">
+          <Link
+            href="/tickets"
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors block"
+          >
+            View My Tickets
+          </Link>
           <Link
             href="/"
             className="w-full bg-amber-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-amber-700 transition-colors block"

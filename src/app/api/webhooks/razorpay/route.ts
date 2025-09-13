@@ -50,6 +50,20 @@ export async function POST(req: NextRequest) {
         });
         
         console.log("✅ Ticket creation successful, result:", result);
+
+        // Update payment session status
+        try {
+          const { PaymentSessionService } = await import("@/lib/paymentSessionService");
+          await PaymentSessionService.updateSessionStatus(event.payload.payment.entity.id, "completed", {
+            ticketIds: result,
+            completedAt: Date.now(),
+            razorpayOrderId: event.payload.payment.entity.order_id,
+            amount: event.payload.payment.entity.amount
+          });
+          console.log("✅ Payment session status updated to completed");
+        } catch (sessionError) {
+          console.warn("Failed to update payment session status:", sessionError);
+        }
       } catch (mutationError) {
         console.error("❌ Error calling issueAfterPayment mutation:", mutationError);
       }

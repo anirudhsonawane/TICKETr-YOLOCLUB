@@ -71,6 +71,36 @@ export default defineSchema({
     .index("by_ticketId", ["ticketIds"])
     .index("by_eventId", ["eventId"]),
 
+  paymentSessions: defineTable({
+    sessionId: v.string(), // Unique session identifier (orderId or paymentId)
+    userId: v.string(),
+    eventId: v.id("events"),
+    amount: v.number(),
+    quantity: v.number(),
+    passId: v.optional(v.id("passes")),
+    selectedDate: v.optional(v.string()),
+    couponCode: v.optional(v.string()),
+    waitingListId: v.optional(v.id("waitingList")),
+    paymentMethod: v.union(
+      v.literal("razorpay"),
+      v.literal("phonepe"),
+      v.literal("upi")
+    ),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("completed"),
+      v.literal("failed"),
+      v.literal("expired")
+    ),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    metadata: v.optional(v.any()), // Additional payment-specific data
+  }).index("by_sessionId", ["sessionId"])
+    .index("by_user", ["userId"])
+    .index("by_event", ["eventId"])
+    .index("by_status", ["status"])
+    .index("by_expiresAt", ["expiresAt"]),
+
   waitingList: defineTable({
     eventId: v.id("events"),
     userId: v.string(),

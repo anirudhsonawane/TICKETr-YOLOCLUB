@@ -144,13 +144,45 @@ export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
         name: "T-System",
         description: `${quantity} Ticket${quantity > 1 ? 's' : ''} for ${event.name}`,
         order_id: order.orderId,
-        handler: function (response: { razorpay_payment_id: string }) {
+        handler: async function (response: { razorpay_payment_id: string }) {
           console.log('Razorpay handler triggered. Payment ID:', response.razorpay_payment_id);
-          // Store data for manual ticket creation
-          localStorage.setItem('lastEventId', eventId);
-          localStorage.setItem('lastUserId', user.id);
-          localStorage.setItem('lastQuantity', quantity.toString());
-          localStorage.setItem('lastAmount', totalAmount.toString());
+          
+          // Create payment session in database
+          try {
+            const sessionResponse = await fetch('/api/payment-sessions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                sessionId: response.razorpay_payment_id,
+                userId: user.id,
+                eventId,
+                amount: totalAmount,
+                quantity,
+                passId: selectedPass?._id,
+                selectedDate: selectedDate,
+                couponCode: appliedCoupon?.code,
+                waitingListId: queuePosition?.waitingListId,
+                paymentMethod: 'razorpay',
+                metadata: {
+                  orderId: order.orderId,
+                  currency: order.currency,
+                  razorpayOrderId: order.orderId
+                }
+              }),
+            });
+
+            if (!sessionResponse.ok) {
+              console.warn('Failed to create payment session:', await sessionResponse.text());
+            } else {
+              console.log('Payment session created successfully');
+            }
+          } catch (sessionError) {
+            console.warn('Error creating payment session:', sessionError);
+            // Continue with redirect even if session creation fails
+          }
+
           try {
             router.push(`/tickets/purchase-success?payment_id=${response.razorpay_payment_id}`);
             console.log('Redirect initiated successfully.');

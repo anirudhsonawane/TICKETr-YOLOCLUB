@@ -6,11 +6,13 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
 import { useState,  useMemo } from "react";
-import { ArrowLeft, Plus, Minus, Tag, Check } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Tag, Check, CreditCard, Smartphone } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 // Removed: import Image from "next/image"; // Removed remote's Image import
 import CouponInput from "@/components/CouponInput";
+import PhonePePayment from "@/components/PhonePePayment";
 // Removed: import { useAction } from "convex/react"; // No longer needed as we removed the UPI action
 
 declare global {
@@ -45,6 +47,7 @@ export default function PurchasePage() {
     finalAmount: number;
     couponId?: string;
   } | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'razorpay' | 'phonepe'>('razorpay');
   // Removed: const [showUpiPayment, setShowUpiPayment] = useState(false); // Removed remote's UPI state
   // Removed: const [uidInput, setUidInput] = useState(""); // Removed remote's UPI state
 
@@ -352,19 +355,111 @@ export default function PurchasePage() {
               </div>
             </div>
 
+            {/* Payment Method Selection */}
             <div className="space-y-4">
-              <Button
-                onClick={handlePurchase}
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold py-4 rounded-lg text-lg transition-all duration-200"
-              >
-                {isLoading ? "Processing..." : `Pay ₹${totalAmount.toFixed(2)} with Razorpay`}
-              </Button>
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-3">Choose Payment Method</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Razorpay Option */}
+                  <Card 
+                    className={`cursor-pointer transition-all duration-200 ${
+                      selectedPaymentMethod === 'razorpay' 
+                        ? 'ring-2 ring-yellow-500 bg-yellow-50' 
+                        : 'hover:shadow-md'
+                    }`}
+                    onClick={() => setSelectedPaymentMethod('razorpay')}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-yellow-100 rounded-lg">
+                          <CreditCard className="h-6 w-6 text-yellow-600" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">Razorpay</CardTitle>
+                          <CardDescription className="text-sm">
+                            Cards, UPI, Net Banking
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+
+                  {/* PhonePe Option */}
+                  <Card 
+                    className={`cursor-pointer transition-all duration-200 ${
+                      selectedPaymentMethod === 'phonepe' 
+                        ? 'ring-2 ring-blue-500 bg-blue-50' 
+                        : 'hover:shadow-md'
+                    }`}
+                    onClick={() => setSelectedPaymentMethod('phonepe')}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <Smartphone className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">PhonePe</CardTitle>
+                          <CardDescription className="text-sm">
+                            UPI, Cards, Wallets
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Payment Component */}
+              {selectedPaymentMethod === 'razorpay' ? (
+                <Button
+                  onClick={handlePurchase}
+                  disabled={isLoading}
+                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold py-4 rounded-lg text-lg transition-all duration-200"
+                >
+                  {isLoading ? "Processing..." : `Pay ₹${totalAmount.toFixed(2)} with Razorpay`}
+                </Button>
+              ) : (
+                <PhonePePayment
+                  amount={totalAmount}
+                  eventId={eventId}
+                  userId={user.id}
+                  quantity={quantity}
+                  passId={currentPassId}
+                  couponCode={appliedCoupon?.code}
+                  selectedDate={selectedDates.join(',')}
+                  onSuccess={(orderId) => {
+                    console.log('PhonePe payment successful:', orderId);
+                    // Mark coupon as used if applicable
+                    if (appliedCoupon) {
+                      try {
+                        fetch('/api/mark-coupon-used', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            code: appliedCoupon.code,
+                            couponId: appliedCoupon.couponId,
+                            userId: user.id,
+                            eventId: eventId
+                          })
+                        });
+                      } catch (error) {
+                        console.error("Error marking coupon as used:", error);
+                      }
+                    }
+                    router.push(`/tickets/purchase-success?orderId=${orderId}`);
+                  }}
+                  onError={(error) => {
+                    console.error('PhonePe payment error:', error);
+                    alert(`Payment failed: ${error}`);
+                  }}
+                />
+              )}
             </div>
 
             {user && (
               <p className="text-xs text-gray-500 text-center mt-3">
-                Secure payment powered by Razorpay
+                Secure payment powered by {selectedPaymentMethod === 'razorpay' ? 'Razorpay' : 'PhonePe'}
               </p>
             )}
           </div>
