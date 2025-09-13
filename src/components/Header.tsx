@@ -15,13 +15,12 @@ function Header() {
         <div className="flex items-center justify-between w-full lg:w-auto">
           <Link href="/" className="font-bold shrink-0">
             <Image
-              src="/logo.png"
-              alt="logo"
-              width={100}
-              height={100}
-              className="w-24 lg:w-28"
-              priority
-            />
+                        src="/images/img.jpg"
+                        alt="Ticketr Logo"
+                        width={200}
+                        height={40}
+                        priority
+                      />
           </Link>
 
           {isLoaded && (

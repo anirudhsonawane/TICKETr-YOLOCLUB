@@ -16,9 +16,9 @@ export default function Footer() {
         {/* Logo - Left aligned */}
         <div className="flex items-center space-x-3 mb-4 md:mb-0">
           <Image
-            src="/logo.png"
+            src="/images/img.jpg"
             alt="Ticketr Logo"
-            width={140}
+            width={200}
             height={40}
             priority
           />
