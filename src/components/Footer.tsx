@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Facebook, Twitter, Instagram } from "lucide-react";
-import logo from "@/app/logo.png"; // Import logo like in Header
+// Remove the import and use the public path directly
 import Link from "next/link"; // Added Link import
 
 export default function Footer() {
@@ -16,7 +16,7 @@ export default function Footer() {
         {/* Logo - Left aligned */}
         <div className="flex items-center space-x-3 mb-4 md:mb-0">
           <Image
-            src={logo}
+            src="/logo.png"
             alt="Ticketr Logo"
             width={140}
             height={40}
