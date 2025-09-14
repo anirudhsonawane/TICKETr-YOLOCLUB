@@ -102,6 +102,30 @@ export default function TestLogoPage() {
               }}
             />
           </div>
+          <div>
+            <h3 className="font-medium mb-2">API Route - Main</h3>
+            <img 
+              src="/api/logo?type=main" 
+              alt="Test API main" 
+              className="border w-full h-32 object-contain bg-gray-100"
+              onError={(e) => {
+                e.currentTarget.style.border = '2px solid red';
+                e.currentTarget.alt = 'Failed to load API main';
+              }}
+            />
+          </div>
+          <div>
+            <h3 className="font-medium mb-2">API Route - Fallback</h3>
+            <img 
+              src="/api/logo?type=fallback" 
+              alt="Test API fallback" 
+              className="border w-full h-32 object-contain bg-gray-100"
+              onError={(e) => {
+                e.currentTarget.style.border = '2px solid red';
+                e.currentTarget.alt = 'Failed to load API fallback';
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>
