@@ -3,7 +3,6 @@
 import Link  from "next/link";
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import SearchBar from "./SearchBar";
-import Logo from "./Logo";
 
 function Header() {
   const { isLoaded } = useUser();
@@ -13,7 +12,25 @@ function Header() {
       <div className="flex flex-col lg:flex-row items-center gap-4 p-4">
         <div className="flex items-center justify-between w-full lg:w-auto">
           <Link href="/" className="font-bold shrink-0">
-            <Logo width={200} height={40} />
+            <div className="flex items-center justify-center w-[250px] h-[50px] relative">
+              <img 
+                        src="/images/img.jpg"
+                        alt="Ticketr Logo"
+                className="max-w-full max-h-full object-contain"
+                onError={(e) => {
+                  console.log('img.jpg failed, trying logo.png');
+                  e.currentTarget.src = '/logo.png';
+                  e.currentTarget.onerror = () => {
+                    console.log('logo.png also failed, showing text fallback');
+                    e.currentTarget.style.display = 'none';
+                    const textFallback = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (textFallback) textFallback.style.display = 'block';
+                  };
+                }}
+                onLoad={() => console.log('Logo loaded successfully')}
+              />
+              <div className="hidden text-gray-600 font-bold text-sm">Ticketr Logo</div>
+            </div>
           </Link>
 
           {isLoaded && (
