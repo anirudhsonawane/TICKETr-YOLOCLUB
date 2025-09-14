@@ -1,10 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link  from "next/link";
-// Remove the import and use the public path directly
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import SearchBar from "./SearchBar";
+import Logo from "./Logo";
 
 function Header() {
   const { isLoaded } = useUser();
@@ -14,13 +13,7 @@ function Header() {
       <div className="flex flex-col lg:flex-row items-center gap-4 p-4">
         <div className="flex items-center justify-between w-full lg:w-auto">
           <Link href="/" className="font-bold shrink-0">
-            <Image
-                        src="/images/img.jpg"
-                        alt="Ticketr Logo"
-                        width={200}
-                        height={40}
-                        priority
-                      />
+            <Logo width={200} height={40} />
           </Link>
 
           {isLoaded && (

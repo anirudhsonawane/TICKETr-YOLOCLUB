@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import { Facebook, Twitter, Instagram } from "lucide-react";
-// Remove the import and use the public path directly
-import Link from "next/link"; // Added Link import
+import Link from "next/link";
+import Logo from "./Logo";
 
 export default function Footer() {
   const [showContact, setShowContact] = useState(false);
@@ -15,13 +14,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Logo - Left aligned */}
         <div className="flex items-center space-x-3 mb-4 md:mb-0">
-          <Image
-            src="/images/img.jpg"
-            alt="Ticketr Logo"
-            width={200}
-            height={40}
-            priority
-          />
+          <Logo width={200} height={40} />
         </div>
 
         {/* Middle section for Social Media (will be centered by justify-between around it) */}

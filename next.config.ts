@@ -34,6 +34,10 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+    // Ensure static images are properly handled
+    unoptimized: false,
+    // Add loader configuration for better compatibility
+    loader: 'default',
   },
 };
 
