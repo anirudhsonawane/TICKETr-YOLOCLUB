@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 
 interface LogoProps {
@@ -26,15 +25,15 @@ export default function Logo({ width = 200, height = 40, className = "" }: LogoP
   };
 
   return (
-    <Image
+    <img
       src={currentSrc}
       alt="Ticketr Logo"
       width={width}
       height={height}
-      priority
       className={className}
       onError={handleError}
       onLoad={handleLoad}
+      style={{ maxWidth: '100%', height: 'auto' }}
     />
   );
 }
