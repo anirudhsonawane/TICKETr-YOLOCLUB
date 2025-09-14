@@ -17,24 +17,79 @@ export async function POST(req: NextRequest) {
     }
 
     // Initialize PhonePe client
-    const client = getPhonePeClient();
+    let client;
+    try {
+      client = getPhonePeClient();
+      console.log("PhonePe client initialized successfully");
+    } catch (clientError) {
+      console.error("Failed to initialize PhonePe client:", clientError);
+      return NextResponse.json({ 
+        error: "Configuration error", 
+        details: `PhonePe client initialization failed: ${clientError instanceof Error ? clientError.message : 'Unknown error'}`
+      }, { status: 500 });
+    }
     
     console.log("Verifying PhonePe payment for order:", merchantOrderId);
     
     // Get order status from PhonePe
-    const response = await client.getOrderStatus(merchantOrderId);
+    let response;
+    try {
+      response = await client.getOrderStatus(merchantOrderId);
+      console.log("PhonePe API call successful");
+    } catch (apiError) {
+      console.error("PhonePe API call failed:", apiError);
+      return NextResponse.json({ 
+        error: "API call failed", 
+        details: `PhonePe API error: ${apiError instanceof Error ? apiError.message : 'Unknown error'}`,
+        apiError: apiError instanceof Error ? apiError.message : String(apiError)
+      }, { status: 500 });
+    }
     
-    console.log("PhonePe order status response:", response);
+    console.log("PhonePe order status response:", JSON.stringify(response, null, 2));
 
-    if (!response || !response.data) {
-      console.error("Invalid PhonePe verification response");
+    if (!response) {
+      console.error("PhonePe API returned null/undefined response");
       return NextResponse.json({ 
         error: "Verification failed", 
-        details: "Invalid response from PhonePe"
+        details: "PhonePe API returned no response"
       }, { status: 500 });
     }
 
-    const { code, data } = response;
+    // Handle different possible response structures
+    let code, data, paymentInfo;
+    const responseAny = response as any;
+    
+    // Check if response has the old structure (code + data)
+    if (responseAny.code && responseAny.data) {
+      console.log("Using old response structure (code + data)");
+      code = responseAny.code;
+      data = responseAny.data;
+      paymentInfo = data;
+    }
+    // Check if response has the new structure (direct payment info)
+    else if (responseAny.state || responseAny.status || responseAny.paymentStatus) {
+      console.log("Using new response structure (direct payment info)");
+      code = responseAny.code || responseAny.status || "SUCCESS";
+      data = responseAny;
+      paymentInfo = responseAny;
+    }
+    // Check if response is the payment info directly
+    else if (responseAny.amount || responseAny.transactionId) {
+      console.log("Using direct payment info structure");
+      code = "SUCCESS";
+      data = responseAny;
+      paymentInfo = responseAny;
+    }
+    else {
+      console.error("Unknown PhonePe API response structure:", response);
+      return NextResponse.json({ 
+        error: "Verification failed", 
+        details: "Unknown PhonePe API response structure",
+        rawResponse: response
+      }, { status: 500 });
+    }
+
+    console.log("Parsed response:", { code, data, paymentInfo });
     
     // Check if the request was successful
     if (code !== "SUCCESS") {
@@ -46,31 +101,38 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Extract payment details
-    const paymentInfo = data;
-    const isSuccess = paymentInfo.code === PHONEPE_PAYMENT_STATUS.COMPLETED;
+    // Extract payment details with flexible field mapping
+    const paymentInfoAny = paymentInfo as any;
+    const paymentStatus = paymentInfoAny.code || paymentInfoAny.state || paymentInfoAny.status || paymentInfoAny.paymentStatus;
+    
+    // Check for success with multiple possible status values
+    const isSuccess = paymentStatus === PHONEPE_PAYMENT_STATUS.COMPLETED || 
+                     paymentStatus === 'SUCCESS' || 
+                     paymentStatus === 'PAYMENT_SUCCESS' ||
+                     paymentStatus === 'COMPLETED';
     
     console.log("Payment verification result:", {
       orderId: merchantOrderId,
-      status: paymentInfo.code,
+      status: paymentStatus,
       isSuccess,
-      amount: paymentInfo.amount,
-      transactionId: paymentInfo.transactionId
+      amount: paymentInfoAny.amount,
+      transactionId: paymentInfoAny.transactionId,
+      allFields: Object.keys(paymentInfo)
     });
 
     return NextResponse.json({
       success: true,
       orderId: merchantOrderId,
-      paymentStatus: paymentInfo.code, // This is what the success page checks
-      status: paymentInfo.code,
+      paymentStatus: paymentStatus, // This is what the success page checks
+      status: paymentStatus,
       isSuccess,
-      amount: paymentInfo.amount,
-      currency: paymentInfo.currency || "INR",
-      transactionId: paymentInfo.transactionId,
-      paymentId: paymentInfo.paymentId,
-      responseCode: paymentInfo.responseCode,
-      responseMessage: paymentInfo.responseMessage,
-      paymentInstrument: paymentInfo.paymentInstrument,
+      amount: paymentInfoAny.amount,
+      currency: paymentInfoAny.currency || "INR",
+      transactionId: paymentInfoAny.transactionId,
+      paymentId: paymentInfoAny.paymentId,
+      responseCode: paymentInfoAny.responseCode,
+      responseMessage: paymentInfoAny.responseMessage,
+      paymentInstrument: paymentInfoAny.paymentInstrument,
       rawResponse: paymentInfo,
     });
 

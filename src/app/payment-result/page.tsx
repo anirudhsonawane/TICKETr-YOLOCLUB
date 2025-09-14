@@ -50,7 +50,11 @@ function PaymentResultContent() {
       setPaymentStatus(verifyData.paymentStatus);
       
       // If payment is successful, create ticket
-      if (verifyData.paymentStatus === 'COMPLETED') {
+      const isPaymentSuccessful = verifyData.paymentStatus === 'COMPLETED' || 
+                                 verifyData.paymentStatus === 'SUCCESS' || 
+                                 verifyData.paymentStatus === 'PAYMENT_SUCCESS';
+      
+      if (isPaymentSuccessful) {
         console.log('Payment is completed, creating ticket...');
         await createTicket();
       } else {
@@ -124,8 +128,14 @@ function PaymentResultContent() {
   };
 
   // Determine the UI state based on payment status
-  const isPaymentSuccessful = paymentStatus === 'COMPLETED' && ticketCreated && !error;
-  const isPaymentFailed = (paymentStatus && paymentStatus !== 'COMPLETED') || error;
+  const isPaymentSuccessful = (paymentStatus === 'COMPLETED' || 
+                              paymentStatus === 'SUCCESS' || 
+                              paymentStatus === 'PAYMENT_SUCCESS') && 
+                             ticketCreated && !error;
+  const isPaymentFailed = (paymentStatus && 
+                          paymentStatus !== 'COMPLETED' && 
+                          paymentStatus !== 'SUCCESS' && 
+                          paymentStatus !== 'PAYMENT_SUCCESS') || error;
   const isPaymentPending = isLoading;
 
   return (
