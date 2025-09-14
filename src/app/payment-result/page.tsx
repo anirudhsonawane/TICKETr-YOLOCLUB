@@ -39,14 +39,22 @@ function PaymentResultContent() {
       console.log('PhonePe verification response:', verifyData);
       
       if (!verifyResponse.ok || !verifyData.success) {
+        console.error('PhonePe verification failed:', {
+          status: verifyResponse.status,
+          response: verifyData
+        });
         throw new Error(verifyData.details || 'Payment verification failed');
       }
       
+      console.log('Payment status received:', verifyData.paymentStatus);
       setPaymentStatus(verifyData.paymentStatus);
       
       // If payment is successful, create ticket
-      if (verifyData.paymentStatus === 'SUCCESS') {
+      if (verifyData.paymentStatus === 'COMPLETED') {
+        console.log('Payment is completed, creating ticket...');
         await createTicket();
+      } else {
+        console.log('Payment not completed, status:', verifyData.paymentStatus);
       }
       
     } catch (error) {
@@ -59,12 +67,26 @@ function PaymentResultContent() {
 
   const createTicket = async () => {
     try {
+      console.log('Creating ticket for order:', orderId);
+      
       // Get payment session and create ticket
       const sessionResponse = await fetch(`/api/payment-sessions?sessionId=${orderId}`);
       const sessionData = await sessionResponse.json();
       
+      console.log('Payment session response:', sessionData);
+      
       if (sessionData.success && sessionData.session) {
         setPaymentSession(sessionData.session);
+        
+        console.log('Creating ticket with session data:', {
+          paymentId: orderId,
+          eventId: sessionData.session.eventId,
+          userId: sessionData.session.userId,
+          quantity: sessionData.session.quantity,
+          amount: sessionData.session.amount,
+          passId: sessionData.session.passId,
+          selectedDate: sessionData.session.selectedDate,
+        });
         
         // Create ticket using session data
         const ticketResponse = await fetch('/api/manual-ticket', {
@@ -82,26 +104,28 @@ function PaymentResultContent() {
         });
         
         const ticketData = await ticketResponse.json();
+        console.log('Ticket creation response:', ticketData);
         
         if (ticketData.success) {
           setTicketCreated(true);
-          console.log('Ticket created:', ticketData.ticketId);
+          console.log('✅ Ticket created successfully:', ticketData.ticketId);
         } else {
-          console.error('Failed to create ticket:', ticketData.error);
+          console.error('❌ Failed to create ticket:', ticketData.error);
           setError(ticketData.error || 'Failed to create ticket');
         }
       } else {
+        console.error('❌ Payment session not found:', sessionData);
         throw new Error('Payment session not found');
       }
     } catch (error) {
-      console.error('Failed to create ticket:', error);
+      console.error('❌ Failed to create ticket:', error);
       setError(error instanceof Error ? error.message : 'Failed to create ticket');
     }
   };
 
   // Determine the UI state based on payment status
-  const isPaymentSuccessful = paymentStatus === 'SUCCESS' && ticketCreated && !error;
-  const isPaymentFailed = (paymentStatus && paymentStatus !== 'SUCCESS') || error;
+  const isPaymentSuccessful = paymentStatus === 'COMPLETED' && ticketCreated && !error;
+  const isPaymentFailed = (paymentStatus && paymentStatus !== 'COMPLETED') || error;
   const isPaymentPending = isLoading;
 
   return (

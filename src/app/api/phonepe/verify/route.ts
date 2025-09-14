@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     // Extract payment details
     const paymentInfo = data;
-    const isSuccess = paymentInfo.code === PHONEPE_PAYMENT_STATUS.SUCCESS;
+    const isSuccess = paymentInfo.code === PHONEPE_PAYMENT_STATUS.COMPLETED;
     
     console.log("Payment verification result:", {
       orderId: merchantOrderId,
