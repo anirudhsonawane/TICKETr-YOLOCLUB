@@ -24,7 +24,9 @@ function Header() {
                     console.log('logo.png also failed, showing text fallback');
                     e.currentTarget.style.display = 'none';
                     const textFallback = e.currentTarget.nextElementSibling as HTMLElement;
-                    if (textFallback) textFallback.style.display = 'block';
+                    if (textFallback && textFallback.style) {
+                      textFallback.style.display = 'block';
+                    }
                   };
                 }}
                 onLoad={() => console.log('Logo loaded successfully')}
