@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       orderId: merchantOrderId,
+      paymentStatus: paymentInfo.code, // This is what the success page checks
       status: paymentInfo.code,
       isSuccess,
       amount: paymentInfo.amount,

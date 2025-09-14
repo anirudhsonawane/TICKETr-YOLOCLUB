@@ -168,6 +168,8 @@ export default function PhonePePayment({
   const handleMockPaymentCancel = () => {
     setShowPaymentInterface(false);
     setPaymentInterface(null);
+    // Redirect to payment result page with cancelled status
+    window.location.href = `/payment-result?orderId=${paymentInterface?.orderId}&status=CANCELLED`;
   };
 
   return (

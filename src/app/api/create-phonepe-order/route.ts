@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       // Generate unique order ID
       const merchantOrderId = generatePhonePeOrderId();
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-      const redirectUrl = `${baseUrl}/tickets/purchase-success?orderId=${merchantOrderId}`;
+      const redirectUrl = `${baseUrl}/payment-result?orderId=${merchantOrderId}`;
       
       // Return mock PhonePe payment interface data
       return NextResponse.json({
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
     
     // Create redirect URLs
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-    const redirectUrl = `${baseUrl}/tickets/purchase-success?orderId=${merchantOrderId}`;
+    const redirectUrl = `${baseUrl}/payment-result?orderId=${merchantOrderId}`;
     
     // Create meta info for tracking
     const metaInfo = {
@@ -214,7 +214,7 @@ export async function POST(req: NextRequest) {
       console.log("🔄 FALLBACK: Switching to mock mode due to PhonePe API failure");
       
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-      const redirectUrl = `${baseUrl}/tickets/purchase-success?orderId=${merchantOrderId}`;
+      const redirectUrl = `${baseUrl}/payment-result?orderId=${merchantOrderId}`;
       
       return NextResponse.json({
         success: true,
