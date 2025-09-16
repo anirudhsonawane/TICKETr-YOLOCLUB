@@ -13,25 +13,26 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Logo - Left aligned */}
         <div className="flex items-center space-x-3 mb-4 md:mb-0">
-          <div className="flex items-center justify-center relative">
+          <div className="flex items-center justify-center w-[250px] h-[50px] relative">
             <img 
-              src="/logo.png" 
-              alt="TICKETr Logo" 
-              className="h-6 sm:h-8 md:h-10 lg:h-12 w-auto object-contain transition-all duration-200 hover:scale-105"
-              loading="lazy"
+              src="/images/img.jpg" 
+              alt="Ticketr Logo" 
+              className="max-w-full max-h-full object-contain"
               onError={(e) => {
-                console.log('Footer logo failed to load, showing text fallback');
-                e.currentTarget.style.display = 'none';
-                const textFallback = e.currentTarget.nextElementSibling as HTMLElement;
-                if (textFallback && textFallback.style) {
-                  textFallback.style.display = 'block';
-                }
+                console.log('Footer img.jpg failed, trying logo.png');
+                e.currentTarget.src = '/logo.png';
+                e.currentTarget.onerror = () => {
+                  console.log('Footer logo.png also failed, showing text fallback');
+                  e.currentTarget.style.display = 'none';
+                  const textFallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (textFallback && textFallback.style) {
+                    textFallback.style.display = 'block';
+                  }
+                };
               }}
               onLoad={() => console.log('Footer logo loaded successfully')}
             />
-            <div className="hidden text-blue-600 font-bold text-lg sm:text-xl md:text-2xl lg:text-3xl tracking-wide">
-              TICKETr
-            </div>
+            <div className="hidden text-gray-600 font-bold text-sm">Ticketr Logo</div>
           </div>
         </div>
 
@@ -120,6 +121,7 @@ export default function Footer() {
           Terms & Conditions
         </Link>
         <p>© {new Date().getFullYear()} Ticketr. All rights reserved.</p>
+        <p className="mt-3 text-sm text-gray-600 font-medium">Created with ❤️ by ANIRUDH SONAWANE</p>
       </div>
     </footer>
   );
