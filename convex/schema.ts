@@ -128,6 +128,8 @@ export default defineSchema({
     code: v.string(),
     // Relax required fields to allow legacy documents to load; we'll default in code
     discountPercentage: v.optional(v.number()),
+    discountAmount: v.optional(v.number()), // NEW: flat discount amount in rupees
+    discountType: v.optional(v.union(v.literal("percentage"), v.literal("flat"))), // NEW: type of discount
     isActive: v.optional(v.boolean()),
     validFrom: v.optional(v.number()),
     validUntil: v.optional(v.number()),

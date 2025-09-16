@@ -6,7 +6,9 @@ import { ConvexError } from "convex/values";
 export const createCoupon = mutation({
   args: {
     code: v.string(),
-    discountPercentage: v.number(),
+    discountPercentage: v.optional(v.number()),
+    discountAmount: v.optional(v.number()),
+    discountType: v.optional(v.union(v.literal("percentage"), v.literal("flat"))),
     isActive: v.boolean(),
     validFrom: v.number(),
     validUntil: v.optional(v.number()),
@@ -25,15 +27,26 @@ export const createCoupon = mutation({
       throw new ConvexError("Coupon with this code already exists");
     }
 
-    // Validate discount percentage (0-100)
-    if (args.discountPercentage < 0 || args.discountPercentage > 100) {
-      throw new ConvexError("Discount percentage must be between 0 and 100");
+    // Set default discount type if not provided
+    const discountType = args.discountType || (args.discountPercentage ? "percentage" : "flat");
+
+    // Validate discount based on type
+    if (discountType === "percentage") {
+      if (!args.discountPercentage || args.discountPercentage < 0 || args.discountPercentage > 100) {
+        throw new ConvexError("Discount percentage must be between 0 and 100");
+      }
+    } else if (discountType === "flat") {
+      if (!args.discountAmount || args.discountAmount < 0) {
+        throw new ConvexError("Discount amount must be a positive number");
+      }
     }
 
     return await ctx.db.insert("coupons", {
       ...args,
+      discountType,
       currentUses: 0,
       usedByUsers: [],
+      usedByUserEvent: [],
     });
   },
 });
@@ -88,6 +101,8 @@ export const validateCoupon = query({
       coupon: {
         code: coupon.code,
         discountPercentage: coupon.discountPercentage ?? 0,
+        discountAmount: coupon.discountAmount ?? 0,
+        discountType: coupon.discountType ?? "percentage",
         description: coupon.description,
       },
     };
@@ -138,16 +153,28 @@ export const calculateDiscountedAmount = query({
       return { success: false, message: "You have already used this coupon", originalAmount: amount };
     }
 
-    // Calculate discount
-    const discountPercentage = coupon.discountPercentage ?? 0;
-    const discountAmount = Math.round((amount * discountPercentage) / 100);
-    const finalAmount = amount - discountAmount;
+    // Calculate discount based on type
+    const discountType = coupon.discountType ?? "percentage";
+    let discountAmount = 0;
+    let discountPercentage = 0;
+
+    if (discountType === "percentage") {
+      discountPercentage = coupon.discountPercentage ?? 0;
+      discountAmount = Math.round((amount * discountPercentage) / 100);
+    } else if (discountType === "flat") {
+      discountAmount = coupon.discountAmount ?? 0;
+      // For flat discounts, calculate the equivalent percentage for display
+      discountPercentage = Math.round((discountAmount / amount) * 100);
+    }
+
+    const finalAmount = Math.max(0, amount - discountAmount); // Ensure final amount is not negative
 
     return {
       success: true,
       originalAmount: amount,
       discountPercentage,
       discountAmount,
+      discountType,
       finalAmount,
       couponId: coupon._id,
     };
@@ -240,6 +267,8 @@ export const updateCoupon = mutation({
     couponId: v.id("coupons"),
     code: v.optional(v.string()),
     discountPercentage: v.optional(v.number()),
+    discountAmount: v.optional(v.number()),
+    discountType: v.optional(v.union(v.literal("percentage"), v.literal("flat"))),
     isActive: v.optional(v.boolean()),
     validFrom: v.optional(v.number()),
     validUntil: v.optional(v.number()),
@@ -261,12 +290,22 @@ export const updateCoupon = mutation({
       if (existingCoupon) throw new ConvexError("Coupon with this code already exists");
     }
 
-    // Validate discount
-    if (
-      updates.discountPercentage !== undefined &&
-      (updates.discountPercentage < 0 || updates.discountPercentage > 100)
-    ) {
-      throw new ConvexError("Discount percentage must be between 0 and 100");
+    // Validate discount based on type
+    const discountType = updates.discountType || coupon.discountType || "percentage";
+    if (discountType === "percentage") {
+      if (
+        updates.discountPercentage !== undefined &&
+        (updates.discountPercentage < 0 || updates.discountPercentage > 100)
+      ) {
+        throw new ConvexError("Discount percentage must be between 0 and 100");
+      }
+    } else if (discountType === "flat") {
+      if (
+        updates.discountAmount !== undefined &&
+        updates.discountAmount < 0
+      ) {
+        throw new ConvexError("Discount amount must be a positive number");
+      }
     }
 
     await ctx.db.patch(couponId, updates);
@@ -283,147 +322,310 @@ export const deleteCoupon = mutation({
   },
 });
 
-// Seed initial coupon YOLOCLUB15
-export const seedInitialCoupon = mutation({
+
+// Create flat discount coupons
+export const createFlatDiscountCoupons = mutation({
   handler: async (ctx) => {
-    const existingCoupon = await ctx.db
-      .query("coupons")
-      .withIndex("by_code", (q) => q.eq("code", "YOLOCLUB15"))
-      .first();
+    const results = [];
+    const now = Date.now();
+    const oneYear = 365 * 24 * 60 * 60 * 1000;
 
-    if (existingCoupon) return { message: "Initial coupon already exists" };
+    // Flat discount coupons
+    const flatCoupons = [
+      {
+        code: "Flat50YC",
+        discountAmount: 50,
+        description: "₹50 off your purchase with Flat50YC",
+        maxUses: 1000,
+      },
+      {
+        code: "Flat100YC", 
+        discountAmount: 100,
+        description: "₹100 off your purchase with Flat100YC",
+        maxUses: 1000,
+      },
+      {
+        code: "Flat500YC",
+        discountAmount: 500,
+        description: "₹500 off your purchase with Flat500YC", 
+        maxUses: 100,
+      },
+    ];
 
-    await ctx.db.insert("coupons", {
-      code: "YOLOCLUB15",
-      discountPercentage: 10,
-      isActive: true,
-      validFrom: Date.now(),
-      validUntil: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year
-      maxUses: 1000,
-      currentUses: 0,
-      description: "10% off your purchase with YOLOCLUB15",
-      usedByUsers: [] as string[],
-      usedByUserEvent: [] as Array<{userId: string, eventId: any, usedAt: number}>,
-      userId: undefined, 
-    });
+    for (const coupon of flatCoupons) {
+      const existingCoupon = await ctx.db
+        .query("coupons")
+        .withIndex("by_code", (q) => q.eq("code", coupon.code))
+        .first();
 
-    return { message: "Initial coupon created successfully" };
+      if (!existingCoupon) {
+        await ctx.db.insert("coupons", {
+          code: coupon.code,
+          discountAmount: coupon.discountAmount,
+          discountType: "flat",
+          isActive: true,
+          validFrom: now,
+          validUntil: now + oneYear,
+          maxUses: coupon.maxUses,
+          currentUses: 0,
+          description: coupon.description,
+          usedByUsers: [] as string[],
+          usedByUserEvent: [] as Array<{userId: string, eventId: any, usedAt: number}>,
+          userId: undefined,
+        });
+        results.push(`${coupon.code} created`);
+      } else {
+        // Update existing coupon to use flat discount
+        await ctx.db.patch(existingCoupon._id, {
+          discountAmount: coupon.discountAmount,
+          discountType: "flat",
+          discountPercentage: undefined, // Remove percentage discount
+          description: coupon.description,
+        });
+        results.push(`${coupon.code} updated to flat discount`);
+      }
+    }
+
+    return { message: "Flat discount coupons initialized", results };
   },
 });
 
-// Ensure a coupon with a given code exists (create if missing)
-export const ensureCouponExists = mutation({
-  args: { code: v.string() },
-  handler: async (ctx, { code }) => {
-    const existing = await ctx.db
-      .query("coupons")
-      .withIndex("by_code", (q) => q.eq("code", code))
-      .first();
-
-    if (existing) return { created: false };
-
-    const nowTs = Date.now();
-    await ctx.db.insert("coupons", {
-      code,
-      discountPercentage: 10,
-      isActive: true,
-      validFrom: nowTs,
-      validUntil: nowTs + 365 * 24 * 60 * 60 * 1000,
-      maxUses: 1000,
-      currentUses: 0,
-      description: `${code} gives 10% off`,
-      usedByUsers: [] as string[],
-      usedByUserEvent: [] as Array<{userId: string, eventId: any, usedAt: number}>,
-      userId: undefined,
-    });
-
-    return { created: true };
-  },
-});
-
-// Create YOLO-CLUB 100% discount coupon
-export const createYoloClubCoupon = mutation({
+// Initialize only flat discount coupons
+export const initializeFlatCoupons = mutation({
   handler: async (ctx) => {
-    const existingCoupon = await ctx.db
-      .query("coupons")
-      .withIndex("by_code", (q) => q.eq("code", "YOLO-CLUB"))
-      .first();
+    const results = [];
+    const now = Date.now();
+    const oneYear = 365 * 24 * 60 * 60 * 1000;
 
-    if (existingCoupon) return { message: "YOLO-CLUB coupon already exists" };
+    const flatCoupons = [
+      {
+        code: "Flat50YC",
+        discountAmount: 50,
+        description: "₹50 off your purchase with Flat50YC",
+        maxUses: 1000,
+      },
+      {
+        code: "Flat100YC", 
+        discountAmount: 100,
+        description: "₹100 off your purchase with Flat100YC",
+        maxUses: 1000,
+      },
+      {
+        code: "Flat500YC",
+        discountAmount: 500,
+        description: "₹500 off your purchase with Flat500YC", 
+        maxUses: 100,
+      },
+    ];
 
-    await ctx.db.insert("coupons", {
-      code: "YOLO-CLUB",
-      discountPercentage: 100,
-      isActive: true,
-      validFrom: Date.now(),
-      validUntil: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year
-      maxUses: 100,
-      currentUses: 0,
-      description: "100% off your purchase with YOLO-CLUB",
-      usedByUsers: [] as string[],
-      usedByUserEvent: [] as Array<{userId: string, eventId: any, usedAt: number}>,
-      userId: undefined, 
-    });
+    for (const coupon of flatCoupons) {
+      const existingCoupon = await ctx.db
+        .query("coupons")
+        .withIndex("by_code", (q) => q.eq("code", coupon.code))
+        .first();
 
-    return { message: "YOLO-CLUB coupon created successfully" };
+      if (!existingCoupon) {
+        await ctx.db.insert("coupons", {
+          code: coupon.code,
+          discountAmount: coupon.discountAmount,
+          discountType: "flat",
+          isActive: true,
+          validFrom: now,
+          validUntil: now + oneYear,
+          maxUses: coupon.maxUses,
+          currentUses: 0,
+          description: coupon.description,
+          usedByUsers: [] as string[],
+          usedByUserEvent: [] as Array<{userId: string, eventId: any, usedAt: number}>,
+          userId: undefined,
+        });
+        results.push(`${coupon.code} created`);
+      } else {
+        // Update existing coupon to use flat discount
+        await ctx.db.patch(existingCoupon._id, {
+          discountAmount: coupon.discountAmount,
+          discountType: "flat",
+          discountPercentage: undefined, // Remove percentage discount
+          description: coupon.description,
+        });
+        results.push(`${coupon.code} updated to flat discount`);
+      }
+    }
+    
+    return {
+      message: "Flat coupons initialized",
+      results,
+    };
   },
 });
 
-// Initialize both discount coupons
-export const initializeDiscountCoupons = mutation({
+// Fix existing flat coupons to use correct discount amounts
+export const fixFlatCoupons = mutation({
   handler: async (ctx) => {
     const results = [];
     
-    // Create YOLOCLUB15 (10% off)
-    const existingYolo15 = await ctx.db
-      .query("coupons")
-      .withIndex("by_code", (q) => q.eq("code", "YOLOCLUB15"))
-      .first();
+    // List of flat coupons to fix
+    const flatCoupons = [
+      { code: "Flat50YC", discountAmount: 50, description: "₹50 off your purchase with Flat50YC" },
+      { code: "Flat100YC", discountAmount: 100, description: "₹100 off your purchase with Flat100YC" },
+      { code: "Flat500YC", discountAmount: 500, description: "₹500 off your purchase with Flat500YC" },
+    ];
 
-    if (!existingYolo15) {
+    for (const coupon of flatCoupons) {
+      const existingCoupon = await ctx.db
+        .query("coupons")
+        .withIndex("by_code", (q) => q.eq("code", coupon.code))
+        .first();
+
+      if (existingCoupon) {
+        // Update existing coupon to use flat discount
+        await ctx.db.patch(existingCoupon._id, {
+          discountAmount: coupon.discountAmount,
+          discountType: "flat",
+          discountPercentage: undefined, // Remove percentage discount
+          description: coupon.description,
+        });
+        results.push(`${coupon.code} fixed - now gives ₹${coupon.discountAmount} off`);
+      } else {
+        results.push(`${coupon.code} not found`);
+      }
+    }
+
+    return { message: "Flat coupons fixed", results };
+  },
+});
+
+// Force fix all flat coupons - deletes and recreates them
+export const forceFixFlatCoupons = mutation({
+  handler: async (ctx) => {
+    const results = [];
+    
+    // List of flat coupons to fix
+    const flatCoupons = [
+      { code: "Flat50YC", discountAmount: 50, description: "₹50 off your purchase with Flat50YC", maxUses: 1000 },
+      { code: "Flat100YC", discountAmount: 100, description: "₹100 off your purchase with Flat100YC", maxUses: 1000 },
+      { code: "Flat500YC", discountAmount: 500, description: "₹500 off your purchase with Flat500YC", maxUses: 100 },
+    ];
+
+    for (const coupon of flatCoupons) {
+      // First, delete existing coupon if it exists
+      const existingCoupon = await ctx.db
+        .query("coupons")
+        .withIndex("by_code", (q) => q.eq("code", coupon.code))
+        .first();
+
+      if (existingCoupon) {
+        await ctx.db.delete(existingCoupon._id);
+        results.push(`${coupon.code} deleted`);
+      }
+
+      // Create new coupon with correct flat discount
       await ctx.db.insert("coupons", {
-        code: "YOLOCLUB15",
-        discountPercentage: 10,
+        code: coupon.code,
+        discountAmount: coupon.discountAmount,
+        discountType: "flat",
         isActive: true,
         validFrom: Date.now(),
         validUntil: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year
-        maxUses: 1000,
+        maxUses: coupon.maxUses,
         currentUses: 0,
-        description: "10% off your purchase with YOLOCLUB15",
+        description: coupon.description,
         usedByUsers: [] as string[],
         usedByUserEvent: [] as Array<{userId: string, eventId: any, usedAt: number}>,
-        userId: undefined, 
+        userId: undefined,
       });
-      results.push("YOLOCLUB15 created");
-    } else {
-      results.push("YOLOCLUB15 already exists");
+      results.push(`${coupon.code} created with ₹${coupon.discountAmount} flat discount`);
     }
 
-    // Create YOLO-CLUB (100% off)
-    const existingYoloClub = await ctx.db
-      .query("coupons")
-      .withIndex("by_code", (q) => q.eq("code", "YOLO-CLUB"))
-      .first();
+    return { message: "Flat coupons force fixed", results };
+  },
+});
 
-    if (!existingYoloClub) {
+// Delete all old percentage-based coupons
+export const deleteOldCoupons = mutation({
+  handler: async (ctx) => {
+    const results = [];
+    
+    // List of old coupons to delete
+    const oldCoupons = ["YOLOCLUB15", "YOLO-CLUB"];
+    
+    for (const code of oldCoupons) {
+      const existingCoupon = await ctx.db
+        .query("coupons")
+        .withIndex("by_code", (q) => q.eq("code", code))
+        .first();
+
+      if (existingCoupon) {
+        await ctx.db.delete(existingCoupon._id);
+        results.push(`${code} deleted`);
+      } else {
+        results.push(`${code} not found`);
+      }
+    }
+
+    return { message: "Old coupons deleted", results };
+  },
+});
+
+// Clean up and initialize only flat coupons
+export const cleanAndInitializeFlatCoupons = mutation({
+  handler: async (ctx) => {
+    const results = [];
+    
+    // First delete old coupons
+    const oldCoupons = ["YOLOCLUB15", "YOLO-CLUB"];
+    
+    for (const code of oldCoupons) {
+      const existingCoupon = await ctx.db
+        .query("coupons")
+        .withIndex("by_code", (q) => q.eq("code", code))
+        .first();
+
+      if (existingCoupon) {
+        await ctx.db.delete(existingCoupon._id);
+        results.push(`${code} deleted`);
+      } else {
+        results.push(`${code} not found`);
+      }
+    }
+    
+    // Then create flat coupons
+    const flatCoupons = [
+      { code: "Flat50YC", discountAmount: 50, description: "₹50 off your purchase with Flat50YC", maxUses: 1000 },
+      { code: "Flat100YC", discountAmount: 100, description: "₹100 off your purchase with Flat100YC", maxUses: 1000 },
+      { code: "Flat500YC", discountAmount: 500, description: "₹500 off your purchase with Flat500YC", maxUses: 100 },
+    ];
+
+    for (const coupon of flatCoupons) {
+      // Delete existing if any
+      const existingCoupon = await ctx.db
+        .query("coupons")
+        .withIndex("by_code", (q) => q.eq("code", coupon.code))
+        .first();
+
+      if (existingCoupon) {
+        await ctx.db.delete(existingCoupon._id);
+        results.push(`${coupon.code} deleted`);
+      }
+
+      // Create new coupon with correct flat discount
       await ctx.db.insert("coupons", {
-        code: "YOLO-CLUB",
-        discountPercentage: 100,
+        code: coupon.code,
+        discountAmount: coupon.discountAmount,
+        discountType: "flat",
         isActive: true,
         validFrom: Date.now(),
         validUntil: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year
-        maxUses: 100,
+        maxUses: coupon.maxUses,
         currentUses: 0,
-        description: "100% off your purchase with YOLO-CLUB",
+        description: coupon.description,
         usedByUsers: [] as string[],
         usedByUserEvent: [] as Array<{userId: string, eventId: any, usedAt: number}>,
-        userId: undefined, 
+        userId: undefined,
       });
-      results.push("YOLO-CLUB created");
-    } else {
-      results.push("YOLO-CLUB already exists");
+      results.push(`${coupon.code} created with ₹${coupon.discountAmount} flat discount`);
     }
-
-    return { message: "Coupons initialized", results };
+    
+    return { message: "Cleaned up old coupons and initialized flat coupons", results };
   },
 });
