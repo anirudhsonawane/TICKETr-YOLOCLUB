@@ -12,26 +12,25 @@ function Header() {
       <div className="flex flex-col lg:flex-row items-center gap-4 p-4">
         <div className="flex items-center justify-between w-full lg:w-auto">
           <Link href="/" className="font-bold shrink-0">
-            <div className="flex items-center justify-center w-[250px] h-[50px] relative">
+            <div className="flex items-center justify-center relative">
               <img 
-                        src="/images/img.jpg"
-                        alt="Ticketr Logo"
-                className="max-w-full max-h-full object-contain"
+                src="/logo.png"
+                alt="TICKETr Logo"
+                className="h-8 sm:h-10 md:h-12 lg:h-14 w-auto object-contain transition-all duration-200 hover:scale-105"
+                loading="eager"
                 onError={(e) => {
-                  console.log('img.jpg failed, trying logo.png');
-                  e.currentTarget.src = '/logo.png';
-                  e.currentTarget.onerror = () => {
-                    console.log('logo.png also failed, showing text fallback');
-                    e.currentTarget.style.display = 'none';
-                    const textFallback = e.currentTarget.nextElementSibling as HTMLElement;
-                    if (textFallback && textFallback.style) {
-                      textFallback.style.display = 'block';
-                    }
-                  };
+                  console.log('Logo failed to load, showing text fallback');
+                  e.currentTarget.style.display = 'none';
+                  const textFallback = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (textFallback && textFallback.style) {
+                    textFallback.style.display = 'block';
+                  }
                 }}
                 onLoad={() => console.log('Logo loaded successfully')}
               />
-              <div className="hidden text-gray-600 font-bold text-sm">Ticketr Logo</div>
+              <div className="hidden text-blue-600 font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl tracking-wide">
+                TICKETr
+              </div>
             </div>
           </Link>
 
