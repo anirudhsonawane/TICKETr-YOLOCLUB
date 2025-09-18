@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Spinner from '@/components/Spinner';
 import { Phone, CreditCard, Smartphone } from 'lucide-react';
+import { configurePhonePeSentry, configurePhonePeWindowHandling } from '@/lib/phonepe';
 
 interface PhonePePaymentProps {
   amount: number;
@@ -36,6 +37,12 @@ export default function PhonePePayment({
   const [paymentInterface, setPaymentInterface] = useState<any>(null);
   const [showPaymentInterface, setShowPaymentInterface] = useState(false);
 
+  // Configure PhonePe error handling on component mount
+  useEffect(() => {
+    configurePhonePeSentry();
+    configurePhonePeWindowHandling();
+  }, []);
+
   const handlePhonePePayment = async () => {
     if (!amount || amount <= 0 || !eventId || !userId) {
       const errorMsg = 'Payment amount must be greater than 0';
@@ -57,7 +64,12 @@ export default function PhonePePayment({
         couponCode,
         selectedDate,
         waitingListId,
+        timestamp: new Date().toISOString()
       });
+
+      // Add timeout to the fetch request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
       const response = await fetch('/api/create-phonepe-order', {
         method: 'POST',
@@ -74,7 +86,10 @@ export default function PhonePePayment({
           selectedDate,
           waitingListId,
         }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       console.log('Response status:', response.status);
       console.log('Response headers:', Object.fromEntries(response.headers.entries()));
@@ -89,7 +104,11 @@ export default function PhonePePayment({
         }
         
         const errorMsg = errorData?.details || errorData?.error || 'Payment initiation failed';
-        console.error('PhonePe payment error:', errorData);
+        console.error('PhonePe payment error:', {
+          errorData,
+          status: response.status,
+          statusText: response.statusText
+        });
         throw new Error(errorMsg);
       }
 
@@ -150,8 +169,27 @@ export default function PhonePePayment({
       }
 
     } catch (error) {
-      console.error('PhonePe payment error:', error);
-      const errorMsg = error instanceof Error ? error.message : 'Payment failed';
+      console.error('PhonePe payment error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : undefined,
+        timestamp: new Date().toISOString()
+      });
+      
+      let errorMsg = 'Payment failed';
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          errorMsg = 'Payment request timed out. Please try again.';
+        } else if (error.message.includes('timeout')) {
+          errorMsg = 'Payment request timed out. Please try again.';
+        } else if (error.message.includes('network')) {
+          errorMsg = 'Network error. Please check your connection and try again.';
+        } else {
+          errorMsg = error.message;
+        }
+      }
+      
       setError(errorMsg);
       onError?.(errorMsg);
     } finally {

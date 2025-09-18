@@ -8,6 +8,7 @@ import {
   MetaInfo
 } from 'phonepe-pg-sdk-node';
 import { randomUUID } from 'crypto';
+import { validatePhonePeEnvironment, logPhonePeValidation } from './phonepe-validation';
 
 // Custom PhonePe Exception class
 export class PhonePeException extends Error {
@@ -42,9 +43,23 @@ let phonePeClient: StandardCheckoutClient | null = null;
 
 // PhonePe configuration
 const getPhonePeConfig = (): PhonePeConfig => {
-  const clientId = process.env.PHONEPE_CLIENT_ID;
-  const clientSecret = process.env.PHONEPE_CLIENT_SECRET;
+  // Validate environment variables first
+  const validation = validatePhonePeEnvironment();
+  logPhonePeValidation(validation);
+
+  if (!validation.isValid) {
+    const errorMsg = `PhonePe configuration validation failed: ${validation.errors.join(', ')}`;
+    console.error('PhonePe configuration error:', {
+      error: errorMsg,
+      validation
+    });
+    throw new Error(errorMsg);
+  }
+
+  const clientId = process.env.PHONEPE_CLIENT_ID!;
+  const clientSecret = process.env.PHONEPE_CLIENT_SECRET!;
   const clientVersion = process.env.PHONEPE_CLIENT_VERSION || '1.0';
+  
   // Use PHONEPE_ENVIRONMENT if set, otherwise fall back to NODE_ENV
   const environment = process.env.PHONEPE_ENVIRONMENT === 'production' 
     ? Env.PRODUCTION 
@@ -52,25 +67,11 @@ const getPhonePeConfig = (): PhonePeConfig => {
       ? Env.PRODUCTION 
       : Env.SANDBOX;
 
-  console.log('PhonePe configuration check:', {
-    clientId: clientId ? 'SET' : 'MISSING',
-    clientSecret: clientSecret ? 'SET' : 'MISSING',
-    clientVersion,
-    environment: environment === Env.PRODUCTION ? 'PRODUCTION' : 'SANDBOX',
-    PHONEPE_ENVIRONMENT: process.env.PHONEPE_ENVIRONMENT || 'NOT_SET',
-    NODE_ENV: process.env.NODE_ENV || 'NOT_SET',
-    allEnvVars: Object.keys(process.env).filter(key => key.startsWith('PHONEPE_'))
-  });
-
-  if (!clientId || !clientSecret) {
-    throw new Error('PhonePe credentials are missing. Please set PHONEPE_CLIENT_ID and PHONEPE_CLIENT_SECRET environment variables.');
-  }
-
   console.log('PhonePe configuration loaded successfully');
 
   return {
-    clientId,
-    clientSecret,
+    clientId: clientId.trim(),
+    clientSecret: clientSecret.trim(),
     clientVersion,
     environment,
   };
@@ -82,16 +83,47 @@ export const getPhonePeClient = (): StandardCheckoutClient => {
     const config = getPhonePeConfig();
     
     try {
+      // Validate client version before parsing
+      const version = parseInt(config.clientVersion);
+      if (isNaN(version) || version < 1) {
+        throw new Error(`Invalid PhonePe client version: ${config.clientVersion}. Must be a number >= 1`);
+      }
+
+      console.log('Initializing PhonePe client with config:', {
+        clientId: config.clientId.substring(0, 8) + '...', // Mask sensitive data
+        clientSecret: '***', // Mask sensitive data
+        clientVersion: version,
+        environment: config.environment === Env.PRODUCTION ? 'PRODUCTION' : 'SANDBOX'
+      });
+
       phonePeClient = StandardCheckoutClient.getInstance(
         config.clientId,
         config.clientSecret,
-        parseInt(config.clientVersion),
+        version,
         config.environment
       );
+      
       console.log('PhonePe client singleton initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize PhonePe client:', error);
-      throw new Error(`PhonePe client initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorDetails = {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : undefined,
+        config: {
+          clientId: config.clientId ? config.clientId.substring(0, 8) + '...' : 'MISSING',
+          clientSecret: config.clientSecret ? '***' : 'MISSING',
+          clientVersion: config.clientVersion,
+          environment: config.environment
+        }
+      };
+      
+      console.error('Failed to initialize PhonePe client:', errorDetails);
+      throw new PhonePeException(
+        `PhonePe client initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'CLIENT_INITIALIZATION_ERROR',
+        500,
+        errorDetails
+      );
     }
   }
   
@@ -263,15 +295,49 @@ export const createPhonePeRefundRequest = ({
   }
 };
 
-// Initiate payment
+// Initiate payment with timeout handling
 export const initiatePhonePePayment = async (paymentRequest: StandardCheckoutPayRequest) => {
+  const timeoutMs = 30000; // 30 seconds timeout
+  const startTime = Date.now();
+  
   try {
     const client = getPhonePeClient();
-    const response = await client.pay(paymentRequest);
-    console.log("PhonePe payment initiated successfully:", response);
+    
+    // Create a timeout promise
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new PhonePeException(
+          'Payment initiation timeout',
+          'PAYMENT_TIMEOUT',
+          408,
+          { timeoutMs, startTime, currentTime: Date.now() }
+        ));
+      }, timeoutMs);
+    });
+
+    // Race between payment initiation and timeout
+    const response = await Promise.race([
+      client.pay(paymentRequest),
+      timeoutPromise
+    ]) as any;
+
+    const duration = Date.now() - startTime;
+    console.log("PhonePe payment initiated successfully:", {
+      response: response,
+      duration: `${duration}ms`,
+      timeout: `${timeoutMs}ms`
+    });
+    
     return response;
   } catch (error) {
+    const duration = Date.now() - startTime;
     console.error("=== PHONEPE PAYMENT INITIATION ERROR ===");
+    console.error("Error details:", {
+      duration: `${duration}ms`,
+      timeout: `${timeoutMs}ms`,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     
     // Convert generic errors to PhonePeException
     if (error instanceof PhonePeException) {
@@ -279,12 +345,14 @@ export const initiatePhonePePayment = async (paymentRequest: StandardCheckoutPay
         code: error.code,
         message: error.message,
         httpStatusCode: error.httpStatusCode,
-        data: error.data
+        data: error.data,
+        duration: `${duration}ms`
       });
     } else {
       console.error("General Error:", {
         message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
+        duration: `${duration}ms`
       });
       
       // Convert to PhonePeException for consistent handling
@@ -292,7 +360,7 @@ export const initiatePhonePePayment = async (paymentRequest: StandardCheckoutPay
         error instanceof Error ? error.message : String(error),
         'PAYMENT_INITIATION_ERROR',
         500,
-        { originalError: error }
+        { originalError: error, duration: `${duration}ms` }
       );
       throw phonePeError;
     }
@@ -455,6 +523,100 @@ export const getPhonePeWebhookCredentials = () => {
   }
   
   return { username, password };
+};
+
+// Disable Sentry for PhonePe to avoid CORS errors
+export const configurePhonePeSentry = () => {
+  // Override console.error to filter out PhonePe Sentry errors
+  const originalConsoleError = console.error;
+  console.error = (...args: any[]) => {
+    const message = args.join(' ');
+    
+    // Filter out PhonePe Sentry CORS errors
+    if (message.includes('sentry.phonepe.com') || 
+        message.includes('Access-Control-Allow-Origin') ||
+        message.includes('ERR_FAILED 403 (Forbidden)') ||
+        message.includes('raven.min.3.21.0.js')) {
+      // Log to console with a different level to avoid noise
+      console.warn('[PhonePe Sentry Filtered]:', ...args);
+      return;
+    }
+    
+    // Call original console.error for other errors
+    originalConsoleError.apply(console, args);
+  };
+
+  // Also handle unhandled promise rejections from PhonePe Sentry
+  if (typeof window !== 'undefined') {
+    const originalOnError = window.onerror;
+    window.onerror = (message, source, lineno, colno, error) => {
+      if (typeof message === 'string' && 
+          (message.includes('sentry.phonepe.com') || 
+           message.includes('raven.min.3.21.0.js'))) {
+        console.warn('[PhonePe Sentry Error Filtered]:', message);
+        return true; // Prevent default error handling
+      }
+      
+      if (originalOnError) {
+        return originalOnError.call(window, message, source, lineno, colno, error);
+      }
+      return false;
+    };
+  }
+};
+
+// Handle PhonePe child window errors
+export const configurePhonePeWindowHandling = () => {
+  if (typeof window === 'undefined') return;
+
+  // Override window.open to handle PhonePe popup requirements
+  const originalWindowOpen = window.open;
+  window.open = function(url?: string | URL, target?: string, features?: string) {
+    try {
+      // Ensure we have a valid target
+      const validTarget = target || '_blank';
+      
+      // Add features to ensure popup works properly
+      const popupFeatures = features || 'width=800,height=600,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no';
+      
+      const popup = originalWindowOpen.call(window, url, validTarget, popupFeatures);
+      
+      if (!popup) {
+        console.warn('PhonePe popup blocked. Falling back to redirect.');
+        // Fallback to redirect if popup is blocked
+        if (url) {
+          window.location.href = url.toString();
+        }
+        return null;
+      }
+      
+      return popup;
+    } catch (error) {
+      console.error('PhonePe window.open error:', error);
+      // Fallback to redirect
+      if (url) {
+        window.location.href = url.toString();
+      }
+      return null;
+    }
+  };
+
+  // Handle child window errors
+  const originalConsoleError = console.error;
+  console.error = (...args: any[]) => {
+    const message = args.join(' ');
+    
+    // Filter out PhonePe child window errors
+    if (message.includes('There is no child window!') || 
+        message.includes('child window') ||
+        message.includes('popup blocked')) {
+      console.warn('[PhonePe Window Filtered]:', ...args);
+      return;
+    }
+    
+    // Call original console.error for other errors
+    originalConsoleError.apply(console, args);
+  };
 };
 
 // Utility function to convert rupees to paisa
