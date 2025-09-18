@@ -17,6 +17,10 @@ const geistSans = GeistSans;
 export const metadata: Metadata = {
   title: "Ticketr - Your ultimate event ticketing solution.",
   description: "Ticketr helps you create, manage, and sell tickets for your events.",
+  other: {
+    // Add meta tag to handle prefetch-src CSP issues
+    'prefetch-src': "'self' https://api.phonepe.com https://mercury-t2.phonepe.com https://mercury.phonepe.com",
+  },
 };
 
 export default function RootLayout({
@@ -73,6 +77,10 @@ export default function RootLayout({
       afterSignUpUrl="/"
     >
       <html lang="en">
+        <head>
+          {/* Add meta tag to handle prefetch-src CSP issues */}
+          <meta name="prefetch-src" content="'self' https://api.phonepe.com https://mercury-t2.phonepe.com https://mercury.phonepe.com" />
+        </head>
         <body className={geistSans.className}>
           <ClerkTimeoutHandler>
             <ConvexClientProvider>

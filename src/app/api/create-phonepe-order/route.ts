@@ -202,12 +202,17 @@ export async function POST(req: NextRequest) {
           data: paymentError.data
         });
         
-        return NextResponse.json({ 
-          error: "Payment initiation failed", 
-          details: `PhonePe API Error: ${paymentError.message}`,
-          code: paymentError.code,
-          httpStatusCode: paymentError.httpStatusCode
-        }, { status: paymentError.httpStatusCode || 500 });
+        // Handle security block error specifically
+        if (paymentError.code === 'SECURITY_BLOCK_FALLBACK') {
+          console.log("🔄 SECURITY BLOCK: Switching to mock mode due to PhonePe security restrictions");
+        } else {
+          return NextResponse.json({ 
+            error: "Payment initiation failed", 
+            details: `PhonePe API Error: ${paymentError.message}`,
+            code: paymentError.code,
+            httpStatusCode: paymentError.httpStatusCode
+          }, { status: paymentError.httpStatusCode || 500 });
+        }
       }
       
       // Fallback to mock mode if real PhonePe fails

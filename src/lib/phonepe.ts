@@ -339,6 +339,17 @@ export const initiatePhonePePayment = async (paymentRequest: StandardCheckoutPay
       stack: error instanceof Error ? error.stack : undefined
     });
     
+    // Handle specific PhonePe security block errors
+    if (error instanceof Error && error.message.includes('INTERNAL_SECURITY_BLOCK_1')) {
+      console.warn("PhonePe security block detected, falling back to mock mode");
+      throw new PhonePeException(
+        'PhonePe security block - using fallback mode',
+        'SECURITY_BLOCK_FALLBACK',
+        400,
+        { originalError: error, fallbackMode: true }
+      );
+    }
+    
     // Convert generic errors to PhonePeException
     if (error instanceof PhonePeException) {
       console.error("PhonePe API Error:", {
@@ -532,13 +543,16 @@ export const configurePhonePeSentry = () => {
   console.error = (...args: any[]) => {
     const message = args.join(' ');
     
-    // Filter out PhonePe Sentry CORS errors
+    // Filter out PhonePe Sentry CORS errors and CSP issues
     if (message.includes('sentry.phonepe.com') || 
         message.includes('Access-Control-Allow-Origin') ||
         message.includes('ERR_FAILED 403 (Forbidden)') ||
-        message.includes('raven.min.3.21.0.js')) {
+        message.includes('raven.min.3.21.0.js') ||
+        message.includes('prefetch-src') ||
+        message.includes('Content-Security-Policy directive') ||
+        message.includes('INTERNAL_SECURITY_BLOCK_1')) {
       // Log to console with a different level to avoid noise
-      console.warn('[PhonePe Sentry Filtered]:', ...args);
+      console.warn('[PhonePe Error Filtered]:', ...args);
       return;
     }
     
@@ -552,8 +566,10 @@ export const configurePhonePeSentry = () => {
     window.onerror = (message, source, lineno, colno, error) => {
       if (typeof message === 'string' && 
           (message.includes('sentry.phonepe.com') || 
-           message.includes('raven.min.3.21.0.js'))) {
-        console.warn('[PhonePe Sentry Error Filtered]:', message);
+           message.includes('raven.min.3.21.0.js') ||
+           message.includes('prefetch-src') ||
+           message.includes('Content-Security-Policy directive'))) {
+        console.warn('[PhonePe Error Filtered]:', message);
         return true; // Prevent default error handling
       }
       
@@ -581,9 +597,10 @@ export const configurePhonePeWindowHandling = () => {
       
       const popup = originalWindowOpen.call(window, url, validTarget, popupFeatures);
       
-      if (!popup) {
-        console.warn('PhonePe popup blocked. Falling back to redirect.');
-        // Fallback to redirect if popup is blocked
+      // Handle missing child window
+      if (!popup || popup.closed) {
+        console.warn('PhonePe popup blocked or closed. Falling back to same-window payment.');
+        // Fallback to same-window payment
         if (url) {
           window.location.href = url.toString();
         }

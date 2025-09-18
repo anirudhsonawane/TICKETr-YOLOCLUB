@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Spinner from '@/components/Spinner';
 import { Phone, CreditCard, Smartphone } from 'lucide-react';
 import { configurePhonePeSentry, configurePhonePeWindowHandling } from '@/lib/phonepe';
+import PaymentErrorBoundary from './PaymentErrorBoundary';
 
 interface PhonePePaymentProps {
   amount: number;
@@ -55,29 +56,10 @@ export default function PhonePePayment({
       setIsLoading(true);
       setError(null);
 
-      console.log('Initiating PhonePe payment...', {
-        amount,
-        eventId,
-        userId,
-        quantity,
-        passId,
-        couponCode,
-        selectedDate,
-        waitingListId,
-        timestamp: new Date().toISOString()
-      });
-
-      // Add timeout to the fetch request
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-      const response = await fetch('/api/create-phonepe-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: Number(amount), // Ensure amount is sent as number
+      // Payment window logic with error boundaries
+      try {
+        console.log('Initiating PhonePe payment...', {
+          amount,
           eventId,
           userId,
           quantity,
@@ -85,87 +67,113 @@ export default function PhonePePayment({
           couponCode,
           selectedDate,
           waitingListId,
-        }),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch (jsonError) {
-          console.error('Failed to parse error response:', jsonError);
-          throw new Error(`Payment initiation failed with status ${response.status}`);
-        }
-        
-        const errorMsg = errorData?.details || errorData?.error || 'Payment initiation failed';
-        console.error('PhonePe payment error:', {
-          errorData,
-          status: response.status,
-          statusText: response.statusText
+          timestamp: new Date().toISOString()
         });
-        throw new Error(errorMsg);
-      }
 
-      const data = await response.json();
-      console.log('PhonePe payment initiated:', data);
+        // Add timeout to the fetch request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-      if (!data.success) {
-        throw new Error('Invalid response from payment service');
-      }
-
-      // Create payment session in database
-      try {
-        const sessionResponse = await fetch('/api/payment-sessions', {
+        const response = await fetch('/api/create-phonepe-order', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            sessionId: data.merchantOrderId,
-            userId,
+            amount: Number(amount), // Ensure amount is sent as number
             eventId,
-            amount,
+            userId,
             quantity,
             passId,
-            selectedDate,
             couponCode,
+            selectedDate,
             waitingListId,
-            paymentMethod: 'phonepe',
-            metadata: {
-              orderId: data.orderId,
-              redirectUrl: data.redirectUrl,
-              state: data.state,
-              expireAt: data.expireAt
-            }
           }),
+          signal: controller.signal
         });
 
-        if (!sessionResponse.ok) {
-          console.warn('Failed to create payment session:', await sessionResponse.text());
-        } else {
-          console.log('Payment session created successfully');
-        }
-      } catch (sessionError) {
-        console.warn('Error creating payment session:', sessionError);
-        // Continue with payment even if session creation fails
-      }
+        clearTimeout(timeoutId);
 
-      // Check if we have a payment interface (mock mode) or redirect URL (real mode)
-      if (data.paymentInterface) {
-        // Show payment interface (mock mode)
-        setPaymentInterface(data.paymentInterface);
-        setShowPaymentInterface(true);
-      } else if (data.redirectUrl) {
-        // Redirect to PhonePe payment page (real mode)
-        window.location.href = data.redirectUrl;
-      } else {
-        throw new Error('No payment method available');
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+        if (!response.ok) {
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch (jsonError) {
+            console.error('Failed to parse error response:', jsonError);
+            throw new Error(`Payment initiation failed with status ${response.status}`);
+          }
+          
+          const errorMsg = errorData?.details || errorData?.error || 'Payment initiation failed';
+          console.error('PhonePe payment error:', {
+            errorData,
+            status: response.status,
+            statusText: response.statusText
+          });
+          throw new Error(errorMsg);
+        }
+
+        const data = await response.json();
+        console.log('PhonePe payment initiated:', data);
+
+        if (!data.success) {
+          throw new Error('Invalid response from payment service');
+        }
+
+        // Create payment session in database
+        try {
+          const sessionResponse = await fetch('/api/payment-sessions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              sessionId: data.merchantOrderId,
+              userId,
+              eventId,
+              amount,
+              quantity,
+              passId,
+              selectedDate,
+              couponCode,
+              waitingListId,
+              paymentMethod: 'phonepe',
+              metadata: {
+                orderId: data.orderId,
+                redirectUrl: data.redirectUrl,
+                state: data.state,
+                expireAt: data.expireAt
+              }
+            }),
+          });
+
+          if (!sessionResponse.ok) {
+            console.warn('Failed to create payment session:', await sessionResponse.text());
+          } else {
+            console.log('Payment session created successfully');
+          }
+        } catch (sessionError) {
+          console.warn('Error creating payment session:', sessionError);
+          // Continue with payment even if session creation fails
+        }
+
+        // Check if we have a payment interface (mock mode) or redirect URL (real mode)
+        if (data.paymentInterface) {
+          // Show payment interface (mock mode)
+          setPaymentInterface(data.paymentInterface);
+          setShowPaymentInterface(true);
+        } else if (data.redirectUrl) {
+          // Redirect to PhonePe payment page (real mode)
+          window.location.href = data.redirectUrl;
+        } else {
+          throw new Error('No payment method available');
+        }
+      } catch (paymentError) {
+        // Graceful fallback for payment window logic
+        console.error('Payment window logic error:', paymentError);
+        throw paymentError; // Re-throw to be handled by outer catch
       }
 
     } catch (error) {
@@ -211,7 +219,7 @@ export default function PhonePePayment({
   };
 
   return (
-    <>
+    <PaymentErrorBoundary>
       <Card className="w-full max-w-md mx-auto">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
@@ -381,6 +389,6 @@ export default function PhonePePayment({
           </Card>
         </div>
       )}
-    </>
+    </PaymentErrorBoundary>
   );
 }
