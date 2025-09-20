@@ -1,0 +1,23 @@
+<svg width="260" height="110" viewBox="0 0 260 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icon Square with proper spacing and full visibility -->
+  <rect x="15" y="20" width="40" height="40" rx="8" fill="#8B5CF6"/>
+  <rect x="60" y="20" width="40" height="40" rx="8" fill="#EC4899"/>
+  <rect x="15" y="65" width="40" height="40" rx="8" fill="#3B82F6"/>
+  <rect x="60" y="65" width="40" height="40" rx="8" fill="#06B6D4"/>
+  
+  <!-- Code tags in top-left -->
+  <text x="35" y="45" text-anchor="middle" fill="white" font-family="monospace" font-size="12" font-weight="bold">&lt;/&gt;</text>
+  
+  <!-- Abstract shapes in top-right -->
+  <path d="M70 35 L75 30 L80 35 L75 40 Z" fill="white"/>
+  <path d="M75 40 L80 35 L85 40 L80 45 Z" fill="white"/>
+  
+  <!-- Play button in bottom-left -->
+  <path d="M30 85 L30 95 L40 90 Z" fill="white"/>
+  
+  <!-- Square outline in bottom-right -->
+  <rect x="70" y="80" width="20" height="20" rx="4" fill="none" stroke="white" stroke-width="2"/>
+  
+  <!-- Softoria Text with proper positioning -->
+  <text x="120" y="70" fill="#1F2937" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Softoria</text>
+</svg>
