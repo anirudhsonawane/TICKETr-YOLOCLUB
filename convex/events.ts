@@ -9,6 +9,13 @@ export const get = query({
   handler: async (ctx) => {
     return await ctx.db.query("events").collect();
   },
+});
+
+export const getAll = query({
+  args: {}, 
+  handler: async (ctx) => {
+    return await ctx.db.query("events").collect();
+  },
 });        
 
 

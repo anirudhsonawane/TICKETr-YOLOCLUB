@@ -43,35 +43,43 @@ export default function PaymentNotificationForm({
       return;
     }
 
+    console.log("Form validation passed, eventId:", eventId, "type:", typeof eventId);
     setIsSubmitting(true);
 
     try {
+      const requestData = {
+        eventId,
+        userId: user.id,
+        amount,
+        quantity,
+        passId,
+        upiTransactionId: formData.upiTransactionId,
+        payeeName: formData.payeeName,
+        payeeMobileNumber: formData.payeeMobileNumber,
+        userInfo: {
+          name: user.fullName || undefined,
+          email: user.emailAddresses[0]?.emailAddress || undefined
+        }
+      };
+
+      console.log("Submitting payment notification with data:", requestData);
+
       // Create payment notification record
       const response = await fetch('/api/payment-notification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          eventId,
-          userId: user.id,
-          amount,
-          quantity,
-          passId,
-          upiTransactionId: formData.upiTransactionId,
-          payeeName: formData.payeeName,
-          payeeMobileNumber: formData.payeeMobileNumber,
-          userInfo: {
-            name: user.fullName,
-            email: user.emailAddresses[0]?.emailAddress
-          }
-        })
+        body: JSON.stringify(requestData)
       });
 
+      console.log("Payment notification response status:", response.status);
       const result = await response.json();
+      console.log("Payment notification response:", result);
       
       if (result.success) {
         setIsSubmitted(true);
         toast.success("Payment notification submitted! The organizer will verify your payment shortly.");
       } else {
+        console.error("Payment notification failed:", result.error);
         toast.error("Failed to submit payment notification: " + result.error);
       }
     } catch (error) {

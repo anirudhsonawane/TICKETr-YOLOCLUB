@@ -114,14 +114,6 @@ export default function UPIPayment({
 
   // Open UPI app directly
   const openUPIApp = () => {
-    // Show warning popup first
-    const confirmed = window.confirm(
-      "IF PAYMENT IS SUCCESS NOTIFY ORGANIZER, UNLESS DON'T\n\n" +
-      "Click OK to open UPI app for payment."
-    );
-    
-    if (!confirmed) return;
-
     const upiLink = generateUPILink();
     if (!upiLink) return;
 

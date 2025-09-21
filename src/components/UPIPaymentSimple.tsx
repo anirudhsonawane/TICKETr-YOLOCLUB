@@ -104,44 +104,61 @@ export default function UPIPaymentSimple({
       // Try to open PhonePe specifically on mobile
       const phonepeUrl = `phonepe://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`${quantity} ticket${quantity > 1 ? 's' : ''} for ${eventName}`)}`;
       
-      // Try PhonePe first
-      const phonepeLink = document.createElement('a');
-      phonepeLink.href = phonepeUrl;
-      phonepeLink.click();
+      // Try PhonePe first - direct window.location approach
+      try {
+        window.location.href = phonepeUrl;
+      } catch (error) {
+        console.log("PhonePe not available, trying generic UPI");
+        window.location.href = upiDeepLink;
+      }
       
-      // Fallback to generic UPI after a short delay
+      // Fallback to generic UPI after a short delay if PhonePe doesn't work
       setTimeout(() => {
-        const link = document.createElement('a');
-        link.href = upiDeepLink;
-        link.click();
-      }, 1000);
+        try {
+          window.location.href = upiDeepLink;
+        } catch (error) {
+          console.log("UPI app not available");
+        }
+      }, 2000);
       
       // Show instructions
       setTimeout(() => {
         toast.info("Opening PhonePe for payment. If PhonePe doesn't open, please open it manually and scan the QR code below.");
-      }, 2000);
+      }, 1000);
     } else {
       // For desktop, show QR code or generic UPI
-      const link = document.createElement('a');
-      link.href = upiDeepLink;
-      link.click();
+      try {
+        window.location.href = upiDeepLink;
+      } catch (error) {
+        console.log("UPI app not available on desktop");
+      }
       
       setTimeout(() => {
         toast.info("Please scan the QR code with PhonePe or any UPI app to complete payment.");
-      }, 2000);
+      }, 1000);
     }
   };
 
   // Show payment notification form if requested
   if (showNotificationForm) {
     return (
-      <PaymentNotificationForm
-        eventId={eventId}
-        eventName={eventName}
-        amount={amount}
-        quantity={quantity}
-        passId={passId}
-      />
+      <div className="space-y-4">
+        {/* Back button */}
+        <button
+          onClick={() => setShowNotificationForm(false)}
+          className="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4"
+        >
+          ← Back to Payment
+        </button>
+        
+        <PaymentNotificationForm
+          eventId={eventId}
+          eventName={eventName}
+          amount={amount}
+          quantity={quantity}
+          passId={passId}
+        />
+      </div>
     );
   }
 
@@ -164,9 +181,6 @@ export default function UPIPaymentSimple({
           </div>
           
           <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-            <p className="text-sm text-yellow-800 mb-3 font-bold">
-              Payment completed! Now notify the organizer about your payment for ticket verification.
-            </p>
             <div className="space-y-2">
               <p className="text-sm text-yellow-800">
                 <strong>Amount:</strong> ₹{amount}

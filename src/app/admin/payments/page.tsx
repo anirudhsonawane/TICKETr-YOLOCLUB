@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { isAuthorizedAdmin } from "@/lib/admin-config";
 import AdminNavigation from "@/components/AdminNavigation";
@@ -16,8 +16,13 @@ import {
   DollarSign,
   Users,
   Calendar,
-  BarChart3
+  BarChart3,
+  X,
+  Eye,
+  Phone,
+  Mail
 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function AdminPaymentsPage() {
   const { user, isLoaded } = useUser();
@@ -26,6 +31,13 @@ export default function AdminPaymentsPage() {
 
   // Get all events for the admin
   const events = useQuery(api.events.getAll);
+  
+  // Get payment notifications
+  const paymentNotifications = useQuery(api.paymentNotifications.getAllPending);
+  const paymentStats = useQuery(api.paymentNotifications.getStats);
+  
+  // Mutations
+  const updatePaymentStatus = useMutation(api.paymentNotifications.updateStatus);
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -129,35 +141,95 @@ export default function AdminPaymentsPage() {
             </div>
           </div>
 
-          {/* Events List */}
+          {/* Payment Statistics */}
+          {paymentStats && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-white rounded-lg p-6 border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{paymentStats.pending}</p>
+                    <p className="text-sm text-gray-600">Pending</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-6 border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{paymentStats.verified}</p>
+                    <p className="text-sm text-gray-600">Verified</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-6 border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <X className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">{paymentStats.rejected}</p>
+                    <p className="text-sm text-gray-600">Rejected</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg p-6 border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <DollarSign className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900">₹{paymentStats.totalAmount}</p>
+                    <p className="text-sm text-gray-600">Total Amount</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Pending Payment Notifications */}
           <div className="bg-white rounded-xl shadow-lg border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center gap-3">
-                <Calendar className="w-6 h-6 text-gray-600" />
+                <Clock className="w-6 h-6 text-yellow-600" />
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Events with Pending Payments
+                  Pending Payment Verifications
                 </h3>
+                {paymentNotifications && (
+                  <span className="bg-yellow-100 text-yellow-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                    {paymentNotifications.length}
+                  </span>
+                )}
               </div>
               <p className="text-sm text-gray-600 mt-1">
-                Select an event to verify payments and create tickets
+                Verify UPI payments and create tickets for customers
               </p>
             </div>
 
             <div className="p-6">
-              {!events ? (
+              {!paymentNotifications ? (
                 <div className="text-center py-8">
                   <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading events...</p>
+                  <p className="text-gray-600">Loading payment notifications...</p>
                 </div>
-              ) : events.length === 0 ? (
+              ) : paymentNotifications.length === 0 ? (
                 <div className="text-center py-8">
-                  <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No events found</p>
+                  <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No pending payment verifications</p>
+                  <p className="text-sm text-gray-500 mt-1">All payments have been processed</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {events.map((event) => (
-                    <EventPaymentCard key={event._id} event={event} />
+                <div className="space-y-4">
+                  {paymentNotifications.map((notification) => (
+                    <PaymentNotificationCard 
+                      key={notification._id} 
+                      notification={notification}
+                      onStatusUpdate={updatePaymentStatus}
+                    />
                   ))}
                 </div>
               )}
@@ -188,51 +260,124 @@ export default function AdminPaymentsPage() {
   );
 }
 
-// Event Payment Card Component
-function EventPaymentCard({ event }: { event: any }) {
-  const [showPaymentTracker, setShowPaymentTracker] = useState(false);
+// Payment Notification Card Component
+function PaymentNotificationCard({ 
+  notification, 
+  onStatusUpdate 
+}: { 
+  notification: any;
+  onStatusUpdate: any;
+}) {
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  if (showPaymentTracker) {
-    return (
-      <div className="col-span-full">
-        <div className="mb-4">
-          <button
-            onClick={() => setShowPaymentTracker(false)}
-            className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
-          >
-            ← Back to Events
-          </button>
-        </div>
-        <div className="bg-white rounded-lg p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4">Payment Verification for {event.name}</h3>
-          <p className="text-gray-600">Payment verification interface will be implemented here.</p>
-        </div>
-      </div>
-    );
-  }
+  const handleStatusUpdate = async (status: "verified" | "rejected") => {
+    setIsUpdating(true);
+    try {
+      // Update payment notification status
+      await onStatusUpdate({
+        notificationId: notification._id,
+        status,
+        ticketCreated: status === "verified"
+      });
+
+      // If verified, create ticket
+      if (status === "verified") {
+        console.log("Creating ticket for verified payment:", notification);
+        
+        const ticketData = {
+          eventId: notification.eventId,
+          userId: notification.userId,
+          paymentId: `UPI_${notification._id}`,
+          quantity: notification.quantity,
+          amount: notification.amount,
+          passId: notification.passId
+        };
+        
+        console.log("Ticket creation data:", ticketData);
+        
+        try {
+          const ticketResponse = await fetch('/api/manual-ticket', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ticketData)
+          });
+
+          console.log("Ticket creation response status:", ticketResponse.status);
+          const ticketResult = await ticketResponse.json();
+          console.log("Ticket creation result:", ticketResult);
+          
+          if (ticketResult.success) {
+            toast.success(`Payment verified and ticket created successfully! Ticket ID: ${ticketResult.ticketId}`);
+          } else {
+            console.error("Failed to create ticket:", ticketResult.error);
+            toast.error(`Payment verified but failed to create ticket: ${ticketResult.error}`);
+          }
+        } catch (ticketError) {
+          console.error("Error creating ticket:", ticketError);
+          toast.error(`Payment verified but failed to create ticket: ${ticketError instanceof Error ? ticketError.message : 'Unknown error'}`);
+        }
+      } else {
+        toast.success(`Payment ${status} successfully!`);
+      }
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      toast.error("Failed to update payment status");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-gray-300 transition-colors cursor-pointer"
-         onClick={() => setShowPaymentTracker(true)}>
+    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <h4 className="font-medium text-gray-900 mb-1">
-            {event.name}
-          </h4>
-          <p className="text-sm text-gray-600 mb-2">
-            {new Date(event.eventDate).toLocaleDateString()}
-          </p>
-          <p className="text-xs text-gray-500 line-clamp-2">
-            {event.description}
-          </p>
-        </div>
-        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center ml-2">
-          <DollarSign className="w-4 h-4 text-blue-600" />
+          <div className="flex items-center gap-2 mb-2">
+            <h4 className="font-medium text-gray-900">
+              Payment Verification Request
+            </h4>
+            <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded-full">
+              Pending
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-gray-600"><strong>Amount:</strong> ₹{notification.amount}</p>
+              <p className="text-gray-600"><strong>Quantity:</strong> {notification.quantity} ticket{notification.quantity > 1 ? 's' : ''}</p>
+              <p className="text-gray-600"><strong>Transaction ID:</strong> {notification.upiTransactionId}</p>
+            </div>
+            <div>
+              <p className="text-gray-600"><strong>Payee Name:</strong> {notification.payeeName}</p>
+              <p className="text-gray-600"><strong>Mobile:</strong> {notification.payeeMobileNumber}</p>
+              <p className="text-gray-600"><strong>Submitted:</strong> {new Date(notification._creationTime).toLocaleString()}</p>
+            </div>
+          </div>
+          {notification.userInfo && (
+            <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-800">
+                <strong>Customer Info:</strong> {notification.userInfo.name} ({notification.userInfo.email})
+              </p>
+            </div>
+          )}
         </div>
       </div>
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-gray-600">₹{event.price}</span>
-        <span className="text-blue-600 font-medium">View Payments →</span>
+      
+      <div className="flex gap-2">
+        <button
+          onClick={() => handleStatusUpdate("verified")}
+          disabled={isUpdating}
+          className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          <CheckCircle className="w-4 h-4" />
+          {isUpdating ? "Verifying..." : "Verify & Create Ticket"}
+        </button>
+        <button
+          onClick={() => handleStatusUpdate("rejected")}
+          disabled={isUpdating}
+          className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          <X className="w-4 h-4" />
+          {isUpdating ? "Rejecting..." : "Reject"}
+        </button>
       </div>
     </div>
   );

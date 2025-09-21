@@ -9,7 +9,7 @@ import { useState, useMemo } from "react";
 import { ArrowLeft, Plus, Minus, Tag, Check } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import CouponInput from "@/components/CouponInput";
-import UPIPayment from "@/components/UPIPayment";
+import UPIPaymentSimple from "@/components/UPIPaymentSimple";
 
 export default function PurchasePage() {
   const { user } = useUser();
@@ -205,36 +205,12 @@ export default function PurchasePage() {
             </div>
 
             {/* UPI Payment */}
-            <UPIPayment
-              amount={totalAmount}
+            <UPIPaymentSimple
+              eventId={eventId}
               eventName={event.name}
-              customerName={user.fullName || user.firstName}
-              customerPhone={user.primaryPhoneNumber?.phoneNumber}
-              organizerUpiId={event.organizerUpiId}
-              onSuccess={(paymentId) => {
-                console.log("UPI payment successful:", paymentId);
-                if (appliedCoupon) {
-                  try {
-                    fetch("/api/mark-coupon-used", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        code: appliedCoupon.code,
-                        couponId: appliedCoupon.couponId,
-                        userId: user.id,
-                        eventId: eventId,
-                      }),
-                    });
-                  } catch (error) {
-                    console.error("Error marking coupon as used:", error);
-                  }
-                }
-                router.push(`/payment-result?orderId=${paymentId}&status=COMPLETED&eventId=${eventId}&eventName=${encodeURIComponent(event.name)}&amount=${totalAmount}&quantity=${quantity}&userId=${user.id}&organizerUpiId=${encodeURIComponent(event.organizerUpiId || "9595961116@ptsbi")}${selectedPass ? `&passId=${selectedPass._id}` : ''}${selectedDates.length > 0 ? `&selectedDate=${encodeURIComponent(selectedDates.join(','))}` : ''}`);
-              }}
-              onError={(error) => {
-                console.error("UPI payment error:", error);
-                alert(`Payment failed: ${error}`);
-              }}
+              amount={totalAmount}
+              quantity={quantity}
+              passId={selectedPass?._id}
             />
 
             {user && (

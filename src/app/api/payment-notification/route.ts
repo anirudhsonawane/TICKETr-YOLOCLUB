@@ -7,6 +7,7 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log("Payment notification request body:", body);
     
     const {
       eventId,
@@ -22,11 +23,33 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!eventId || !userId || !amount || !quantity || !upiTransactionId || !payeeName || !payeeMobileNumber) {
+      console.log("Missing required fields:", { eventId, userId, amount, quantity, upiTransactionId, payeeName, payeeMobileNumber });
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
       );
     }
+
+    // Validate eventId format (should be a Convex ID)
+    if (typeof eventId !== 'string' || !eventId.startsWith('j')) {
+      console.log("Invalid eventId format:", eventId);
+      return NextResponse.json(
+        { success: false, error: "Invalid event ID format" },
+        { status: 400 }
+      );
+    }
+
+    console.log("Creating payment notification with data:", {
+      eventId,
+      userId,
+      amount,
+      quantity,
+      passId,
+      upiTransactionId,
+      payeeName,
+      payeeMobileNumber,
+      userInfo
+    });
 
     // Create payment notification in Convex
     const notificationId = await convex.mutation(api.paymentNotifications.create, {
@@ -41,6 +64,8 @@ export async function POST(request: NextRequest) {
       userInfo
     });
 
+    console.log("Payment notification created successfully:", notificationId);
+
     return NextResponse.json({
       success: true,
       notificationId,
@@ -50,7 +75,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error creating payment notification:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to create payment notification" },
+      { success: false, error: `Failed to create payment notification: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
     );
   }

@@ -19,11 +19,23 @@ export const create = mutation({
     })),
   },
   handler: async (ctx, args) => {
+    console.log("Creating payment notification with args:", args);
+    
+    // Validate that the event exists
+    const event = await ctx.db.get(args.eventId);
+    if (!event) {
+      throw new Error(`Event with ID ${args.eventId} not found`);
+    }
+    
+    console.log("Event found:", event.name);
+    
     const notificationId = await ctx.db.insert("paymentNotifications", {
       ...args,
       status: "pending",
       ticketCreated: false,
     });
+    
+    console.log("Payment notification created with ID:", notificationId);
     return notificationId;
   },
 });
