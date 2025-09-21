@@ -199,10 +199,28 @@ export default function UPIPaymentSimple({
           </div>
 
           {showQR && (
-            <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-              <div className="mb-2">
-                <p className="text-sm text-gray-600 mb-3">Scan with PhonePe app:</p>
-                <div className="inline-block p-4 bg-white border-2 border-gray-300 rounded-lg">
+            <div className="bg-gray-900 rounded-2xl p-6 text-center shadow-2xl">
+              {/* PhonePe Header */}
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">पे</span>
+                </div>
+                <span className="text-white text-lg font-semibold">PhonePe</span>
+              </div>
+              
+              {/* Accepted Here Text */}
+              <div className="text-purple-400 text-sm font-medium mb-6">
+                ACCEPTED HERE
+              </div>
+              
+              {/* Instructions */}
+              <div className="text-white text-sm mb-6">
+                Scan any QR using PhonePe App
+              </div>
+              
+              {/* QR Code Container */}
+              <div className="relative inline-block mb-4">
+                <div className="bg-white p-4 rounded-xl">
                   <canvas 
                     ref={canvasRef} 
                     className="w-48 h-48"
@@ -217,10 +235,26 @@ export default function UPIPaymentSimple({
                     </div>
                   )}
                 </div>
+                
+                {/* PhonePe Logo Overlay on QR Code */}
+                {qrCodeDataURL && (
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-white font-bold text-xs">पे</span>
+                    </div>
+                  </div>
+                )}
               </div>
-              <p className="text-xs text-gray-500 mt-2">
-                QR contains: {qrCodeData}
-              </p>
+              
+              {/* Payee Name */}
+              <div className="text-white text-sm font-medium mb-4">
+                {PAYEE_NAME}
+              </div>
+              
+              {/* Copyright */}
+              <div className="text-gray-400 text-xs">
+                ©2016, All rights reserved, PhonePe Internet Pvt. Ltd.
+              </div>
             </div>
           )}
         </div>
@@ -294,10 +328,28 @@ export default function UPIPaymentSimple({
         </div>
 
         {showQR && (
-          <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
-            <div className="mb-2">
-              <p className="text-sm text-gray-600 mb-3">Scan with PhonePe app:</p>
-              <div className="inline-block p-4 bg-white border-2 border-gray-300 rounded-lg">
+          <div className="bg-gray-900 rounded-2xl p-6 text-center shadow-2xl">
+            {/* PhonePe Header */}
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">पे</span>
+              </div>
+              <span className="text-white text-lg font-semibold">PhonePe</span>
+            </div>
+            
+            {/* Accepted Here Text */}
+            <div className="text-purple-400 text-sm font-medium mb-6">
+              ACCEPTED HERE
+            </div>
+            
+            {/* Instructions */}
+            <div className="text-white text-sm mb-6">
+              Scan any QR using PhonePe App
+            </div>
+            
+            {/* QR Code Container */}
+            <div className="relative inline-block mb-4">
+              <div className="bg-white p-4 rounded-xl">
                 <canvas 
                   ref={canvasRef} 
                   className="w-48 h-48"
@@ -312,10 +364,26 @@ export default function UPIPaymentSimple({
                   </div>
                 )}
               </div>
+              
+              {/* PhonePe Logo Overlay on QR Code */}
+              {qrCodeDataURL && (
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                  <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-white font-bold text-xs">पे</span>
+                  </div>
+                </div>
+              )}
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              QR contains: {qrCodeData}
-            </p>
+            
+            {/* Payee Name */}
+            <div className="text-white text-sm font-medium mb-4">
+              {PAYEE_NAME}
+            </div>
+            
+            {/* Copyright */}
+            <div className="text-gray-400 text-xs">
+              ©2016, All rights reserved, PhonePe Internet Pvt. Ltd.
+            </div>
           </div>
         )}
 

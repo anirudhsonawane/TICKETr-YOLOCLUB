@@ -3,6 +3,7 @@ export const ADMIN_CONFIG = {
   // List of authorized admin email addresses
   authorizedAdmins: [
     'anirudhsonawane111@gmail.com',
+    'gauravbhagwat999@gmail.com',
     // Add more admin emails here as needed
     // 'admin2@example.com',
     // 'admin3@example.com',

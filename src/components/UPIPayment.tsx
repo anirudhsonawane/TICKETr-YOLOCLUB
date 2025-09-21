@@ -229,18 +229,52 @@ export default function UPIPayment({
         {showQRCode && qrCodeDataURL && (
           <div className="text-center space-y-4">
             <Separator />
-            <div>
-              <h3 className="font-medium mb-2">Scan QR Code</h3>
-              <div className="flex justify-center p-4 bg-white rounded-lg border">
-                <img
-                  src={qrCodeDataURL}
-                  alt="UPI Payment QR Code"
-                  className="w-48 h-48"
-                />
+            <div className="bg-gray-900 rounded-2xl p-6 text-center shadow-2xl">
+              {/* PhonePe Header */}
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">पे</span>
+                </div>
+                <span className="text-white text-lg font-semibold">PhonePe</span>
               </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Scan with any UPI app (GPay, PhonePe, Paytm, BHIM, etc.)
-              </p>
+              
+              {/* Accepted Here Text */}
+              <div className="text-purple-400 text-sm font-medium mb-6">
+                ACCEPTED HERE
+              </div>
+              
+              {/* Instructions */}
+              <div className="text-white text-sm mb-6">
+                Scan any QR using PhonePe App
+              </div>
+              
+              {/* QR Code Container */}
+              <div className="relative inline-block mb-4">
+                <div className="bg-white p-4 rounded-xl">
+                  <img
+                    src={qrCodeDataURL}
+                    alt="UPI Payment QR Code"
+                    className="w-48 h-48"
+                  />
+                </div>
+                
+                {/* PhonePe Logo Overlay on QR Code */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                  <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-white font-bold text-xs">पे</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Payee Name */}
+              <div className="text-white text-sm font-medium mb-4">
+                {merchantName}
+              </div>
+              
+              {/* Copyright */}
+              <div className="text-gray-400 text-xs">
+                ©2016, All rights reserved, PhonePe Internet Pvt. Ltd.
+              </div>
             </div>
             <Button
               variant="outline"
