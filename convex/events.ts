@@ -268,6 +268,7 @@ export const createEvent = mutation({
     price: v.number(),
     totalTickets: v.number(),
     userId: v.string(),
+    organizerUpiId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const eventId = await ctx.db.insert("events", {
@@ -278,6 +279,7 @@ export const createEvent = mutation({
       price: args.price,
       totalTickets: args.totalTickets,
       userId: args.userId,
+      organizerUpiId: args.organizerUpiId,
       is_cancelled: false,
     });
     return eventId;
@@ -294,6 +296,7 @@ export const updateEvent = mutation({
     eventDate: v.number(),
     price: v.number(),
     totalTickets: v.number(),
+    organizerUpiId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { eventId, ...updateData } = args;

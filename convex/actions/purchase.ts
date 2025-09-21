@@ -28,7 +28,7 @@ export const completePurchaseAndSendEmail = action({
           <li>Event: ${event.name}</li>
           <li>Location: ${event.location}</li>
           <li>Date: ${new Date(event.eventDate).toLocaleDateString()}</li>
-          <li>Price: $${event.price.toFixed(2)}</li>
+          
         </ul>
         <p>We look forward to seeing you there!</p>
         <p>Best regards,</p>

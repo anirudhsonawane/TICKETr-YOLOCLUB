@@ -102,6 +102,7 @@ export default function Footer() {
           Terms & Conditions
         </Link>
         <p>© {new Date().getFullYear()} Ticketr. All rights reserved.</p>
+        <p className="mt-3 text-sm text-gray-600 font-medium">Created with ❤️ by ANIRUDH SONAWANE</p>
       </div>
     </footer>
   );

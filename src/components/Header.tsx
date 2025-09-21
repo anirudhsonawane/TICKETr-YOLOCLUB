@@ -4,6 +4,7 @@ import Link  from "next/link";
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import SearchBar from "./SearchBar";
 import TICKETRLogo from "./TICKETRLogo";
+import PaymentVerificationNotification from "./PaymentVerificationNotification";
 
 function Header() {
   const { isLoaded } = useUser();
@@ -48,6 +49,8 @@ function Header() {
         <div className="hidden lg:block ml-auto">
           <SignedIn>
             <div className="flex items-center gap-3">
+              <PaymentVerificationNotification />
+              
               <Link href="/seller/new-event">
                 <button className="bg-blue-600 text-white px-3 py-1.5 text-sm rounded-lg
                 hover:bg-blue-700 transition">

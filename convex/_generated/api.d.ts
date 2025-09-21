@@ -20,6 +20,7 @@ import type * as coupons from "../coupons.js";
 import type * as events from "../events.js";
 import type * as passes from "../passes.js";
 import type * as paymentSessions from "../paymentSessions.js";
+import type * as paymentVerifications from "../paymentVerifications.js";
 import type * as purchaseComplete from "../purchaseComplete.js";
 import type * as scheduledJobs from "../scheduledJobs.js";
 import type * as seedPasses from "../seedPasses.js";
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   events: typeof events;
   passes: typeof passes;
   paymentSessions: typeof paymentSessions;
+  paymentVerifications: typeof paymentVerifications;
   purchaseComplete: typeof purchaseComplete;
   scheduledJobs: typeof scheduledJobs;
   seedPasses: typeof seedPasses;

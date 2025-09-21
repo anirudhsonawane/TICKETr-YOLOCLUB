@@ -210,6 +210,7 @@ export default function PurchasePage() {
               eventName={event.name}
               customerName={user.fullName || user.firstName}
               customerPhone={user.primaryPhoneNumber?.phoneNumber}
+              organizerUpiId={event.organizerUpiId}
               onSuccess={(paymentId) => {
                 console.log("UPI payment successful:", paymentId);
                 if (appliedCoupon) {
@@ -228,7 +229,7 @@ export default function PurchasePage() {
                     console.error("Error marking coupon as used:", error);
                   }
                 }
-                router.push(`/tickets/purchase-success?orderId=${paymentId}`);
+                router.push(`/payment-result?orderId=${paymentId}&status=COMPLETED`);
               }}
               onError={(error) => {
                 console.error("UPI payment error:", error);

@@ -61,17 +61,32 @@ export const createDefaultPasses = mutation({
       },
       {
         eventId,
-        name: "Stag Male",
+        name: "Group of 5",
         description: "Entire event for a limited time",
-        price: 999,
+        price: 2700,
         totalQuantity: 300,
         soldQuantity: 0,
         benefits: [
+          "Atleast One Female Required for Reg.",
           "Priority entry",
           "Main Venue Access",
           "All Day Early Bird",
         ]
-      }
+      },
+      {
+        eventId,
+        name: "Group of 10",
+        description: "Entire event for a limited time",
+        price: 3600,
+        totalQuantity: 300,
+        soldQuantity: 0,
+        benefits: [
+          "Atleast One Female Required for Reg.",
+          "Priority entry",
+          "Main Venue Access",
+          "All Day Early Bird",
+        ]
+      },
     ];
 
     const createdPasses = [];

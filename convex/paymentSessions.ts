@@ -1,4 +1,4 @@
-import { mutation, query, internal } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { ConvexError, v } from "convex/values";
 
 // Create a payment session
@@ -123,7 +123,7 @@ export const getUserPaymentSessions = query({
 });
 
 // Clean up expired sessions
-export const cleanupExpiredSessions = internal.mutation({
+export const cleanupExpiredSessions = mutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();

@@ -14,6 +14,7 @@ export default defineSchema({
     userId: v.string(),
     is_cancelled: v.optional(v.boolean()),
     imageStorageId: v.optional(v.id("_storage")),
+    organizerUpiId: v.optional(v.string()), // NEW: organizer's UPI ID for payments
   }),
 
   passes: defineTable({
@@ -128,6 +129,8 @@ export default defineSchema({
     code: v.string(),
     // Relax required fields to allow legacy documents to load; we'll default in code
     discountPercentage: v.optional(v.number()),
+    discountAmount: v.optional(v.number()), // NEW: flat discount amount in rupees
+    discountType: v.optional(v.union(v.literal("percentage"), v.literal("flat"))), // NEW: type of discount
     isActive: v.optional(v.boolean()),
     validFrom: v.optional(v.number()),
     validUntil: v.optional(v.number()),
@@ -149,4 +152,33 @@ export default defineSchema({
     amount: v.number(),
     timestamp: v.number(),
   }).index("by_uid", ["uid"]),
+
+  paymentVerifications: defineTable({
+    eventId: v.id("events"),
+    userId: v.string(),
+    userEmail: v.string(),
+    userName: v.string(),
+    mobileNumber: v.string(),
+    uid: v.string(),
+    amount: v.number(),
+    quantity: v.number(),
+    passId: v.optional(v.id("passes")),
+    selectedDate: v.optional(v.string()),
+    paymentScreenshotUrl: v.optional(v.string()),
+    paymentScreenshotStorageId: v.optional(v.id("_storage")),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("rejected")
+    ),
+    submittedAt: v.number(),
+    reviewedAt: v.optional(v.number()),
+    reviewedBy: v.optional(v.string()),
+    reviewNotes: v.optional(v.string()),
+    ticketIds: v.optional(v.array(v.id("tickets"))), // Created after approval
+  })
+    .index("by_event", ["eventId"])
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_uid", ["uid"]),
 });

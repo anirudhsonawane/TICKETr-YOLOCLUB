@@ -17,6 +17,7 @@ interface UPIPaymentProps {
   eventName: string;
   customerName?: string;
   customerPhone?: string;
+  organizerUpiId?: string; // Organizer's UPI ID
   onSuccess?: (paymentId: string) => void;
   onError?: (error: string) => void;
 }
@@ -26,11 +27,12 @@ export default function UPIPayment({
   eventName,
   customerName,
   customerPhone,
+  organizerUpiId,
   onSuccess,
   onError,
 }: UPIPaymentProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [upiId, setUpiId] = useState(process.env.NEXT_PUBLIC_UPI_ID || "");
+  const [upiId, setUpiId] = useState(organizerUpiId || "9595961116@ptsbi");
   const [merchantName, setMerchantName] = useState("TICKETr");
   const [paymentNote, setPaymentNote] = useState(`Payment for ${eventName} ticket`);
   const [showQRCode, setShowQRCode] = useState(false);
@@ -115,23 +117,15 @@ export default function UPIPayment({
     }, 100);
   };
 
-  // Simulate payment completion (for testing)
-  const simulatePayment = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const paymentId = `UPI_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      onSuccess?.(paymentId);
-      setIsLoading(false);
-    }, 2000);
-  };
 
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Smartphone className="h-5 w-5" />
-          UPI Payment
+          Pay with UPI
         </CardTitle>
+        <p className="text-sm text-gray-600">Quick and secure payment</p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Amount Display */}
@@ -140,43 +134,21 @@ export default function UPIPayment({
           <div className="text-sm text-gray-600 mt-1">{eventName}</div>
         </div>
 
-        {/* UPI Configuration */}
+        {/* Organizer's UPI Details */}
         <div className="space-y-4">
           <div>
-            <Label htmlFor="upiId">UPI ID *</Label>
-            <Input
-              id="upiId"
-              type="text"
-              placeholder="yourname@bank"
-              value={upiId}
-              onChange={(e) => setUpiId(e.target.value)}
-              className="mt-1"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Enter your UPI ID (e.g., yourname@paytm, yourname@ybl)
-            </p>
+            <Label>Pay to:</Label>
+            <div className="p-3 bg-blue-50 rounded-lg border mt-1">
+              <div className="font-medium text-blue-900">{upiId || "Organizer UPI ID"}</div>
+              <div className="text-sm text-blue-700">TICKETr - {eventName}</div>
+            </div>
           </div>
-
+          
           <div>
-            <Label htmlFor="merchantName">Merchant Name</Label>
-            <Input
-              id="merchantName"
-              type="text"
-              value={merchantName}
-              onChange={(e) => setMerchantName(e.target.value)}
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="paymentNote">Payment Note</Label>
-            <Textarea
-              id="paymentNote"
-              value={paymentNote}
-              onChange={(e) => setPaymentNote(e.target.value)}
-              className="mt-1"
-              rows={2}
-            />
+            <Label>Payment Note:</Label>
+            <div className="p-3 bg-gray-50 rounded-lg mt-1">
+              <div className="text-sm text-gray-700">{paymentNote}</div>
+            </div>
           </div>
         </div>
 
@@ -259,30 +231,13 @@ export default function UPIPayment({
             <strong>How to pay:</strong>
             <ol className="mt-2 space-y-1 text-xs">
               <li>1. Click "Open UPI App" or scan the QR code</li>
-              <li>2. Verify amount and merchant details</li>
+              <li>2. Verify amount and organizer details</li>
               <li>3. Complete payment in your UPI app</li>
-              <li>4. Keep the payment receipt for confirmation</li>
+              <li>4. After payment, contact the organizer with your payment screenshot</li>
             </ol>
           </AlertDescription>
         </Alert>
 
-        {/* Development Mode - Simulate Payment */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="space-y-3">
-            <Separator />
-            <div className="text-sm font-medium text-orange-600">
-              Development Mode
-            </div>
-            <Button
-              onClick={simulatePayment}
-              disabled={isLoading}
-              variant="secondary"
-              className="w-full"
-            >
-              {isLoading ? "Processing..." : "Simulate Payment"}
-            </Button>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

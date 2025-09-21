@@ -37,6 +37,7 @@ const formSchema = z.object({
     ),
   price: z.number().min(0, "Price must be 0 or greater"),
   totalTickets: z.number().min(1, "Must have at least 1 ticket"),
+  organizerUpiId: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -50,6 +51,7 @@ interface InitialEventData {
   price: number;
   totalTickets: number;
   imageStorageId?: Id<"_storage">;
+  organizerUpiId?: string;
 }
 
 interface EventFormProps {
@@ -90,6 +92,7 @@ export default function EventForm({ mode, initialData }: EventFormProps) {
       eventDate: initialData ? new Date(initialData.eventDate) : new Date(),
       price: initialData?.price ?? 0,
       totalTickets: initialData?.totalTickets ?? 1,
+      organizerUpiId: initialData?.organizerUpiId ?? "",
     },
   });
 
@@ -313,6 +316,27 @@ export default function EventForm({ mode, initialData }: EventFormProps) {
                   />
                 </FormControl>
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="organizerUpiId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Organizer UPI ID (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    placeholder="yourname@paytm"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+                <p className="text-xs text-gray-500">
+                  Your UPI ID for receiving payments (e.g., yourname@paytm, yourname@ybl)
+                </p>
               </FormItem>
             )}
           />
