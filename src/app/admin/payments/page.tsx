@@ -191,50 +191,101 @@ export default function AdminPaymentsPage() {
             </div>
           )}
 
-          {/* Pending Payment Notifications */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <Clock className="w-6 h-6 text-yellow-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Pending Payment Verifications
-                </h3>
-                {paymentNotifications && (
-                  <span className="bg-yellow-100 text-yellow-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
-                    {paymentNotifications.length}
-                  </span>
+          {/* Event-wise Payment Notifications */}
+          {events && events.length > 0 && (
+            <div className="space-y-6">
+              {events.map((event) => {
+                // Filter notifications for this specific event
+                const eventNotifications = paymentNotifications?.filter(
+                  notification => notification.eventId === event._id
+                ) || [];
+
+                if (eventNotifications.length === 0) return null;
+
+                return (
+                  <div key={event._id} className="bg-white rounded-xl shadow-lg border border-gray-200">
+                    <div className="p-6 border-b border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Calendar className="w-6 h-6 text-blue-600" />
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {event.name}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {new Date(event.eventDate).toLocaleDateString()} • {event.location}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="bg-yellow-100 text-yellow-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                          {eventNotifications.length} pending
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-6">
+                      <div className="space-y-4">
+                        {eventNotifications.map((notification) => (
+                          <PaymentNotificationCard 
+                            key={notification._id} 
+                            notification={notification}
+                            onStatusUpdate={updatePaymentStatus}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* All Pending Payment Notifications (Fallback) */}
+          {(!events || events.length === 0) && (
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-6 h-6 text-yellow-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Pending Payment Verifications
+                  </h3>
+                  {paymentNotifications && (
+                    <span className="bg-yellow-100 text-yellow-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                      {paymentNotifications.length}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  Verify UPI payments and create tickets for customers
+                </p>
+              </div>
+
+              <div className="p-6">
+                {!paymentNotifications ? (
+                  <div className="text-center py-8">
+                    <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading payment notifications...</p>
+                  </div>
+                ) : paymentNotifications.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
+                    <p className="text-gray-600">No pending payment verifications</p>
+                    <p className="text-sm text-gray-500 mt-1">All payments have been processed</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {paymentNotifications.map((notification) => (
+                      <PaymentNotificationCard 
+                        key={notification._id} 
+                        notification={notification}
+                        onStatusUpdate={updatePaymentStatus}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
-              <p className="text-sm text-gray-600 mt-1">
-                Verify UPI payments and create tickets for customers
-              </p>
             </div>
-
-            <div className="p-6">
-              {!paymentNotifications ? (
-                <div className="text-center py-8">
-                  <div className="w-12 h-12 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading payment notifications...</p>
-                </div>
-              ) : paymentNotifications.length === 0 ? (
-                <div className="text-center py-8">
-                  <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No pending payment verifications</p>
-                  <p className="text-sm text-gray-500 mt-1">All payments have been processed</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {paymentNotifications.map((notification) => (
-                    <PaymentNotificationCard 
-                      key={notification._id} 
-                      notification={notification}
-                      onStatusUpdate={updatePaymentStatus}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          )}
 
           {/* Instructions */}
           <div className="bg-yellow-50 rounded-lg p-6 border border-yellow-200">

@@ -20,7 +20,7 @@ export const completePurchaseAndSendEmail = action({
 
     if (user && event && user.email) {
       const subject = `Your Ticket for ${event.name}`;
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://ticketr.yoloclub.in';
       const htmlContent = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 20px;">
           <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
@@ -59,7 +59,8 @@ export const completePurchaseAndSendEmail = action({
               </div>
               
               <div style="text-align: center; margin-top: 24px;">
-                <a href="${baseUrl}/tickets" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">View Your Tickets</a>
+                <a href="${baseUrl}/tickets" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">View Your Tickets</a>
+                <p style="font-size: 12px; color: #64748b; margin: 8px 0 0 0;">Click to access your tickets in your account</p>
               </div>
             </div>
           </div>

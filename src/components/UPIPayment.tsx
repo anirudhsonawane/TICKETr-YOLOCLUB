@@ -112,7 +112,7 @@ export default function UPIPayment({
     }
   };
 
-  // Open UPI app directly
+  // Open PhonePe app directly
   const openUPIApp = () => {
     const upiLink = generateUPILink();
     if (!upiLink) return;
@@ -120,13 +120,24 @@ export default function UPIPayment({
     // Set payment initiated to show notification buttons
     setPaymentInitiated(true);
 
-    // Try to open UPI app (PhonePe/Paytm)
-    window.location.href = upiLink;
+    // Check if user is on mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
-    // Show success message
-    setTimeout(() => {
-      toast.success("Opening UPI app... Please complete the payment.");
-    }, 100);
+    if (isMobile) {
+      // Try to open PhonePe specifically on mobile
+      const phonepeUrl = `phonepe://pay?pa=${upiId}&pn=${encodeURIComponent(merchantName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(paymentNote)}`;
+      
+      try {
+        window.location.href = phonepeUrl;
+        toast.success("Opening PhonePe... Please complete the payment.");
+      } catch (error) {
+        console.log("PhonePe not available");
+        toast.error("PhonePe app not found. Please install PhonePe or scan the QR code below.");
+      }
+    } else {
+      // For desktop, show QR code only
+      toast.info("Please scan the QR code with PhonePe to complete payment.");
+    }
   };
 
 
@@ -183,7 +194,7 @@ export default function UPIPayment({
               size="lg"
             >
               <Smartphone className="h-4 w-4 mr-2" />
-              Pay ₹{amount} with UPI
+              Pay ₹{amount} with PhonePe
             </Button>
 
             {/* Copy Link */}

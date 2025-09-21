@@ -101,41 +101,20 @@ export default function UPIPaymentSimple({
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     if (isMobile) {
-      // Try to open PhonePe specifically on mobile
+      // Only try to open PhonePe on mobile - no fallback to generic UPI
       const phonepeUrl = `phonepe://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`${quantity} ticket${quantity > 1 ? 's' : ''} for ${eventName}`)}`;
       
-      // Try PhonePe first - direct window.location approach
+      // Try PhonePe only
       try {
         window.location.href = phonepeUrl;
+        toast.info("Opening PhonePe for payment...");
       } catch (error) {
-        console.log("PhonePe not available, trying generic UPI");
-        window.location.href = upiDeepLink;
+        console.log("PhonePe not available");
+        toast.error("PhonePe app not found. Please install PhonePe or scan the QR code below.");
       }
-      
-      // Fallback to generic UPI after a short delay if PhonePe doesn't work
-      setTimeout(() => {
-        try {
-          window.location.href = upiDeepLink;
-        } catch (error) {
-          console.log("UPI app not available");
-        }
-      }, 2000);
-      
-      // Show instructions
-      setTimeout(() => {
-        toast.info("Opening PhonePe for payment. If PhonePe doesn't open, please open it manually and scan the QR code below.");
-      }, 1000);
     } else {
-      // For desktop, show QR code or generic UPI
-      try {
-        window.location.href = upiDeepLink;
-      } catch (error) {
-        console.log("UPI app not available on desktop");
-      }
-      
-      setTimeout(() => {
-        toast.info("Please scan the QR code with PhonePe or any UPI app to complete payment.");
-      }, 1000);
+      // For desktop, show QR code only - no UPI app opening
+      toast.info("Please scan the QR code with PhonePe to complete payment.");
     }
   };
 
@@ -222,7 +201,7 @@ export default function UPIPaymentSimple({
           {showQR && (
             <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
               <div className="mb-2">
-                <p className="text-sm text-gray-600 mb-3">Scan with any UPI app:</p>
+                <p className="text-sm text-gray-600 mb-3">Scan with PhonePe app:</p>
                 <div className="inline-block p-4 bg-white border-2 border-gray-300 rounded-lg">
                   <canvas 
                     ref={canvasRef} 
@@ -317,7 +296,7 @@ export default function UPIPaymentSimple({
         {showQR && (
           <div className="bg-white border border-gray-200 rounded-lg p-4 text-center">
             <div className="mb-2">
-              <p className="text-sm text-gray-600 mb-3">Scan with any UPI app:</p>
+              <p className="text-sm text-gray-600 mb-3">Scan with PhonePe app:</p>
               <div className="inline-block p-4 bg-white border-2 border-gray-300 rounded-lg">
                 <canvas 
                   ref={canvasRef} 
@@ -341,9 +320,9 @@ export default function UPIPaymentSimple({
         )}
 
         <div className="text-xs text-gray-500 text-center">
-          <p>Recommended: PhonePe (opens automatically on mobile)</p>
-          <p className="mt-1">Also works with: GPay, Paytm, BHIM, and other UPI apps</p>
-          <p className="mt-1">After payment, contact the organizer with your payment screenshot</p>
+          <p>Opens PhonePe automatically on mobile devices</p>
+          <p className="mt-1">For desktop: Scan QR code with PhonePe app</p>
+          <p className="mt-1">After payment, notify the organizer with your payment details</p>
         </div>
       </div>
     </div>
