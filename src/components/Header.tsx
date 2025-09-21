@@ -19,7 +19,7 @@ function Header() {
       <div className="flex flex-col lg:flex-row items-center gap-4 p-4">
         <div className="flex items-center justify-between w-full lg:w-auto">
           <Link href="/" className="shrink-0">
-            <TICKETRLogo size="md" />
+            <TICKETRLogo size="sm" />
           </Link>
 
           {isLoaded && (
