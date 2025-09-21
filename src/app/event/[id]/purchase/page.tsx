@@ -9,7 +9,7 @@ import { useState, useMemo } from "react";
 import { ArrowLeft, Plus, Minus, Tag, Check } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import CouponInput from "@/components/CouponInput";
-import PhonePePayment from "@/components/PhonePePayment";
+import UPIPayment from "@/components/UPIPayment";
 
 export default function PurchasePage() {
   const { user } = useUser();
@@ -204,17 +204,14 @@ export default function PurchasePage() {
               </div>
             </div>
 
-            {/* Only PhonePe Payment */}
-            <PhonePePayment
+            {/* UPI Payment */}
+            <UPIPayment
               amount={totalAmount}
-              eventId={eventId}
-              userId={user.id}
-              quantity={quantity}
-              passId={currentPassId}
-              couponCode={appliedCoupon?.code}
-              selectedDate={selectedDates.join(",")}
-              onSuccess={(orderId) => {
-                console.log("PhonePe payment successful:", orderId);
+              eventName={event.name}
+              customerName={user.fullName || user.firstName}
+              customerPhone={user.primaryPhoneNumber?.phoneNumber}
+              onSuccess={(paymentId) => {
+                console.log("UPI payment successful:", paymentId);
                 if (appliedCoupon) {
                   try {
                     fetch("/api/mark-coupon-used", {
@@ -231,17 +228,17 @@ export default function PurchasePage() {
                     console.error("Error marking coupon as used:", error);
                   }
                 }
-                router.push(`/tickets/purchase-success?orderId=${orderId}`);
+                router.push(`/tickets/purchase-success?orderId=${paymentId}`);
               }}
               onError={(error) => {
-                console.error("PhonePe payment error:", error);
+                console.error("UPI payment error:", error);
                 alert(`Payment failed: ${error}`);
               }}
             />
 
             {user && (
               <p className="text-xs text-gray-500 text-center mt-3">
-                Secure payment powered by PhonePe
+                Secure payment via UPI
               </p>
             )}
           </div>

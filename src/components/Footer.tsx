@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import { Facebook, Twitter, Instagram } from "lucide-react";
-// Remove the import and use the public path directly
-import Link from "next/link"; // Added Link import
+import Link from "next/link";
+import TICKETRLogo from "./TICKETRLogo";
 
 export default function Footer() {
   const [showContact, setShowContact] = useState(false);
@@ -15,13 +14,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Logo - Left aligned */}
         <div className="flex items-center space-x-3 mb-4 md:mb-0">
-          <Image
-            src="/images/img.jpg"
-            alt="Ticketr Logo"
-            width={200}
-            height={40}
-            priority
-          />
+          <TICKETRLogo size="md" />
         </div>
 
         {/* Middle section for Social Media (will be centered by justify-between around it) */}
@@ -85,7 +78,7 @@ export default function Footer() {
                     <label className="block text-sm font-medium text-gray-700">Message</label>
                     <textarea
                       rows={3}
-                      className="mt-1 block w-full rounded-lg border border-gray-300 p-2 text-sm shadow-sm focus:border-blue-500 focus:ring focus:ring-200"
+                      className="mt-1 block w-full rounded-lg border border-gray-300 p-2 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                       placeholder="Write your message..."
                     />
                   </div>

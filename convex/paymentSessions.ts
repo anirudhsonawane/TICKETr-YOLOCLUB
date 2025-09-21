@@ -15,7 +15,6 @@ export const createPaymentSession = mutation({
     waitingListId: v.optional(v.id("waitingList")),
     paymentMethod: v.union(
       v.literal("razorpay"),
-      v.literal("phonepe"),
       v.literal("upi")
     ),
     metadata: v.optional(v.any()),
