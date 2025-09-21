@@ -28,6 +28,12 @@ export const getOverallAnalytics = query({
     const verifiedPayments = paymentNotifications.filter(p => p.status === "verified").length;
     const rejectedPayments = paymentNotifications.filter(p => p.status === "rejected").length;
     
+    // Get payment verifications
+    const paymentVerifications = await ctx.db.query("paymentVerifications").collect();
+    const verificationsRequested = paymentVerifications.length;
+    const verificationsApproved = paymentVerifications.filter(v => v.status === "approved").length;
+    const verificationsRejected = paymentVerifications.filter(v => v.status === "rejected").length;
+    
     // Ticket status stats
     const scannedTickets = tickets.filter(t => t.isScanned).length;
     const unscannedTickets = tickets.filter(t => !t.isScanned).length;
@@ -44,6 +50,9 @@ export const getOverallAnalytics = query({
       pendingPayments,
       verifiedPayments,
       rejectedPayments,
+      verificationsRequested,
+      verificationsApproved,
+      verificationsRejected,
       scannedTickets,
       unscannedTickets,
       activeEvents,
@@ -70,6 +79,12 @@ export const getDayWiseAnalytics = query({
       .filter((q) => q.gte(q.field("_creationTime"), thirtyDaysAgo))
       .collect();
     
+    // Get payment verifications from last 30 days
+    const recentVerifications = await ctx.db
+      .query("paymentVerifications")
+      .filter((q) => q.gte(q.field("_creationTime"), thirtyDaysAgo))
+      .collect();
+    
     // Group by day
     const dayWiseData: { [key: string]: any } = {};
     
@@ -85,6 +100,9 @@ export const getDayWiseAnalytics = query({
         paymentsPending: 0,
         paymentsVerified: 0,
         paymentsRejected: 0,
+        verificationsRequested: 0,
+        verificationsApproved: 0,
+        verificationsRejected: 0,
         revenue: 0,
         newUsers: 0,
       };
@@ -112,6 +130,19 @@ export const getDayWiseAnalytics = query({
           dayWiseData[date].paymentsVerified++;
         } else if (payment.status === "rejected") {
           dayWiseData[date].paymentsRejected++;
+        }
+      }
+    });
+    
+    // Process payment verifications
+    recentVerifications.forEach(verification => {
+      const date = new Date(verification._creationTime).toISOString().split('T')[0];
+      if (dayWiseData[date]) {
+        dayWiseData[date].verificationsRequested++;
+        if (verification.status === "approved") {
+          dayWiseData[date].verificationsApproved++;
+        } else if (verification.status === "rejected") {
+          dayWiseData[date].verificationsRejected++;
         }
       }
     });

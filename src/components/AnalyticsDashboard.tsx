@@ -149,6 +149,48 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
         </Card>
       </div>
 
+      {/* Verification Status Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Verification Requests</CardTitle>
+            <Activity className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{overallAnalytics.verificationsRequested}</div>
+            <p className="text-xs text-muted-foreground">
+              Total requests
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Approved Verifications</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{overallAnalytics.verificationsApproved}</div>
+            <p className="text-xs text-muted-foreground">
+              Successfully approved
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Rejected Verifications</CardTitle>
+            <XCircle className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{overallAnalytics.verificationsRejected}</div>
+            <p className="text-xs text-muted-foreground">
+              Verification failures
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Payment Status Chart */}
@@ -175,6 +217,48 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
           type="line"
         />
       </div>
+
+      {/* Verification Analytics */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Verification Analytics (Last 7 Days)
+          </CardTitle>
+          <CardDescription>
+            Daily breakdown of verification requests and approvals
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {dayWiseAnalytics.slice(-7).map((day, index) => (
+              <div key={day.date} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="text-sm font-medium">{formatDate(day.date)}</div>
+                  <div className="flex gap-2">
+                    <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800">
+                      {day.verificationsRequested || 0} requested
+                    </Badge>
+                    <Badge variant="outline" className="text-xs bg-green-100 text-green-800">
+                      {day.verificationsApproved || 0} approved
+                    </Badge>
+                    <Badge variant="outline" className="text-xs bg-red-100 text-red-800">
+                      {day.verificationsRejected || 0} rejected
+                    </Badge>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-muted-foreground">
+                    Approval Rate: {day.verificationsRequested > 0 
+                      ? Math.round(((day.verificationsApproved || 0) / day.verificationsRequested) * 100)
+                      : 0}%
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Day-wise Analytics Chart */}
       <Card>
@@ -205,15 +289,29 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
                 <div className="flex gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3 text-yellow-600" />
-                    {day.paymentsPending}
+                    {day.paymentsPending} pending
                   </span>
                   <span className="flex items-center gap-1">
                     <CheckCircle className="h-3 w-3 text-green-600" />
-                    {day.paymentsVerified}
+                    {day.paymentsVerified} verified
                   </span>
                   <span className="flex items-center gap-1">
                     <XCircle className="h-3 w-3 text-red-600" />
-                    {day.paymentsRejected}
+                    {day.paymentsRejected} rejected
+                  </span>
+                </div>
+                <div className="flex gap-4 text-sm text-muted-foreground mt-1">
+                  <span className="flex items-center gap-1">
+                    <Activity className="h-3 w-3 text-blue-600" />
+                    {day.verificationsRequested || 0} requested
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3 text-green-600" />
+                    {day.verificationsApproved || 0} approved
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <XCircle className="h-3 w-3 text-red-600" />
+                    {day.verificationsRejected || 0} rejected
                   </span>
                 </div>
               </div>
