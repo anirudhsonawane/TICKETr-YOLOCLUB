@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as actions_email from "../actions/email.js";
 import type * as actions_purchase from "../actions/purchase.js";
+import type * as analytics from "../analytics.js";
 import type * as constants from "../constants.js";
 import type * as coupons from "../coupons.js";
 import type * as events from "../events.js";
@@ -42,6 +43,7 @@ import type * as waitingList from "../waitingList.js";
 declare const fullApi: ApiFromModules<{
   "actions/email": typeof actions_email;
   "actions/purchase": typeof actions_purchase;
+  analytics: typeof analytics;
   constants: typeof constants;
   coupons: typeof coupons;
   events: typeof events;
