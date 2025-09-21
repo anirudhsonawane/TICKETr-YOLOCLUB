@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { CheckCircle, XCircle, Clock, Bell } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Bell, QrCode, Copy } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, Suspense } from "react";
 import { useQuery } from "convex/react";
@@ -18,6 +18,7 @@ function PaymentResultContent() {
   const [ticketCreated, setTicketCreated] = useState(false);
   const [paymentSession, setPaymentSession] = useState<any>(null);
   const [showNotifyOrganizer, setShowNotifyOrganizer] = useState(false);
+  const [showNotifyForm, setShowNotifyForm] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -30,9 +31,48 @@ function PaymentResultContent() {
 
   const verifyPaymentStatus = async () => {
     try {
-      console.log('Verifying PhonePe payment for order:', orderId);
+      console.log('Verifying payment for order:', orderId);
       
-      // Verify payment status with PhonePe
+      // Check if this is a UPI payment (starts with UPI_)
+      if (orderId && orderId.startsWith('UPI_')) {
+        console.log('UPI payment detected, checking status from URL params');
+        
+        // For UPI payments, use the status from URL parameters
+        const urlStatus = searchParams.get("status");
+        console.log('URL status:', urlStatus);
+        
+        if (urlStatus === 'COMPLETED') {
+          setPaymentStatus('COMPLETED');
+          
+          // Create a mock payment session for UPI payments
+          const mockPaymentSession = {
+            id: orderId,
+            eventId: searchParams.get("eventId") || "",
+            userId: searchParams.get("userId") || "",
+            amount: parseFloat(searchParams.get("amount") || "0"),
+            quantity: parseInt(searchParams.get("quantity") || "1"),
+            passId: searchParams.get("passId") || undefined,
+            selectedDate: searchParams.get("selectedDate") || undefined,
+            paymentMethod: 'upi',
+            status: 'completed',
+            event: {
+              name: searchParams.get("eventName") || "Event",
+              organizerUpiId: searchParams.get("organizerUpiId") || "9595961116@ptsbi"
+            }
+          };
+          
+          setPaymentSession(mockPaymentSession);
+          setShowNotifyOrganizer(true);
+          setIsLoading(false);
+          return;
+        } else {
+          setPaymentStatus(urlStatus || 'FAILED');
+          setIsLoading(false);
+          return;
+        }
+      }
+      
+      // For non-UPI payments, verify with PhonePe API
       const verifyResponse = await fetch('/api/phonepe/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -86,7 +126,7 @@ function PaymentResultContent() {
       }
       
     } catch (error) {
-      console.error('PhonePe payment verification failed:', error);
+      console.error('Payment verification failed:', error);
       setError(error instanceof Error ? error.message : 'Payment verification failed');
     } finally {
       setIsLoading(false);
@@ -166,6 +206,72 @@ function PaymentResultContent() {
   if (showNotifyOrganizer && paymentSession) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          {/* Payment Success Header */}
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-green-600" />
+          </div>
+          
+                      <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                        Payment completed!
+                      </h1>
+                      <p className="text-gray-600 mb-6">
+                        If payment completed, then notify organizer to get your tickets.
+                      </p>
+
+          {/* Payment Details */}
+          <div className="bg-green-50 rounded-lg p-4 mb-6 text-left">
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Amount:</span>
+                <span className="font-medium">₹{paymentSession.amount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Note:</span>
+                <span className="font-medium">{paymentSession.quantity} ticket for {paymentSession.event?.name || 'Event'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">UPI ID:</span>
+                <span className="font-medium">9595961116@ptsbi</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Notify Organizer Button */}
+          <button
+            onClick={() => {
+              setShowNotifyForm(true);
+            }}
+            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors mb-4 flex items-center justify-center"
+          >
+            <Bell className="w-5 h-5 mr-2" />
+            Notify Organizer About Payment
+          </button>
+
+          {/* QR Code and Copy Link buttons */}
+          <div className="flex gap-3">
+            <button className="flex-1 bg-blue-100 text-blue-700 py-2 px-4 rounded-lg font-medium hover:bg-blue-200 transition-colors flex items-center justify-center">
+              <QrCode className="w-4 h-4 mr-2" />
+              Show QR Code
+            </button>
+            <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center">
+              <Copy className="w-4 h-4 mr-2" />
+              Copy Link
+            </button>
+          </div>
+
+          <p className="text-xs text-gray-500 mt-4">
+            Secure UPI payment - Contact organizer after payment for ticket verification
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show NotifyOrganizer form after clicking the button
+  if (showNotifyForm && paymentSession) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <NotifyOrganizer
           eventId={paymentSession.eventId}
           eventName={paymentSession.event?.name || 'Unknown Event'}
@@ -173,8 +279,9 @@ function PaymentResultContent() {
           quantity={paymentSession.quantity}
           passId={paymentSession.passId}
           selectedDate={paymentSession.selectedDate}
-          organizerUpiId="9595961116@ptsbi"
+                      organizerUpiId={paymentSession.event?.organizerUpiId || "9595961116@ptsbi"}
           onSuccess={() => {
+            setShowNotifyForm(false);
             setShowNotifyOrganizer(false);
           }}
           onError={(error) => {

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { Copy, QrCode, ExternalLink, CheckCircle, Smartphone } from "lucide-react";
+import { Copy, QrCode, ExternalLink, CheckCircle, Smartphone, Bell } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
 
@@ -32,12 +32,20 @@ export default function UPIPayment({
   onError,
 }: UPIPaymentProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [upiId, setUpiId] = useState(organizerUpiId || "9595961116@ptsbi");
-  const [merchantName, setMerchantName] = useState("TICKETr");
+  const [upiId, setUpiId] = useState(
+    organizerUpiId || 
+    process.env.NEXT_PUBLIC_UPI_ID || 
+    "9595961116@ptsbi"
+  );
+  const [merchantName, setMerchantName] = useState(
+    process.env.NEXT_PUBLIC_PAYEE_NAME || 
+    "TICKETR Events"
+  );
   const [paymentNote, setPaymentNote] = useState(`Payment for ${eventName} ticket`);
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeDataURL, setQrCodeDataURL] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [paymentInitiated, setPaymentInitiated] = useState(false);
 
   // Generate UPI deep link
   const generateUPILink = () => {
@@ -62,6 +70,7 @@ export default function UPIPayment({
       params.append("pa", `${upiId}@${customerPhone}`);
     }
 
+    // Use UPI deep link that opens PhonePe/Paytm
     return `upi://pay?${params.toString()}`;
   };
 
@@ -105,10 +114,21 @@ export default function UPIPayment({
 
   // Open UPI app directly
   const openUPIApp = () => {
+    // Show warning popup first
+    const confirmed = window.confirm(
+      "IF PAYMENT IS SUCCESS NOTIFY ORGANIZER, UNLESS DON'T\n\n" +
+      "Click OK to open UPI app for payment."
+    );
+    
+    if (!confirmed) return;
+
     const upiLink = generateUPILink();
     if (!upiLink) return;
 
-    // Try to open UPI app
+    // Set payment initiated to show notification buttons
+    setPaymentInitiated(true);
+
+    // Try to open UPI app (PhonePe/Paytm)
     window.location.href = upiLink;
     
     // Show success message
@@ -134,69 +154,73 @@ export default function UPIPayment({
           <div className="text-sm text-gray-600 mt-1">{eventName}</div>
         </div>
 
-        {/* Organizer's UPI Details */}
-        <div className="space-y-4">
-          <div>
-            <Label>Pay to:</Label>
-            <div className="p-3 bg-blue-50 rounded-lg border mt-1">
-              <div className="font-medium text-blue-900">{upiId || "Organizer UPI ID"}</div>
-              <div className="text-sm text-blue-700">TICKETr - {eventName}</div>
-            </div>
+        {/* Payment Details */}
+        <div className="space-y-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Amount:</span>
+            <span className="font-medium">₹{amount}</span>
           </div>
-          
-          <div>
-            <Label>Payment Note:</Label>
-            <div className="p-3 bg-gray-50 rounded-lg mt-1">
-              <div className="text-sm text-gray-700">{paymentNote}</div>
-            </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Quantity:</span>
+            <span className="font-medium">1 ticket</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Event:</span>
+            <span className="font-medium text-right flex-1 ml-2">{eventName}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Pay to:</span>
+            <span className="font-medium">{upiId || "Organizer UPI ID"}</span>
           </div>
         </div>
 
         <Separator />
 
         {/* Payment Actions */}
-        <div className="space-y-3">
-          <div className="text-sm font-medium text-gray-700">
-            Choose payment method:
+        {!paymentInitiated && (
+          <div className="space-y-3">
+            <div className="text-sm font-medium text-gray-700">
+              Choose payment method:
+            </div>
+
+            {/* Direct UPI App */}
+            <Button
+              onClick={openUPIApp}
+              disabled={!upiId || isLoading}
+              className="w-full bg-green-600 hover:bg-green-700"
+              size="lg"
+            >
+              <Smartphone className="h-4 w-4 mr-2" />
+              Pay ₹{amount} with UPI
+            </Button>
+
+            {/* Copy Link */}
+            <Button
+              onClick={copyToClipboard}
+              variant="outline"
+              disabled={!upiId || isLoading}
+              className="w-full"
+            >
+              {copied ? (
+                <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+              ) : (
+                <Copy className="h-4 w-4 mr-2" />
+              )}
+              {copied ? "Copied!" : "Copy Payment Link"}
+            </Button>
+
+            {/* Generate QR Code */}
+            <Button
+              onClick={generateQRCode}
+              variant="outline"
+              disabled={!upiId || isLoading}
+              className="w-full"
+            >
+              <QrCode className="h-4 w-4 mr-2" />
+              Show QR Code
+            </Button>
           </div>
-
-          {/* Direct UPI App */}
-          <Button
-            onClick={openUPIApp}
-            disabled={!upiId || isLoading}
-            className="w-full"
-            size="lg"
-          >
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Open UPI App
-          </Button>
-
-          {/* Copy Link */}
-          <Button
-            onClick={copyToClipboard}
-            variant="outline"
-            disabled={!upiId || isLoading}
-            className="w-full"
-          >
-            {copied ? (
-              <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-            ) : (
-              <Copy className="h-4 w-4 mr-2" />
-            )}
-            {copied ? "Copied!" : "Copy Payment Link"}
-          </Button>
-
-          {/* Generate QR Code */}
-          <Button
-            onClick={generateQRCode}
-            variant="outline"
-            disabled={!upiId || isLoading}
-            className="w-full"
-          >
-            <QrCode className="h-4 w-4 mr-2" />
-            Show QR Code
-          </Button>
-        </div>
+        )}
 
         {/* QR Code Display */}
         {showQRCode && qrCodeDataURL && (
@@ -225,18 +249,92 @@ export default function UPIPayment({
           </div>
         )}
 
+        {/* Payment Initiated Section */}
+        {paymentInitiated && (
+          <div className="space-y-4">
+            <Separator />
+            
+            {/* Payment Initiated Banner */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center mb-2">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                  <Smartphone className="w-4 h-4 text-green-600" />
+                </div>
+                <div>
+                  <div className="font-medium text-green-800">Payment Initiated</div>
+                  <div className="text-sm text-green-600">Complete payment in your UPI app</div>
+                </div>
+              </div>
+              
+                          <div className="bg-green-100 rounded-lg p-3 mt-3">
+                            <div className="text-sm text-green-800">
+                              If payment completed, then notify organizer to get your tickets.
+                            </div>
+                
+                {/* Payment Details */}
+                <div className="mt-3 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-green-700">Amount:</span>
+                    <span className="font-medium text-green-800">₹{amount}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-green-700">Note:</span>
+                    <span className="font-medium text-green-800">1 ticket for {eventName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-green-700">UPI ID:</span>
+                    <span className="font-medium text-green-800">{upiId}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <Button
+                onClick={() => {
+                  // Call the onSuccess callback to redirect to payment result page
+                  const paymentId = `UPI_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                  onSuccess?.(paymentId);
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                size="lg"
+              >
+                <Bell className="h-4 w-4 mr-2" />
+                Notify Organizer About Payment
+              </Button>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={generateQRCode}
+                  variant="outline"
+                  className="flex-1 bg-blue-100 text-blue-700 hover:bg-blue-200"
+                >
+                  <QrCode className="h-4 w-4 mr-2" />
+                  Show QR Code
+                </Button>
+                <Button
+                  onClick={copyToClipboard}
+                  variant="outline"
+                  className="flex-1 bg-gray-100 text-gray-700 hover:bg-gray-200"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Link
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Supported Apps */}
+        <div className="text-center text-sm text-gray-500">
+          Supported apps: GPay, PhonePe, Paytm, BHIM, and more
+        </div>
+
         {/* Payment Instructions */}
-        <Alert>
-          <AlertDescription className="text-sm">
-            <strong>How to pay:</strong>
-            <ol className="mt-2 space-y-1 text-xs">
-              <li>1. Click "Open UPI App" or scan the QR code</li>
-              <li>2. Verify amount and organizer details</li>
-              <li>3. Complete payment in your UPI app</li>
-              <li>4. After payment, contact the organizer with your payment screenshot</li>
-            </ol>
-          </AlertDescription>
-        </Alert>
+        <div className="text-center text-sm text-gray-500">
+          After payment, contact the organizer with your payment screenshot
+        </div>
 
       </CardContent>
     </Card>

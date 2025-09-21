@@ -19,6 +19,7 @@ import type * as constants from "../constants.js";
 import type * as coupons from "../coupons.js";
 import type * as events from "../events.js";
 import type * as passes from "../passes.js";
+import type * as paymentNotifications from "../paymentNotifications.js";
 import type * as paymentSessions from "../paymentSessions.js";
 import type * as paymentVerifications from "../paymentVerifications.js";
 import type * as purchaseComplete from "../purchaseComplete.js";
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   coupons: typeof coupons;
   events: typeof events;
   passes: typeof passes;
+  paymentNotifications: typeof paymentNotifications;
   paymentSessions: typeof paymentSessions;
   paymentVerifications: typeof paymentVerifications;
   purchaseComplete: typeof purchaseComplete;

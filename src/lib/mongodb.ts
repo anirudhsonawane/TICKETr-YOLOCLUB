@@ -43,3 +43,9 @@ async function connectDB() {
 }
 
 export default connectDB;
+
+// Export getDatabase function for compatibility
+export const getDatabase = async () => {
+  const connection = await connectDB();
+  return connection.connection.db;
+};

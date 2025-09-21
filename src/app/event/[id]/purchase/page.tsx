@@ -229,7 +229,7 @@ export default function PurchasePage() {
                     console.error("Error marking coupon as used:", error);
                   }
                 }
-                router.push(`/payment-result?orderId=${paymentId}&status=COMPLETED`);
+                router.push(`/payment-result?orderId=${paymentId}&status=COMPLETED&eventId=${eventId}&eventName=${encodeURIComponent(event.name)}&amount=${totalAmount}&quantity=${quantity}&userId=${user.id}&organizerUpiId=${encodeURIComponent(event.organizerUpiId || "9595961116@ptsbi")}${selectedPass ? `&passId=${selectedPass._id}` : ''}${selectedDates.length > 0 ? `&selectedDate=${encodeURIComponent(selectedDates.join(','))}` : ''}`);
               }}
               onError={(error) => {
                 console.error("UPI payment error:", error);

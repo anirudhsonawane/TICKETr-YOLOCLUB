@@ -181,4 +181,30 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_status", ["status"])
     .index("by_uid", ["uid"]),
+
+  paymentNotifications: defineTable({
+    eventId: v.id("events"),
+    userId: v.string(),
+    amount: v.number(),
+    quantity: v.number(),
+    passId: v.optional(v.id("passes")),
+    upiTransactionId: v.string(),
+    payeeName: v.string(),
+    payeeMobileNumber: v.string(),
+    userInfo: v.optional(v.object({
+      name: v.optional(v.string()),
+      email: v.optional(v.string()),
+    })),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("verified"),
+      v.literal("rejected")
+    ),
+    ticketCreated: v.boolean(),
+    verifiedAt: v.optional(v.number()),
+  })
+    .index("by_event", ["eventId"])
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_event_status", ["eventId", "status"]),
 });
