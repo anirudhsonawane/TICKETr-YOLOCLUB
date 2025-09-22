@@ -3,7 +3,6 @@
 import Link  from "next/link";
 import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import SearchBar from "./SearchBar";
-import TICKETRLogo from "./TICKETRLogo";
 import PaymentVerificationNotification from "./PaymentVerificationNotification";
 import { isAuthorizedAdmin } from "@/lib/admin-config";
 import { Shield } from "lucide-react";
@@ -18,8 +17,16 @@ function Header() {
     <div className="border-b relative z-40">
       <div className="flex flex-col lg:flex-row items-center gap-4 p-4">
         <div className="flex items-center justify-between w-full lg:w-auto">
-          <Link href="/" className="shrink-0">
-            <TICKETRLogo size="sm" />
+          <Link href="/" className="shrink-0 group">
+            <div className="relative">
+              {/* Light Gradient Logo */}
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-wide">
+                <span className="inline-block transform transition-transform duration-500 ease-out bg-gradient-to-r from-rose-400 via-fuchsia-500 to-indigo-500 bg-clip-text text-transparent group-hover:from-rose-300 group-hover:via-fuchsia-400 group-hover:to-indigo-400 group-hover:scale-105 drop-shadow-sm group-hover:drop-shadow-md">
+                  GHOOMAR GARBA
+                </span>
+              </div>
+              <div className="mt-0.5 text-xs sm:text-sm font-medium text-gray-600 group-hover:text-gray-700">By YOLO CLUB EVENTS</div>
+            </div>
           </Link>
 
           {isLoaded && (

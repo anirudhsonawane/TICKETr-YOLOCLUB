@@ -124,7 +124,7 @@ export default function AdminDashboard() {
 
           {/* Tabs Navigation */}
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="w-full overflow-x-auto no-scrollbar flex gap-2 sm:grid sm:grid-cols-4">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               <TabsTrigger value="management">Management</TabsTrigger>

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Facebook, Twitter, Instagram } from "lucide-react";
 import Link from "next/link";
-import TICKETRLogo from "./TICKETRLogo";
 
 export default function Footer() {
   const [showContact, setShowContact] = useState(false);
@@ -14,7 +13,12 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Logo - Left aligned */}
         <div className="flex items-center space-x-3 mb-4 md:mb-0">
-          <TICKETRLogo size="md" />
+          <div className="">
+            <div className="text-xl font-extrabold tracking-wide bg-gradient-to-r from-rose-500 via-fuchsia-600 to-indigo-600 bg-clip-text text-transparent">
+              GHOOMAR GARBA
+            </div>
+            <div className="text-xs font-medium text-gray-600">By YOLO CLUB EVENTS</div>
+          </div>
         </div>
 
         {/* Middle section for Social Media (will be centered by justify-between around it) */}
@@ -96,13 +100,31 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Copyright and Terms & Conditions - Centered */}
-      <div className="mt-6 text-center text-sm text-gray-500 flex flex-col items-center">
-        <Link href="/terms-and-conditions" className="text-gray-600 hover:text-gray-900 transition-colors mb-2 block">
-          Terms & Conditions
-        </Link>
-        <p>© {new Date().getFullYear()} Ticketr. All rights reserved.</p>
-        <p className="mt-3 text-sm text-gray-600 font-medium">Created with ❤️ by ANIRUDH SONAWANE</p>
+      {/* Policy Links */}
+      <div className="mt-6 text-center">
+        <div className="flex flex-wrap justify-center gap-6 mb-4">
+          <Link href="/about-us" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">
+            About Us
+          </Link>
+          <Link href="/terms-and-conditions" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">
+            Terms & Conditions
+          </Link>
+          <Link href="/pricing-policy" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">
+            Pricing Policy
+          </Link>
+          <Link href="/cancellation-refund-policy" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">
+            Cancellation & Refund Policy
+          </Link>
+          <Link href="/privacy-policy" className="text-gray-600 hover:text-blue-600 transition-colors text-sm">
+            Privacy Policy
+          </Link>
+        </div>
+        
+        {/* Copyright */}
+        <div className="text-sm text-gray-500">
+          <p>© {new Date().getFullYear()} Ticketr. All rights reserved.</p>
+          
+        </div>
       </div>
     </footer>
   );

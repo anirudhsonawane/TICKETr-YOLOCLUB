@@ -72,7 +72,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
       </div>
 
       {/* Overall Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -127,7 +127,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
       </div>
 
       {/* Payment Status Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
@@ -251,7 +251,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
         <CardContent>
           <div className="space-y-4">
             {dayWiseAnalytics.slice(-7).map((day, index) => (
-              <div key={day.date} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div key={day.date} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg flex-col sm:flex-row gap-3">
                 <div className="flex items-center gap-3">
                   <div className="text-sm font-medium">{formatDate(day.date)}</div>
                   <div className="flex gap-2">
@@ -266,7 +266,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
                     </Badge>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right w-full sm:w-auto">
                   <div className="text-sm text-muted-foreground">
                     Approval Rate: {day.verificationsRequested > 0 
                       ? Math.round(((day.verificationsApproved || 0) / day.verificationsRequested) * 100)
@@ -293,8 +293,8 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
         <CardContent>
           <div className="space-y-4">
             {dayWiseAnalytics.slice(-7).map((day, index) => (
-              <div key={day.date} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
+              <div key={day.date} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg flex-col sm:flex-row gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
                   <div className="text-sm font-medium">{formatDate(day.date)}</div>
                   <div className="flex gap-2">
                     <Badge variant="outline" className="text-xs">
@@ -305,7 +305,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
                     </Badge>
                   </div>
                 </div>
-                <div className="flex gap-4 text-sm text-muted-foreground">
+                <div className="flex gap-4 text-sm text-muted-foreground flex-wrap">
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3 text-yellow-600" />
                     {day.paymentsPending} pending
@@ -319,7 +319,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
                     {day.paymentsRejected} rejected
                   </span>
                 </div>
-                <div className="flex gap-4 text-sm text-muted-foreground mt-1">
+                <div className="flex gap-4 text-sm text-muted-foreground mt-1 flex-wrap w-full sm:w-auto">
                   <span className="flex items-center gap-1">
                     <Activity className="h-3 w-3 text-blue-600" />
                     {day.verificationsRequested || 0} requested
@@ -397,8 +397,8 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
         <CardContent>
           <div className="space-y-3">
             {recentActivity.slice(0, 10).map((activity, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg flex-col sm:flex-row gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
                   <div className={`w-2 h-2 rounded-full ${
                     activity.type === 'ticket_created' ? 'bg-blue-500' :
                     activity.type === 'payment_verified' ? 'bg-green-500' :
@@ -413,7 +413,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
                   </div>
                 </div>
                 {activity.amount && (
-                  <div className="text-sm font-medium">
+                  <div className="text-sm font-medium w-full sm:w-auto">
                     {formatCurrency(activity.amount)}
                   </div>
                 )}
