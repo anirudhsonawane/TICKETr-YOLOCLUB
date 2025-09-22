@@ -15,8 +15,13 @@ import ScriptWithErrorHandling from "../components/ScriptWithErrorHandling";
 const geistSans = GeistSans;
 
 export const metadata: Metadata = {
-  title: "Ticketr - Your ultimate event ticketing solution.",
-  description: "Ticketr helps you create, manage, and sell tickets for your events.",
+  title: "YOLO CLUB - Your ultimate event ticketing solution.",
+  description: "YOLO CLUB helps you create, manage, and sell tickets for your events.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+    shortcut: "/logo.png",
+  },
   other: {
     // Add meta tag to handle prefetch-src CSP issues
     'prefetch-src': "'self' https://api.phonepe.com https://mercury-t2.phonepe.com https://mercury.phonepe.com",
@@ -80,6 +85,9 @@ export default function RootLayout({
         <head>
           {/* Add meta tag to handle prefetch-src CSP issues */}
           <meta name="prefetch-src" content="'self' https://api.phonepe.com https://mercury-t2.phonepe.com https://mercury.phonepe.com" />
+          {/* Favicon / App Icon */}
+          <link rel="icon" href="/logo.png" />
+          <link rel="apple-touch-icon" href="/logo.png" />
         </head>
         <body className={geistSans.className}>
           <ClerkTimeoutHandler>

@@ -57,43 +57,25 @@ export default function Footer() {
                 transition={{ duration: 0.3 }}
                 className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-80 bg-white border border-gray-200 rounded-xl shadow-lg p-6 z-50"
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Get in Touch</h3>
-
-                <form className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Name</label>
-                    <input
-                      type="text"
-                      className="mt-1 block w-full rounded-lg border border-gray-300 p-2 text-sm shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-                      placeholder="Your Name"
-                    />
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Details</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-start justify-between">
+                    <span className="text-gray-600">Name</span>
+                    <span className="font-medium text-gray-900">VINAYAK PARSEWAR</span>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <input
-                      type="email"
-                      className="mt-1 block w-full rounded-lg border border-gray-300 p-2 text-sm shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-                      placeholder="you@example.com"
-                    />
+                  <div className="flex items-start justify-between">
+                    <span className="text-gray-600">Email</span>
+                    <a href="mailto:vinayak.parsewar55@gmail.com" className="font-medium text-blue-600 hover:underline">vinayak.parsewar55@gmail.com</a>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Message</label>
-                    <textarea
-                      rows={3}
-                      className="mt-1 block w-full rounded-lg border border-gray-300 p-2 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                      placeholder="Write your message..."
-                    />
+                  <div className="flex items-start justify-between">
+                    <span className="text-gray-600">Phone</span>
+                    <a href="tel:+919822028988" className="font-medium text-gray-900">+91 9822028988</a>
                   </div>
-
-                  <button
-                    type="submit"
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-sm"
-                  >
-                    Send Message
-                  </button>
-                </form>
+                  <div>
+                    <div className="text-gray-600">Address</div>
+                    <div className="font-medium text-gray-900 mt-1">N9 A15 34/4 SHIVNERI COLONY CIDCO, Aurangabad, Maharashtra, India</div>
+                  </div>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -122,7 +104,7 @@ export default function Footer() {
         
         {/* Copyright */}
         <div className="text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} Ticketr. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} YOLO CLUB EVENTS. All rights reserved.</p>
           
         </div>
       </div>
