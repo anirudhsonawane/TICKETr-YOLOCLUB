@@ -18,9 +18,9 @@ export const metadata: Metadata = {
   title: "YOLO CLUB - Your ultimate event ticketing solution.",
   description: "YOLO CLUB helps you create, manage, and sell tickets for your events.",
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
-    shortcut: "/logo.png",
+    icon: "/softoria-logo.png",
+    apple: "/softoria-logo.png",
+    shortcut: "/softoria-logo.png",
   },
   other: {
     // Add meta tag to handle prefetch-src CSP issues
@@ -86,8 +86,8 @@ export default function RootLayout({
           {/* Add meta tag to handle prefetch-src CSP issues */}
           <meta name="prefetch-src" content="'self' https://api.phonepe.com https://mercury-t2.phonepe.com https://mercury.phonepe.com" />
           {/* Favicon / App Icon */}
-          <link rel="icon" href="/logo.png" />
-          <link rel="apple-touch-icon" href="/logo.png" />
+          <link rel="icon" href="/softoria-logo.png" />
+          <link rel="apple-touch-icon" href="/softoria-logo.png" />
         </head>
         <body className={geistSans.className}>
           <ClerkTimeoutHandler>
