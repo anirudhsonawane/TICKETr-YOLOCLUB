@@ -55,8 +55,8 @@ function AdminDashboardContent() {
 
   // Get all events for the admin
   const events = useQuery(api.events.getAll);
-  const paymentStats = useQuery(api.paymentNotifications?.getStats);
-  const allPendingPayments = useQuery(api.paymentNotifications?.getAllPending);
+  const paymentStats = useQuery(api.paymentNotifications.getStats);
+  const allPendingPayments = useQuery(api.paymentNotifications.getAllPending);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -68,12 +68,12 @@ function AdminDashboardContent() {
   }, [isAuthenticated, user]);
 
   // Show loading state
-  if (isLoading || isCheckingAuth) {
+  if (isLoading || isCheckingAuth || events === undefined || paymentStats === undefined) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking authorization...</p>
+          <p className="text-gray-600">Loading admin dashboard...</p>
         </div>
       </div>
     );
@@ -110,7 +110,7 @@ function AdminDashboardContent() {
     );
   }
 
-    // Real data for dashboard stats
+    // Real data for dashboard stats with safe fallbacks
     const dashboardStats = {
       totalEvents: events?.length || 0,
       pendingPayments: paymentStats?.pending || 0,

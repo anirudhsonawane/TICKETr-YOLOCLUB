@@ -7,6 +7,7 @@ import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import TicketScanner from "@/components/TicketScanner";
 import { redirect } from "next/navigation";
+import { isAuthorizedAdmin } from "@/lib/admin-config";
 
 // Force dynamic rendering to prevent SSR issues
 export const dynamic = 'force-dynamic';
@@ -26,12 +27,16 @@ export default function ScanTicketsPage({
     redirect("/");
   }
 
-  if (event && event.userId !== user.id) {
+  // Check if user is event owner OR authorized admin
+  const isEventOwner = event && event.userId === user.id;
+  const isAuthorizedUser = user.email && isAuthorizedAdmin(user.email);
+  
+  if (event && !isEventOwner && !isAuthorizedUser) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-2">Access Denied</h1>
-          <p className="text-gray-600">You can only scan tickets for your own events.</p>
+          <p className="text-gray-600">You can only scan tickets for your own events or if you're an authorized admin.</p>
         </div>
       </div>
     );

@@ -65,7 +65,7 @@ function NewEventContent() {
     return null;
   }
 
-  const isAuthorized = AUTHORIZED_CREATORS.includes(user.id);
+  const isAuthorized = AUTHORIZED_CREATOR_EMAILS.includes(user.email?.toLowerCase() || '');
 
   if (!isAuthorized) {
     return (

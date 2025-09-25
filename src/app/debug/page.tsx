@@ -41,7 +41,7 @@ function DebugContent() {
           <p><strong>Name:</strong> {user.name}</p>
         </div>
         <div className="mt-4 p-3 bg-gray-100 rounded">
-          <p className="text-sm text-gray-600">Copy your User ID and add it to the AUTHORIZED_CREATORS array in:</p>
+          <p className="text-sm text-gray-600">Copy your email and add it to the AUTHORIZED_CREATOR_EMAILS array in:</p>
           <p className="text-sm font-mono">src/app/seller/new-event/page.tsx</p>
         </div>
       </div>
