@@ -155,3 +155,66 @@ export const verifyPassword = query({
     return null;
   },
 });
+
+export const createGoogleUser = mutation({
+  args: {
+    userId: v.string(),
+    googleId: v.string(),
+    email: v.string(),
+    name: v.string(),
+    avatar: v.optional(v.string()),
+    isEmailVerified: v.optional(v.boolean()),
+    createdAt: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    // Check if user already exists
+    const existingUser = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .first();
+
+    if (existingUser) {
+      throw new ConvexError("User already exists with this email");
+    }
+
+    const newUserId = await ctx.db.insert("users", {
+      userId: args.userId,
+      email: args.email,
+      name: args.name,
+      googleId: args.googleId,
+      avatar: args.avatar,
+      role: "user",
+      isEmailVerified: args.isEmailVerified || true,
+      lastLogin: Date.now(),
+      createdAt: args.createdAt || Date.now(),
+      updatedAt: Date.now(),
+      stripeConnectId: undefined,
+    });
+
+    return newUserId;
+  },
+});
+
+export const updateUserGoogleId = mutation({
+  args: {
+    userId: v.string(),
+    googleId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+
+    await ctx.db.patch(user._id, {
+      googleId: args.googleId,
+      updatedAt: Date.now(),
+    });
+
+    return user._id;
+  },
+});
