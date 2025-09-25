@@ -72,7 +72,6 @@ export const createUser = mutation({
       lastLogin: args.lastLogin || Date.now(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      stripeConnectId: undefined,
     });
 
     return newUserId;
@@ -188,7 +187,6 @@ export const createGoogleUser = mutation({
       lastLogin: Date.now(),
       createdAt: args.createdAt || Date.now(),
       updatedAt: Date.now(),
-      stripeConnectId: undefined,
     });
 
     return newUserId;
