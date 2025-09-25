@@ -352,6 +352,20 @@ export const issueAfterPayment = mutation({
         console.log("✅ Ticket email scheduled successfully");
       } catch (emailError) {
         console.error("❌ Failed to schedule ticket email:", emailError);
+        
+        // Try fallback simple email method
+        try {
+          console.log("🔄 Trying fallback email method...");
+          await ctx.scheduler.runAfter(0, internal.actions.simpleEmail.sendSimpleEmailAction, {
+            to: user.email,
+            subject,
+            message: `Ticket Details:\nEvent: ${eventDetails?.name || "Event"}\nTicket IDs: ${ticketIds.join(", ")}\nQuantity: ${ticketQuantity}\nAmount: ₹${amount}`,
+          });
+          console.log("✅ Fallback email scheduled successfully");
+        } catch (fallbackError) {
+          console.error("❌ Fallback email also failed:", fallbackError);
+        }
+        
         // Don't throw error - ticket creation should still succeed even if email fails
       }
     }
