@@ -58,7 +58,6 @@ export const updateUser = mutation({
       userId,
       name,
       email,
-      stripeConnectId: undefined, // Optional field
     });
 
         return newUserId;

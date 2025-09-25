@@ -100,7 +100,25 @@ export async function GET(req: NextRequest) {
         const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
         try {
-          await convex.mutation(api.auth.createGoogleUser, {
+          const userData = {
+            userId,
+            googleId: googleUser.id,
+            email: googleUser.email,
+            name: googleUser.name,
+            avatar: googleUser.picture,
+            isEmailVerified: true,
+            createdAt: Date.now(),
+          };
+          
+          console.log('Attempting to create user with data:', userData);
+          
+          await convex.mutation(api.auth.createGoogleUser, userData);
+
+          user = await convex.query(api.auth.getUserByGoogleId, { googleId: googleUser.id });
+          console.log('Successfully created new user:', user?.email);
+        } catch (createError) {
+          console.error('Error creating new user:', createError);
+          console.error('User data that failed:', {
             userId,
             googleId: googleUser.id,
             email: googleUser.email,
@@ -109,11 +127,6 @@ export async function GET(req: NextRequest) {
             isEmailVerified: true,
             createdAt: Date.now(),
           });
-
-          user = await convex.query(api.auth.getUserByGoogleId, { googleId: googleUser.id });
-          console.log('Successfully created new user:', user?.email);
-        } catch (createError) {
-          console.error('Error creating new user:', createError);
           throw new Error(`Failed to create user: ${createError instanceof Error ? createError.message : String(createError)}`);
         }
       }
