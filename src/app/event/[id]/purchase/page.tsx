@@ -5,7 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ArrowLeft, Plus, Minus, Tag, Check } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import CouponInput from "@/components/CouponInput";
@@ -15,6 +15,24 @@ import PhonePePayment from "@/components/PhonePePayment";
 export const dynamic = 'force-dynamic';
 
 export default function PurchasePage() {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  return <PurchasePageContent />;
+}
+
+function PurchasePageContent() {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const params = useParams();

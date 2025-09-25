@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, ArrowLeft, Tag } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,24 @@ import DateSelector from "@/components/DateSelector";
 export const dynamic = 'force-dynamic';
 
 export default function PassSelectionPage() {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  return <PassSelectionContent />;
+}
+
+function PassSelectionContent() {
   const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
