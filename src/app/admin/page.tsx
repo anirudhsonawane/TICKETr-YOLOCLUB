@@ -57,6 +57,7 @@ function AdminDashboardContent() {
   const events = useQuery(api.events.getAll);
   const paymentStats = useQuery(api.paymentNotifications.getStats);
   const allPendingPayments = useQuery(api.paymentNotifications.getAllPending);
+  const recentActivity = useQuery(api.analytics.getRecentActivity);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -117,6 +118,51 @@ function AdminDashboardContent() {
       verifiedPayments: paymentStats?.verified || 0,
       totalRevenue: paymentStats?.totalAmount || 0,
       rejectedPayments: paymentStats?.rejected || 0
+    };
+
+    // Helper function to format activity data
+    const formatActivityTime = (timestamp: number) => {
+      const now = Date.now();
+      const diff = now - timestamp;
+      const minutes = Math.floor(diff / (1000 * 60));
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+      if (minutes < 60) {
+        return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+      } else if (hours < 24) {
+        return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+      } else {
+        return `${days} day${days !== 1 ? 's' : ''} ago`;
+      }
+    };
+
+    const getActivityIcon = (type: string) => {
+      switch (type) {
+        case 'payment_verified':
+        case 'ticket_created':
+          return <CheckCircle className="w-5 h-5 text-green-600" />;
+        case 'payment_pending':
+          return <Clock className="w-5 h-5 text-yellow-600" />;
+        case 'payment_rejected':
+          return <AlertTriangle className="w-5 h-5 text-red-600" />;
+        default:
+          return <Activity className="w-5 h-5 text-blue-600" />;
+      }
+    };
+
+    const getActivityBgColor = (type: string) => {
+      switch (type) {
+        case 'payment_verified':
+        case 'ticket_created':
+          return 'bg-green-50';
+        case 'payment_pending':
+          return 'bg-yellow-50';
+        case 'payment_rejected':
+          return 'bg-red-50';
+        default:
+          return 'bg-blue-50';
+      }
     };
 
   return (
@@ -293,31 +339,31 @@ function AdminDashboardContent() {
             </div>
             <div className="p-6">
               <div className="space-y-4">
-                {/* Mock recent activity */}
-                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Payment verified</p>
-                    <p className="text-xs text-gray-600">John Doe - ₹750 - Event Ticket</p>
+                {recentActivity && recentActivity.length > 0 ? (
+                  recentActivity.slice(0, 3).map((activity, index) => (
+                    <div key={index} className={`flex items-center gap-3 p-3 ${getActivityBgColor(activity.type)} rounded-lg`}>
+                      {getActivityIcon(activity.type)}
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">
+                          {activity.description}
+                        </p>
+                        {activity.amount && (
+                          <p className="text-xs text-gray-600">
+                            ₹{activity.amount.toLocaleString()} - {activity.eventName}
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {formatActivityTime(activity.timestamp)}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Activity className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p>No recent activity</p>
                   </div>
-                  <span className="text-xs text-gray-500">2 minutes ago</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
-                  <Clock className="w-5 h-5 text-yellow-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Payment pending</p>
-                    <p className="text-xs text-gray-600">Jane Smith - ₹1500 - 2 Event Tickets</p>
-                  </div>
-                  <span className="text-xs text-gray-500">15 minutes ago</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Payment verified</p>
-                    <p className="text-xs text-gray-600">Mike Johnson - ₹500 - Event Pass</p>
-                  </div>
-                  <span className="text-xs text-gray-500">1 hour ago</span>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -499,39 +545,31 @@ function AdminDashboardContent() {
                 </div>
                 <div className="p-6">
                   <div className="space-y-4">
-                    {/* Mock recent activity */}
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Payment verified</p>
-                        <p className="text-xs text-gray-600">John Doe - ₹750 - Event Ticket</p>
+                    {recentActivity && recentActivity.length > 0 ? (
+                      recentActivity.slice(0, 10).map((activity, index) => (
+                        <div key={index} className={`flex items-center gap-3 p-3 ${getActivityBgColor(activity.type)} rounded-lg`}>
+                          {getActivityIcon(activity.type)}
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {activity.description}
+                            </p>
+                            {activity.amount && (
+                              <p className="text-xs text-gray-600">
+                                ₹{activity.amount.toLocaleString()} - {activity.eventName}
+                              </p>
+                            )}
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {formatActivityTime(activity.timestamp)}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <Activity className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                        <p>No recent activity</p>
                       </div>
-                      <span className="text-xs text-gray-500">2 minutes ago</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
-                      <Clock className="w-5 h-5 text-yellow-600" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Payment pending</p>
-                        <p className="text-xs text-gray-600">Jane Smith - ₹1500 - 2 Event Tickets</p>
-                      </div>
-                      <span className="text-xs text-gray-500">15 minutes ago</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Payment verified</p>
-                        <p className="text-xs text-gray-600">Mike Johnson - ₹500 - Event Pass</p>
-                      </div>
-                      <span className="text-xs text-gray-500">1 hour ago</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                      <Calendar className="w-5 h-5 text-blue-600" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">New event created</p>
-                        <p className="text-xs text-gray-600">Ghoomar Garba Night - ₹799 per ticket</p>
-                      </div>
-                      <span className="text-xs text-gray-500">2 hours ago</span>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
