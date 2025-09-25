@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import { ConvexClientProvider } from "../components/ConvexClientProvider";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { ClientAuthProvider } from "@/components/ClientAuthProvider";
 import { Toaster } from "@/components/ui/sonner";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -36,7 +36,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/softoria-logo.png" />
       </head>
       <body className={geistSans.className}>
-        <AuthProvider>
+        <ClientAuthProvider>
           <ConvexClientProvider>
             <div className="min-h-screen flex flex-col">
               <Header />
@@ -45,7 +45,7 @@ export default function RootLayout({
             </div>
             <Toaster />
           </ConvexClientProvider>
-        </AuthProvider>
+        </ClientAuthProvider>
       </body>
     </html>
   );

@@ -71,9 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Check if we're on the client side
+        // Always check if we're on the client side
         if (typeof window === 'undefined') {
-          setIsLoading(false);
           return;
         }
 
@@ -103,7 +102,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    initializeAuth();
+    // Only run on client side
+    if (typeof window !== 'undefined') {
+      initializeAuth();
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
   // Clear auth state

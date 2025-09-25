@@ -5,9 +5,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import SearchBar from "./SearchBar";
 import { isAuthorizedAdmin } from "@/lib/admin-config";
 import { Shield, User, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
 
 function Header() {
   const { user, isAuthenticated, logout } = useAuth();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   // Check if user is authorized admin
   const isAdmin = user && isAuthorizedAdmin(user.email || '');
@@ -29,7 +35,9 @@ function Header() {
           </Link>
 
           <div className="lg:hidden flex items-center relative z-50">
-            {isAuthenticated ? (
+            {!isClient ? (
+              <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
+            ) : isAuthenticated ? (
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
@@ -62,7 +70,13 @@ function Header() {
 
         {/* Desktop Action Buttons */}
         <div className="hidden lg:block ml-auto">
-          {isAuthenticated ? (
+          {!isClient ? (
+            <div className="flex items-center gap-3">
+              <div className="w-24 h-8 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          ) : isAuthenticated ? (
             <div className="flex items-center gap-3">
               {/* Admin Panel Button - Only for authorized admins */}
               {isAdmin && (
