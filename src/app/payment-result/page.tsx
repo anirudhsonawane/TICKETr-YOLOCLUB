@@ -193,8 +193,49 @@ function PaymentResultContent() {
           setError(ticketData.error || 'Failed to create ticket');
         }
       } else {
-        console.error('❌ Payment session not found:', sessionData);
-        throw new Error('Payment session not found');
+        console.log('Payment session not found, trying fallback ticket creation');
+        // Payment session not found, but payment was successful
+        // Try to get payment details from localStorage first
+        let fallbackData = null;
+        try {
+          const storedData = localStorage.getItem('phonepe_payment_fallback');
+          if (storedData) {
+            fallbackData = JSON.parse(storedData);
+            console.log('Found fallback data in localStorage:', fallbackData);
+          }
+        } catch (error) {
+          console.warn('Error reading localStorage fallback data:', error);
+        }
+        
+        // Try to create ticket with fallback method
+        try {
+          const fallbackResponse = await fetch('/api/create-ticket-fallback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              paymentId: orderId,
+              eventId: fallbackData?.eventId || searchParams.get('eventId'),
+              userId: fallbackData?.userId || searchParams.get('userId'),
+              amount: fallbackData?.amount || searchParams.get('amount'),
+              quantity: fallbackData?.quantity || searchParams.get('quantity') || 1,
+            }),
+          });
+          
+          const fallbackResult = await fallbackResponse.json();
+          
+          if (fallbackResult.success) {
+            setTicketCreated(true);
+            console.log('✅ Fallback ticket created:', fallbackResult.ticketId);
+            // Clear localStorage fallback data
+            localStorage.removeItem('phonepe_payment_fallback');
+          } else {
+            console.error('❌ Fallback ticket creation failed:', fallbackResult.error);
+            setError('Payment successful but ticket creation failed. Please contact support with payment ID: ' + orderId);
+          }
+        } catch (fallbackError) {
+          console.error('❌ Fallback ticket creation error:', fallbackError);
+          setError('Payment successful but ticket creation requires manual intervention. Please contact support with payment ID: ' + orderId);
+        }
       }
     } catch (error) {
       console.error('❌ Failed to create ticket:', error);

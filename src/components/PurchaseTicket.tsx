@@ -174,13 +174,39 @@ export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
             });
 
             if (!sessionResponse.ok) {
-              console.warn('Failed to create payment session:', await sessionResponse.text());
+              const errorText = await sessionResponse.text();
+              console.warn('Failed to create payment session:', errorText);
+              // Store payment details in localStorage as fallback
+              localStorage.setItem('razorpay_payment_fallback', JSON.stringify({
+                sessionId: response.razorpay_payment_id,
+                userId: user.id,
+                eventId,
+                amount: totalAmount,
+                quantity,
+                passId: selectedPass?._id,
+                selectedDate: selectedDate,
+                couponCode: appliedCoupon?.code,
+                waitingListId: queuePosition?.waitingListId,
+                timestamp: Date.now()
+              }));
             } else {
               console.log('Payment session created successfully');
             }
           } catch (sessionError) {
             console.warn('Error creating payment session:', sessionError);
-            // Continue with redirect even if session creation fails
+            // Store payment details in localStorage as fallback
+            localStorage.setItem('razorpay_payment_fallback', JSON.stringify({
+              sessionId: response.razorpay_payment_id,
+              userId: user.id,
+              eventId,
+              amount: totalAmount,
+              quantity,
+              passId: selectedPass?._id,
+              selectedDate: selectedDate,
+              couponCode: appliedCoupon?.code,
+              waitingListId: queuePosition?.waitingListId,
+              timestamp: Date.now()
+            }));
           }
 
           try {

@@ -150,13 +150,39 @@ export default function PhonePePayment({
           });
 
           if (!sessionResponse.ok) {
-            console.warn('Failed to create payment session:', await sessionResponse.text());
+            const errorText = await sessionResponse.text();
+            console.warn('Failed to create payment session:', errorText);
+            // Store payment details in localStorage as fallback
+            localStorage.setItem('phonepe_payment_fallback', JSON.stringify({
+              sessionId: data.merchantOrderId,
+              userId,
+              eventId,
+              amount,
+              quantity,
+              passId,
+              selectedDate,
+              couponCode,
+              waitingListId,
+              timestamp: Date.now()
+            }));
           } else {
             console.log('Payment session created successfully');
           }
         } catch (sessionError) {
           console.warn('Error creating payment session:', sessionError);
-          // Continue with payment even if session creation fails
+          // Store payment details in localStorage as fallback
+          localStorage.setItem('phonepe_payment_fallback', JSON.stringify({
+            sessionId: data.merchantOrderId,
+            userId,
+            eventId,
+            amount,
+            quantity,
+            passId,
+            selectedDate,
+            couponCode,
+            waitingListId,
+            timestamp: Date.now()
+          }));
         }
 
         // Check if we have a payment interface (mock mode) or redirect URL (real mode)

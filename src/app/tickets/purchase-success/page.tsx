@@ -184,6 +184,18 @@ function PurchaseSuccessContent() {
       } else {
         console.log('Payment session not found, trying fallback ticket creation');
         // Payment session not found, but payment was successful
+        // Try to get payment details from localStorage first
+        let fallbackData = null;
+        try {
+          const storedData = localStorage.getItem('razorpay_payment_fallback');
+          if (storedData) {
+            fallbackData = JSON.parse(storedData);
+            console.log('Found fallback data in localStorage:', fallbackData);
+          }
+        } catch (error) {
+          console.warn('Error reading localStorage fallback data:', error);
+        }
+        
         // Try to create ticket with fallback method
         try {
           const fallbackResponse = await fetch('/api/create-ticket-fallback', {
@@ -191,20 +203,22 @@ function PurchaseSuccessContent() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               paymentId: paymentId,
-              eventId: searchParams.get('eventId'), // Try to get from URL params
-              userId: searchParams.get('userId'), // Try to get from URL params
-              amount: searchParams.get('amount'), // Try to get from URL params
-              quantity: searchParams.get('quantity') || 1,
+              eventId: fallbackData?.eventId || searchParams.get('eventId'),
+              userId: fallbackData?.userId || searchParams.get('userId'),
+              amount: fallbackData?.amount || searchParams.get('amount'),
+              quantity: fallbackData?.quantity || searchParams.get('quantity') || 1,
             }),
           });
           
-          const fallbackData = await fallbackResponse.json();
+          const fallbackResult = await fallbackResponse.json();
           
-          if (fallbackData.success) {
+          if (fallbackResult.success) {
             setTicketCreated(true);
-            console.log('Fallback ticket created:', fallbackData.ticketId);
+            console.log('Fallback ticket created:', fallbackResult.ticketId);
+            // Clear localStorage fallback data
+            localStorage.removeItem('razorpay_payment_fallback');
           } else {
-            console.error('Fallback ticket creation failed:', fallbackData.error);
+            console.error('Fallback ticket creation failed:', fallbackResult.error);
             setSessionError('Payment successful but ticket creation failed. Please contact support with payment ID: ' + paymentId);
           }
         } catch (fallbackError) {

@@ -15,7 +15,8 @@ export const createPaymentSession = mutation({
     waitingListId: v.optional(v.id("waitingList")),
     paymentMethod: v.union(
       v.literal("razorpay"),
-      v.literal("upi")
+      v.literal("upi"),
+      v.literal("phonepe")
     ),
     metadata: v.optional(v.any()),
   },
@@ -162,8 +163,8 @@ export const getPaymentSessionWithEvent = query({
 
     // Check if session has expired
     if (session.expiresAt < Date.now() && session.status === "pending") {
-      await ctx.db.patch(session._id, { status: "expired" });
-      return { ...session, status: "expired", event };
+      // Return expired status without modifying the database in query context
+      return { ...session, status: "expired" as const, event };
     }
 
     return { ...session, event };
