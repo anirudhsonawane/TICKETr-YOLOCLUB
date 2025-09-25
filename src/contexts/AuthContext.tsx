@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 
@@ -8,6 +8,7 @@ import { api } from '../../convex/_generated/api';
 interface User {
   _id: string;
   id: string; // For compatibility with existing code
+  userId?: string; // For backend compatibility
   name: string;
   email: string;
   avatar?: string;
@@ -110,8 +111,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Enhanced setToken function that persists to localStorage and cookies
+  const setTokenWithPersistence = useCallback((newToken: string | null) => {
+    setToken(newToken);
+    if (typeof window !== 'undefined') {
+      if (newToken) {
+        localStorage.setItem('token', newToken);
+        // Also set cookie for middleware
+        document.cookie = `token=${newToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+      } else {
+        localStorage.removeItem('token');
+        // Remove cookie
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      }
+    }
+  }, []);
+
+  // Enhanced setUser function that persists to localStorage
+  const setUserWithPersistence = useCallback((newUser: User | null) => {
+    setUser(newUser);
+    if (typeof window !== 'undefined') {
+      if (newUser) {
+        localStorage.setItem('user', JSON.stringify(newUser));
+      } else {
+        localStorage.removeItem('user');
+      }
+    }
+  }, []);
+
   // Clear auth state
-  const clearAuthState = () => {
+  const clearAuthState = useCallback(() => {
     setUser(null);
     setToken(null);
     if (typeof window !== 'undefined') {
@@ -120,10 +149,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear cookie
       document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }
-  };
+  }, []);
 
   // Login function
-  const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
+  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {
       setIsLoading(true);
       
@@ -149,10 +178,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setTokenWithPersistence, setUserWithPersistence]);
 
   // Register function
-  const register = async (name: string, email: string, password: string): Promise<{ success: boolean; message?: string }> => {
+  const register = useCallback(async (name: string, email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {
       setIsLoading(true);
       
@@ -176,16 +205,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setTokenWithPersistence, setUserWithPersistence]);
 
   // Logout function
-  const logout = async () => {
+  const logout = useCallback(async () => {
     // Clear the local auth state
     clearAuthState();
-  };
+  }, [clearAuthState]);
 
   // Update user function
-  const updateUser = async (userData: Partial<User>): Promise<{ success: boolean; message?: string }> => {
+  const updateUser = useCallback(async (userData: Partial<User>): Promise<{ success: boolean; message?: string }> => {
     try {
       const response = await fetch('/api/auth/profile', {
         method: 'PUT',
@@ -205,10 +234,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       return { success: false, message: 'Update failed' };
     }
-  };
+  }, [token, setUserWithPersistence]);
 
   // Refresh user data
-  const refreshUser = async (): Promise<void> => {
+  const refreshUser = useCallback(async (): Promise<void> => {
     try {
       const response = await fetch('/api/auth/me', {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -220,35 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Refresh user error:', error);
     }
-  };
-
-  // Enhanced setToken function that persists to localStorage and cookies
-  const setTokenWithPersistence = (newToken: string | null) => {
-    setToken(newToken);
-    if (typeof window !== 'undefined') {
-      if (newToken) {
-        localStorage.setItem('token', newToken);
-        // Also set cookie for middleware
-        document.cookie = `token=${newToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
-      } else {
-        localStorage.removeItem('token');
-        // Remove cookie
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      }
-    }
-  };
-
-  // Enhanced setUser function that persists to localStorage
-  const setUserWithPersistence = (newUser: User | null) => {
-    setUser(newUser);
-    if (typeof window !== 'undefined') {
-      if (newUser) {
-        localStorage.setItem('user', JSON.stringify(newUser));
-      } else {
-        localStorage.removeItem('user');
-      }
-    }
-  };
+  }, [token, setUserWithPersistence]);
 
   // Handle OAuth callback
   const handleOAuthCallback = (token: string, user: User) => {

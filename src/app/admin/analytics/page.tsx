@@ -7,7 +7,31 @@ import AdminNavigation from "@/components/AdminNavigation";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import { Lock, BarChart3 } from "lucide-react";
 
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic';
+
 export default function AdminAnalyticsPage() {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <AdminAnalyticsContent />;
+}
+
+function AdminAnalyticsContent() {
   const { user, isLoading } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -7,7 +8,28 @@ import { Ticket, Calendar, MapPin, Clock, Download, Tag } from "lucide-react";
 import Link from "next/link";
 import Spinner from "@/components/Spinner";
 
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic';
+
 export default function MyTicketsPage() {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  return <MyTicketsContent />;
+}
+
+function MyTicketsContent() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const tickets = useQuery(api.tickets.getUserTickets, 
     user ? { userId: user._id } : "skip"

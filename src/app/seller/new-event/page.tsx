@@ -1,10 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { Mail, Shield } from "lucide-react";
 import EventForm from "@/components/EventForm";
+
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic';
 
 // Authorized event creators (add developer-approved user IDs here)
 const AUTHORIZED_CREATORS: string[] = [
@@ -13,6 +16,26 @@ const AUTHORIZED_CREATORS: string[] = [
 ];
 
 export default function NewEventPage() {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="max-w-3xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-lg text-center p-8">
+          <div className="text-center">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return <NewEventContent />;
+}
+
+function NewEventContent() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 

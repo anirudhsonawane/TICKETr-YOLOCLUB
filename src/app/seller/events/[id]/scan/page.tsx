@@ -8,6 +8,9 @@ import { Id } from "../../../../../../convex/_generated/dataModel";
 import TicketScanner from "@/components/TicketScanner";
 import { redirect } from "next/navigation";
 
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic';
+
 export default function ScanTicketsPage({ 
   params 
 }: { 

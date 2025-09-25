@@ -6,7 +6,7 @@ const crons = cronJobs();
 // Clean up expired payment sessions every hour
 crons.hourly(
   "cleanup expired payment sessions",
-  { hourUTC: 0, minuteUTC: 0 }, // Run at the top of every hour
+  { hour: 0, minute: 0 }, // Run at the top of every hour
   internal.paymentSessions.cleanupExpiredSessions
 );
 

@@ -13,9 +13,13 @@ import {
 } from "lucide-react";
 import QRCode from "react-qr-code";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStorageUrl } from "@/lib/utils";
 import { useParams } from "next/navigation";
+
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic';
 
 const theme = {
   bg: "bg-gradient-to-br from-white-500 to-yellow-600",
@@ -24,7 +28,25 @@ const theme = {
   light: "bg-red-50",
 };
 
-function TicketPage() {
+export default function TicketPage() {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">Loading...</div>
+      </div>
+    );
+  }
+
+  return <TicketPageContent />;
+}
+
+function TicketPageContent() {
   const { isLoading, user } = useAuth();
   const params = useParams<{ ticketId: string }>();
 
@@ -83,7 +105,7 @@ const ticketCount =
     : 1;
 
 
-  if (!isLoaded || ticket === undefined) {
+  if (isLoading || ticket === undefined) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">Loading...</div>
@@ -206,10 +228,10 @@ const ticketCount =
                 />
                 <div>
                   <p className="text-sm text-gray-500">Ticket Holder</p>
-                  <p className="font-medium">{user?.fullName || "Guest"}</p>
-                  {user?.primaryEmailAddress && (
+                  <p className="font-medium">{user?.name || "Guest"}</p>
+                  {user?.email && (
                     <p className="text-sm text-gray-500">
-                      {user.primaryEmailAddress.emailAddress}
+                      {user.email}
                     </p>
                   )}
                 </div>
@@ -335,7 +357,6 @@ const ticketCount =
   );
 }
 
-export default TicketPage;
 /* <TicketCard
   ticket={ticket}
   totalTickets={ticketCount}

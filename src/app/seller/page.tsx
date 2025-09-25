@@ -1,10 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { Mail, Shield } from "lucide-react";
 import EventForm from "@/components/EventForm";
+
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic';
 
 // Authorized event creators (add developer-approved user IDs here)
 const AUTHORIZED_CREATORS: string[] = [
@@ -14,6 +17,24 @@ const AUTHORIZED_CREATORS: string[] = [
 ];
 
 export default function SellerPage() {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">Loading...</div>
+      </div>
+    );
+  }
+
+  return <SellerContent />;
+}
+
+function SellerContent() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 

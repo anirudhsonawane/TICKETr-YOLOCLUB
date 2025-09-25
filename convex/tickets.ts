@@ -279,15 +279,16 @@ We look forward to seeing you there!
 Best regards,
 The Ticketr Team`;
 
-      await ctx.runAction(internal.actions.sendEmail.sendEmail, {
-        to: user.email,
-        subject,
-        body,
-        userId: user.userId,
-        ticketIds,
-        eventId,
-        purchaseId: paymentIntentId,
-      });
+      // Note: Email sending is commented out as the action doesn't exist
+      // await ctx.runAction(internal.actions.sendEmail.sendEmail, {
+      //   to: user.email,
+      //   subject,
+      //   body,
+      //   userId: user.userId,
+      //   ticketIds,
+      //   eventId,
+      //   purchaseId: paymentIntentId,
+      // });
     }
 
     // Update pass sold quantity if passId is provided

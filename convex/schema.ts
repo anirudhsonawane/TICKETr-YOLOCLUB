@@ -165,4 +165,51 @@ export default defineSchema({
     timestamp: v.number(),
   }).index("by_uid", ["uid"]),
 
+  paymentNotifications: defineTable({
+    eventId: v.id("events"),
+    userId: v.string(),
+    amount: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("verified"),
+      v.literal("rejected")
+    ),
+    upiTransactionId: v.string(),
+    payeeName: v.string(),
+    payeeMobileNumber: v.string(),
+    submittedAt: v.number(),
+    verifiedAt: v.optional(v.number()),
+    quantity: v.number(),
+    passId: v.optional(v.id("passes")),
+    selectedDate: v.optional(v.string()),
+    userInfo: v.optional(v.object({
+      name: v.optional(v.string()),
+      email: v.optional(v.string())
+    })),
+  })
+    .index("by_user", ["userId"])
+    .index("by_event", ["eventId"])
+    .index("by_status", ["status"]),
+
+  paymentVerifications: defineTable({
+    uid: v.string(),
+    eventId: v.id("events"),
+    userId: v.string(),
+    amount: v.number(),
+    quantity: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("verified"),
+      v.literal("rejected")
+    ),
+    submittedAt: v.number(),
+    verifiedAt: v.optional(v.number()),
+    passId: v.optional(v.id("passes")),
+    selectedDate: v.optional(v.string()),
+  })
+    .index("by_uid", ["uid"])
+    .index("by_event", ["eventId"])
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"]),
+
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { Id } from "../../convex/_generated/dataModel";
@@ -12,7 +13,38 @@ import { CalendarDays, Check, CircleArrowRight, LoaderCircle, MapPin, PencilIcon
 import Link from "next/link";
 import PurchaseTicket from "./PurchaseTicket";
 
+function EventCardSkeleton() {
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden animate-pulse">
+      <div className="w-full h-40 sm:h-56 md:h-72 bg-gray-200"></div>
+      <div className="p-4 sm:p-6">
+        <div className="h-6 bg-gray-200 rounded mb-2"></div>
+        <div className="h-4 bg-gray-200 rounded mb-4"></div>
+        <div className="space-y-2">
+          <div className="h-4 bg-gray-200 rounded"></div>
+          <div className="h-4 bg-gray-200 rounded"></div>
+          <div className="h-4 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function EventCard({ eventId, hideBuyButton = false }: { eventId: Id<"events">, hideBuyButton?: boolean }) {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return <EventCardSkeleton />;
+  }
+
+  return <EventCardContent eventId={eventId} hideBuyButton={hideBuyButton} />;
+}
+
+function EventCardContent({ eventId, hideBuyButton = false }: { eventId: Id<"events">, hideBuyButton?: boolean }) {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const event = useQuery(api.events.getById, { eventId });

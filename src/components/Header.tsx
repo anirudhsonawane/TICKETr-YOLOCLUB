@@ -8,12 +8,36 @@ import { Shield, User, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 
 function Header() {
-  const { user, isAuthenticated, logout } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Show loading state during SSR
+  if (!isClient) {
+    return (
+      <div className="border-b">
+        <div className="flex flex-col lg:flex-row items-center gap-4 p-4">
+          <div className="flex items-center justify-between w-full lg:w-auto">
+            <Link href="/" className="shrink-0">
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-wide">
+                <span className="inline-block bg-gradient-to-r from-rose-400 via-fuchsia-500 to-indigo-500 bg-clip-text text-transparent">
+                  GHOOMAR GARBA
+                </span>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <HeaderContent />;
+}
+
+function HeaderContent() {
+  const { user, isAuthenticated, logout } = useAuth();
   
   // Check if user is authorized admin
   const isAdmin = user && isAuthorizedAdmin(user.email || '');
@@ -35,9 +59,7 @@ function Header() {
           </Link>
 
           <div className="lg:hidden flex items-center relative z-50">
-            {!isClient ? (
-              <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
-            ) : isAuthenticated ? (
+            {isAuthenticated ? (
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
@@ -70,13 +92,7 @@ function Header() {
 
         {/* Desktop Action Buttons */}
         <div className="hidden lg:block ml-auto">
-          {!isClient ? (
-            <div className="flex items-center gap-3">
-              <div className="w-24 h-8 bg-gray-200 rounded animate-pulse"></div>
-              <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
-              <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-          ) : isAuthenticated ? (
+          {isAuthenticated ? (
             <div className="flex items-center gap-3">
               {/* Admin Panel Button - Only for authorized admins */}
               {isAdmin && (

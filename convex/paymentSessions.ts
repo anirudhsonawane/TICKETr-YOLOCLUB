@@ -67,9 +67,8 @@ export const getPaymentSession = query({
 
     // Check if session has expired
     if (session.expiresAt < Date.now() && session.status === "pending") {
-      // Mark as expired
-      await ctx.db.patch(session._id, { status: "expired" });
-      return { ...session, status: "expired" };
+      // Return expired status without modifying the database in query context
+      return { ...session, status: "expired" as const };
     }
 
     return session;

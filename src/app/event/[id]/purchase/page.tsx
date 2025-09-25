@@ -11,6 +11,9 @@ import Spinner from "@/components/Spinner";
 import CouponInput from "@/components/CouponInput";
 import PhonePePayment from "@/components/PhonePePayment";
 
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic';
+
 export default function PurchasePage() {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();

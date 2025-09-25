@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
@@ -10,6 +10,28 @@ import Link from "next/link";
 import Spinner from "@/components/Spinner";
 
 export default function GroupTicketsPage({ 
+  params 
+}: { 
+  params: Promise<{ eventId: string; passId: string }> 
+}) {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  return <GroupTicketsContent params={params} />;
+}
+
+function GroupTicketsContent({ 
   params 
 }: { 
   params: Promise<{ eventId: string; passId: string }> 

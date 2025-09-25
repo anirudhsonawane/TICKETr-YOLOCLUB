@@ -24,7 +24,31 @@ import {
   Activity
 } from "lucide-react";
 
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic';
+
 export default function AdminDashboard() {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <AdminDashboardContent />;
+}
+
+function AdminDashboardContent() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -77,7 +101,7 @@ export default function AdminDashboard() {
             </div>
             {user && (
               <p className="text-sm text-gray-500 mt-4">
-                Logged in as: {user.emailAddresses[0]?.emailAddress}
+                Logged in as: {user.email}
               </p>
             )}
           </div>
@@ -108,7 +132,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold mb-2">
-                  Welcome back, {user.fullName || 'Admin'}!
+                  Welcome back, {user.name || 'Admin'}!
                 </h1>
                 <p className="text-blue-100 text-lg">
                   Manage your UPI payment system and verify customer payments
@@ -447,7 +471,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm">Active Users</span>
-                        <span className="text-sm font-medium text-blue-600">{dashboardStats.totalUsers}</span>
+                        <span className="text-sm font-medium text-blue-600">{events?.length || 0}</span>
                       </div>
                     </div>
                   </div>

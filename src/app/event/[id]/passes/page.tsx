@@ -11,6 +11,9 @@ import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
 import DateSelector from "@/components/DateSelector";
 
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic';
+
 export default function PassSelectionPage() {
   const { user } = useAuth();
   const router = useRouter();
