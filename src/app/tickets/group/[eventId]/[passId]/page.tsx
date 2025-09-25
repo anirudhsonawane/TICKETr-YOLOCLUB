@@ -14,7 +14,7 @@ export default function GroupTicketsPage({
 }: { 
   params: Promise<{ eventId: string; passId: string }> 
 }) {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { eventId, passId } = use(params);
   
   const event = useQuery(api.events.getById, { eventId: eventId as Id<"events"> });

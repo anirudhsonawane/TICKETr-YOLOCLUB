@@ -23,7 +23,7 @@ export default function SellerDashboard() {
     null
   );
   const router = useRouter();
-  const { user } = useUser();
+  const { user } = useAuth();
   const stripeConnectId = useQuery(api.users.getUsersStripeConnectId, {
     userId: user?.id || "",
   });

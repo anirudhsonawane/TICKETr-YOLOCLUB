@@ -20,7 +20,7 @@ interface TicketScannerProps {
 }
 
 export default function TicketScanner({ eventId }: TicketScannerProps) {
-  const { user } = useUser();
+  const { user } = useAuth();
 
   // Local state hooks
   const [ticketId, setTicketId] = useState("");
