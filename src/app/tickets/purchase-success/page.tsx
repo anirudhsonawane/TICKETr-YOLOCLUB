@@ -34,6 +34,17 @@ function PurchaseSuccessContent() {
     try {
       console.log('Verifying PhonePe payment for order:', orderId);
       
+      // First, check if tickets already exist for this payment
+      const existingTicketsResponse = await fetch(`/api/tickets/by-payment?paymentId=${orderId}`);
+      const existingTicketsData = await existingTicketsResponse.json();
+      
+      if (existingTicketsData.success && existingTicketsData.tickets && existingTicketsData.tickets.length > 0) {
+        // Tickets already exist, mark as created
+        setTicketCreated(true);
+        console.log('Tickets already exist:', existingTicketsData.tickets);
+        return;
+      }
+      
       // Verify payment status with PhonePe
       const verifyResponse = await fetch('/api/phonepe/verify', {
         method: 'POST',
@@ -85,7 +96,35 @@ function PurchaseSuccessContent() {
           setSessionError(ticketData.error || 'Failed to create ticket');
         }
       } else {
-        throw new Error('Payment session not found');
+        console.log('Payment session not found, trying fallback ticket creation');
+        // Payment session not found, but payment was successful
+        // Try to create ticket with fallback method
+        try {
+          const fallbackResponse = await fetch('/api/create-ticket-fallback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              paymentId: orderId,
+              eventId: searchParams.get('eventId'), // Try to get from URL params
+              userId: searchParams.get('userId'), // Try to get from URL params
+              amount: searchParams.get('amount'), // Try to get from URL params
+              quantity: searchParams.get('quantity') || 1,
+            }),
+          });
+          
+          const fallbackData = await fallbackResponse.json();
+          
+          if (fallbackData.success) {
+            setTicketCreated(true);
+            console.log('Fallback ticket created:', fallbackData.ticketId);
+          } else {
+            console.error('Fallback ticket creation failed:', fallbackData.error);
+            setSessionError('Payment successful but ticket creation failed. Please contact support with payment ID: ' + orderId);
+          }
+        } catch (fallbackError) {
+          console.error('Fallback ticket creation error:', fallbackError);
+          setSessionError('Payment successful but ticket creation requires manual intervention. Please contact support with payment ID: ' + orderId);
+        }
       }
       
     } catch (error) {
@@ -98,23 +137,25 @@ function PurchaseSuccessContent() {
 
   const processRazorpayPayment = async (paymentId: string) => {
     try {
-      // First, try to get payment session from database
+      console.log('Processing Razorpay payment for ID:', paymentId);
+      
+      // First, check if tickets already exist for this payment (webhook might have created them)
+      const existingTicketsResponse = await fetch(`/api/tickets/by-payment?paymentId=${paymentId}`);
+      const existingTicketsData = await existingTicketsResponse.json();
+      
+      if (existingTicketsData.success && existingTicketsData.tickets && existingTicketsData.tickets.length > 0) {
+        // Tickets already exist, mark as created
+        setTicketCreated(true);
+        console.log('Tickets already exist:', existingTicketsData.tickets);
+        return;
+      }
+      
+      // Try to get payment session from database
       const sessionResponse = await fetch(`/api/payment-sessions?sessionId=${paymentId}`);
       const sessionData = await sessionResponse.json();
       
       if (sessionData.success && sessionData.session) {
         setPaymentSession(sessionData.session);
-        
-        // Check if tickets already exist for this payment (webhook might have created them)
-        const existingTicketsResponse = await fetch(`/api/tickets/by-payment?paymentId=${paymentId}`);
-        const existingTicketsData = await existingTicketsResponse.json();
-        
-        if (existingTicketsData.success && existingTicketsData.tickets && existingTicketsData.tickets.length > 0) {
-          // Tickets already exist, mark as created
-          setTicketCreated(true);
-          console.log('Tickets already exist:', existingTicketsData.tickets);
-          return;
-        }
         
         // Create ticket using session data
         const ticketResponse = await fetch('/api/manual-ticket', {
@@ -141,7 +182,35 @@ function PurchaseSuccessContent() {
           setSessionError(ticketData.error || 'Failed to create ticket');
         }
       } else {
-        throw new Error('Payment session not found');
+        console.log('Payment session not found, trying fallback ticket creation');
+        // Payment session not found, but payment was successful
+        // Try to create ticket with fallback method
+        try {
+          const fallbackResponse = await fetch('/api/create-ticket-fallback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              paymentId: paymentId,
+              eventId: searchParams.get('eventId'), // Try to get from URL params
+              userId: searchParams.get('userId'), // Try to get from URL params
+              amount: searchParams.get('amount'), // Try to get from URL params
+              quantity: searchParams.get('quantity') || 1,
+            }),
+          });
+          
+          const fallbackData = await fallbackResponse.json();
+          
+          if (fallbackData.success) {
+            setTicketCreated(true);
+            console.log('Fallback ticket created:', fallbackData.ticketId);
+          } else {
+            console.error('Fallback ticket creation failed:', fallbackData.error);
+            setSessionError('Payment successful but ticket creation failed. Please contact support with payment ID: ' + paymentId);
+          }
+        } catch (fallbackError) {
+          console.error('Fallback ticket creation error:', fallbackError);
+          setSessionError('Payment successful but ticket creation requires manual intervention. Please contact support with payment ID: ' + paymentId);
+        }
       }
     } catch (error) {
       console.error('Failed to process Razorpay payment:', error);

@@ -184,7 +184,8 @@ export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
           }
 
           try {
-            router.push(`/tickets/purchase-success?payment_id=${response.razorpay_payment_id}`);
+            const redirectUrl = `/tickets/purchase-success?payment_id=${response.razorpay_payment_id}&eventId=${eventId}&userId=${user.id}&amount=${totalAmount}&quantity=${quantity}`;
+            router.push(redirectUrl);
             console.log('Redirect initiated successfully.');
           } catch (redirectError) {
             console.error('Error during router.push:', redirectError);

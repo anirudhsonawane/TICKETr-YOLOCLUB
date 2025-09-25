@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
     
     // Create redirect URLs
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-    const redirectUrl = `${baseUrl}/payment-result?orderId=${merchantOrderId}`;
+    const redirectUrl = `${baseUrl}/payment-result?orderId=${merchantOrderId}&eventId=${eventId}&userId=${userId}&amount=${numericAmount}&quantity=${quantity}`;
     
     // Create meta info for tracking
     const metaInfo = {

@@ -9,7 +9,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useStorageUrl } from "@/lib/utils";
 
-import { CalendarDays, Check, CircleArrowRight, LoaderCircle, MapPin, PencilIcon, QrCode, StarIcon, Ticket, XCircle } from "lucide-react";
+import { CalendarDays, Check, CircleArrowRight, LoaderCircle, MapPin, PencilIcon, QrCode, Shield, StarIcon, Ticket, XCircle } from "lucide-react";
 import Link from "next/link";
 import PurchaseTicket from "./PurchaseTicket";
 import { isAuthorizedAdmin } from "@/lib/admin-config";
@@ -296,6 +296,12 @@ function EventCardContent({ eventId, hideBuyButton = false }: { eventId: Id<"eve
                   Your Event
                 </span>
               )}
+              {isAuthorizedUser && !isEventOwner && (
+                <span className="inline-flex items-center gap-1 bg-purple-600/90 text-white px-2 py-1 rounded-full text-xs font-medium">
+                  <Shield className="w-3 h-3" />
+                  Admin View
+                </span>
+              )}
               <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{event.name}</h2>
             </div>
             {isPastEvent && (
@@ -347,7 +353,7 @@ function EventCardContent({ eventId, hideBuyButton = false }: { eventId: Id<"eve
           <div className="flex items-center text-gray-600">
             <Ticket className="w-4 h-4 mr-2" />
             <span>
-              {isEventOwner ? (
+              {isEventOwner || isAuthorizedUser ? (
                 <>
                   {availability.purchasedCount} tickets sold ({isPastEvent || availability.remainingTickets === 0 ? 'Sold Out' : `${availability.remainingTickets} available`})
                 </>
