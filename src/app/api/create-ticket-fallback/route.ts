@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const convex = getConvexClient();
     
     // Get event details to ensure it exists
-    const event = await convex.query(api.events.getEvent, { eventId });
+    const event = await convex.query(api.events.getById, { eventId });
     if (!event) {
       return NextResponse.json({ 
         success: false,
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     }
     
     // Get user details to ensure user exists
-    const user = await convex.query(api.users.getUser, { userId });
+    const user = await convex.query(api.users.getUserById, { userId });
     if (!user) {
       return NextResponse.json({ 
         success: false,
