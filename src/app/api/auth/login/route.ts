@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getConvexClient } from "@/lib/convex";
 import { api } from "../../../../../convex/_generated/api";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,11 +39,19 @@ export async function POST(req: NextRequest) {
     // Update last login
     await convex.mutation(api.auth.updateLastLogin, { userId: user.userId });
 
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user.userId },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: process.env.JWT_EXPIRE || '30d' }
+    );
+
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json({
       success: true,
+      token,
       user: userWithoutPassword
     });
 
