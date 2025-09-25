@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Mail, Shield } from "lucide-react";
@@ -13,17 +13,17 @@ const AUTHORIZED_CREATORS: string[] = [
 ];
 
 export default function NewEventPage() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoaded && !user) {
+    if (!isLoading && !user) {
       router.push("/");
       return;
     }
-  }, [isLoaded, user, router]);
+  }, [isLoading, user, router]);
 
-  if (!isLoaded) {
+  if (isLoading) {
     return (
       <div className="max-w-3xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-lg text-center p-8">

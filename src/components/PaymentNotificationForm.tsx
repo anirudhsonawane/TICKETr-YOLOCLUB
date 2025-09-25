@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { Id } from "../../convex/_generated/dataModel";
 import { Smartphone, CheckCircle, AlertCircle, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ export default function PaymentNotificationForm({
   quantity,
   passId 
 }: PaymentNotificationFormProps) {
-  const { user } = useUser();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState({

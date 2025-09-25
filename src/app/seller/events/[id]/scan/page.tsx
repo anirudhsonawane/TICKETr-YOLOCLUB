@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
@@ -13,7 +13,7 @@ export default function ScanTicketsPage({
 }: { 
   params: Promise<{ id: string }> 
 }) {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { id } = use(params);
   const eventId = id as Id<"events">;
   

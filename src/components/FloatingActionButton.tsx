@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { 
   Plus, 
@@ -18,12 +18,12 @@ import {
 import { isAuthorizedAdmin } from "@/lib/admin-config";
 
 export default function FloatingActionButton() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   
-  const isAdmin = user && isAuthorizedAdmin(user.emailAddresses[0]?.emailAddress || '');
+  const isAdmin = user && isAuthorizedAdmin(user.email || '');
 
   // Don't show on certain pages
   const hiddenPages = ['/admin', '/seller'];

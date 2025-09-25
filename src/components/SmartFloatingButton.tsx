@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { 
   X, 
@@ -21,7 +21,7 @@ import {
 import { isAuthorizedAdmin } from "@/lib/admin-config";
 
 export default function SmartFloatingButton() {
-  const { user, isLoaded } = useUser();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -29,7 +29,7 @@ export default function SmartFloatingButton() {
   const [showContactPopup, setShowContactPopup] = useState(false);
   const [contactType, setContactType] = useState<'call' | 'whatsapp'>('call');
   
-  const isAdmin = user && isAuthorizedAdmin(user.emailAddresses[0]?.emailAddress || '');
+  const isAdmin = user && isAuthorizedAdmin(user.email || '');
 
   // Don't show on certain pages
   const hiddenPages = ['/admin', '/seller'];
@@ -46,7 +46,7 @@ export default function SmartFloatingButton() {
     }
   }, [isAdmin]);
 
-  if (!isLoaded || !user || shouldHide) {
+  if (isLoading || !isAuthenticated || !user || shouldHide) {
     return null;
   }
 
@@ -70,7 +70,7 @@ export default function SmartFloatingButton() {
       {
         icon: Shield,
         label: "Admin Panel",
-        action: () => router.push('/admin/payments'),
+        action: () => router.push('/admin'),
         color: "bg-purple-600 hover:bg-purple-700",
         show: isAdmin,
       },

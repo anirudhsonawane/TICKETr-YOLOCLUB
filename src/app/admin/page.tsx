@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { isAuthorizedAdmin } from "@/lib/admin-config";
@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 export default function AdminDashboard() {
-  const { user, isLoaded } = useUser();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
@@ -35,16 +35,16 @@ export default function AdminDashboard() {
   const allPendingPayments = useQuery(api.paymentNotifications?.getAllPending);
 
   useEffect(() => {
-    if (isLoaded && user) {
-      const userEmail = user.emailAddresses[0]?.emailAddress || '';
+    if (isAuthenticated && user) {
+      const userEmail = user.email || '';
       const authorized = isAuthorizedAdmin(userEmail);
       setIsAuthorized(authorized);
       setIsCheckingAuth(false);
     }
-  }, [isLoaded, user]);
+  }, [isAuthenticated, user]);
 
   // Show loading state
-  if (!isLoaded || isCheckingAuth) {
+  if (isLoading || isCheckingAuth) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

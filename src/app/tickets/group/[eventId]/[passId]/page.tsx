@@ -4,7 +4,7 @@ import { use } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { Calendar, MapPin, Ticket, ArrowLeft, Download } from "lucide-react";
 import Link from "next/link";
 import Spinner from "@/components/Spinner";

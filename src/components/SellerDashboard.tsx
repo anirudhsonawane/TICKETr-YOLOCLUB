@@ -2,7 +2,7 @@
 import { createStripeConnectAccountLink } from "../../actions/createStripeConnectAccountLink";
 import { createStripeConnectCustomer } from "../../actions/createStripeConnectCustomer";
 import { api } from "../../convex/_generated/api";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "convex/react";
 
 import { useRouter } from "next/navigation";

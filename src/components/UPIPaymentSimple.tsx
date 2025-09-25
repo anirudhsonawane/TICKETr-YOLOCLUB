@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { Id } from "../../convex/_generated/dataModel";
 import { QrCode, Smartphone, Copy, Check, ExternalLink, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -29,7 +29,7 @@ export default function UPIPaymentSimple({
   passId,
   onPaymentInitiated 
 }: UPIPaymentSimpleProps) {
-  const { user } = useUser();
+  const { user } = useAuth();
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
   const [paymentInitiated, setPaymentInitiated] = useState(false);

@@ -9,7 +9,8 @@ import { CalendarDays, Ticket } from "lucide-react";
 export default function EventList() {
   const events = useQuery(api.events.get);
 
-  if (!events) {
+  // Add error handling
+  if (events === undefined) {
     return (
       <div className="min-h-[400px] flex items-center justify-center">
         <Spinner />
@@ -17,13 +18,19 @@ export default function EventList() {
     );
   }
 
-  const upcomingEvents = events
-    .filter((event) => event.eventDate > Date.now())
-    .sort((a, b) => a.eventDate - b.eventDate);
+  if (events === null) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center">
+        <div className="text-center">
+          <h3 className="text-lg font-medium text-red-600">Error loading events</h3>
+          <p className="text-gray-600 mt-2">There was an error connecting to the database</p>
+        </div>
+      </div>
+    );
+  }
 
-  const pastEvents = events
-    .filter((event) => event.eventDate <= Date.now())
-    .sort((a, b) => b.eventDate - a.eventDate);
+  // Simplified: show all events for now
+  const allEvents = events.sort((a, b) => a.eventDate - b.eventDate);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
@@ -39,16 +46,16 @@ export default function EventList() {
           <div className="flex items-center gap-2 text-gray-600">
             <CalendarDays className="w-5 h-5" />
             <span className="font-medium">
-              {upcomingEvents.length} Upcoming Events
+              {allEvents.length} Events
             </span>
           </div>
         </div>
       </div>
 
-      {/* Upcoming Events Grid */}
-      {upcomingEvents.length > 0 ? (
+      {/* Events Grid */}
+      {allEvents.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
-          {upcomingEvents.map((event) => (
+          {allEvents.map((event) => (
             <EventCard key={event._id} eventId={event._id} />
           ))}
         </div>
@@ -56,22 +63,10 @@ export default function EventList() {
         <div className="bg-gray-50 rounded-lg p-12 text-center mb-12">
           <Ticket className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900">
-            No upcoming events
+            No events found
           </h3>
           <p className="text-gray-600 mt-1">Check back later for new events</p>
         </div>
-      )}
-
-      {/* Past Events Section */}
-      {pastEvents.length > 0 && (
-        <>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Past Events</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {pastEvents.map((event) => (
-              <EventCard key={event._id} eventId={event._id} />
-            ))}
-          </div>
-        </>
       )}
     </div>
   );

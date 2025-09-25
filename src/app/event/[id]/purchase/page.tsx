@@ -4,15 +4,15 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { useState, useMemo } from "react";
 import { ArrowLeft, Plus, Minus, Tag, Check } from "lucide-react";
 import Spinner from "@/components/Spinner";
 import CouponInput from "@/components/CouponInput";
-import UPIPaymentSimple from "@/components/UPIPaymentSimple";
+import PhonePePayment from "@/components/PhonePePayment";
 
 export default function PurchasePage() {
-  const { user } = useUser();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -204,18 +204,41 @@ export default function PurchasePage() {
               </div>
             </div>
 
-            {/* UPI Payment */}
-            <UPIPaymentSimple
-              eventId={eventId}
-              eventName={event.name}
-              amount={totalAmount}
-              quantity={quantity}
-              passId={selectedPass?._id}
-            />
+            {/* PhonePe Payment */}
+            {isAuthenticated && user && (
+              <PhonePePayment
+                eventId={eventId}
+                amount={totalAmount}
+                userId={user._id}
+                quantity={quantity}
+                passId={selectedPass?._id}
+                couponCode={appliedCoupon?.code}
+                selectedDate={selectedDates.join(",")}
+                onSuccess={(orderId) => {
+                  console.log("Payment successful:", orderId);
+                  router.push(`/tickets/purchase-success?orderId=${orderId}`);
+                }}
+                onError={(error) => {
+                  console.error("Payment error:", error);
+                }}
+              />
+            )}
 
-            {user && (
+            {!isAuthenticated && (
+              <div className="text-center py-4">
+                <p className="text-gray-600 mb-4">Please sign in to complete your purchase</p>
+                <button
+                  onClick={() => router.push('/auth')}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Sign In
+                </button>
+              </div>
+            )}
+
+            {isAuthenticated && user && (
               <p className="text-xs text-gray-500 text-center mt-3">
-                Secure payment via UPI
+                Secure payment via PhonePe
               </p>
             )}
           </div>

@@ -262,7 +262,7 @@ export const issueAfterPayment = mutation({
     // After successfully issuing tickets, send an email to the user
     const user = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("clerkId"), userId))
+      .filter((q) => q.eq(q.field("userId"), userId))
       .first();
 
     if (user && user.email) {
@@ -283,7 +283,7 @@ The Ticketr Team`;
         to: user.email,
         subject,
         body,
-        userId: user.clerkId,
+        userId: user.userId,
         ticketIds,
         eventId,
         purchaseId: paymentIntentId,

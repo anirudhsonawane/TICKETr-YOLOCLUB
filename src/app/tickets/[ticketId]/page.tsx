@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import QRCode from "react-qr-code";
 import Image from "next/image";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { useStorageUrl } from "@/lib/utils";
 import { useParams } from "next/navigation";
 
@@ -25,7 +25,7 @@ const theme = {
 };
 
 function TicketPage() {
-  const { isLoaded, user } = useUser();
+  const { isLoading, user } = useAuth();
   const params = useParams<{ ticketId: string }>();
 
   const ticketId = params?.ticketId as Id<"tickets"> | undefined;

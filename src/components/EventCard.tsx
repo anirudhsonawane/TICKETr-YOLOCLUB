@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { Id } from "../../convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
@@ -9,11 +9,11 @@ import { api } from "../../convex/_generated/api";
 import { useStorageUrl } from "@/lib/utils";
 
 import { CalendarDays, Check, CircleArrowRight, LoaderCircle, MapPin, PencilIcon, QrCode, StarIcon, Ticket, XCircle } from "lucide-react";
-import { SignInButton } from "@clerk/nextjs";
+import Link from "next/link";
 import PurchaseTicket from "./PurchaseTicket";
 
 export default function EventCard({ eventId, hideBuyButton = false }: { eventId: Id<"events">, hideBuyButton?: boolean }) {
-  const { user } = useUser();
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const event = useQuery(api.events.getById, { eventId });
   
@@ -42,7 +42,7 @@ export default function EventCard({ eventId, hideBuyButton = false }: { eventId:
 
   const isPastEvent = event.eventDate < Date.now();
 
-  const isEventOwner = user?.id === event?.userId;
+  const isEventOwner = user?._id === event?.userId;
 
   const renderQueuePosition = () => {
     if (!queuePosition || queuePosition.status !== "waiting") return null;
@@ -89,14 +89,14 @@ export default function EventCard({ eventId, hideBuyButton = false }: { eventId:
   };
 
   const renderTicketStatus = () => {
-    if (!user) {
+    if (!isAuthenticated || !user) {
       return (
         <div className="mt-4">
-          <SignInButton mode="modal">
+          <Link href="/auth">
             <button className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg text-base font-medium hover:bg-blue-700 transition-colors duration-200 shadow-sm">
               Sign In to Buy Tickets
             </button>
-          </SignInButton>
+          </Link>
         </div>
       );
     }

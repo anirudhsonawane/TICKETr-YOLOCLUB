@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PaymentSessionService } from "@/lib/paymentSessionService";
+import { getConvexClient } from "@/lib/convex";
+import { api } from "../../../../convex/_generated/api";
 
 // POST - Clean up expired payment sessions
 export async function POST(req: NextRequest) {
   try {
-    const cleanedCount = await PaymentSessionService.cleanupExpiredSessions();
+    const convex = getConvexClient();
+    const cleanedCount = await convex.mutation(api.paymentSessions.cleanupExpiredSessions, {});
     
     return NextResponse.json({
       success: true,

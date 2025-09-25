@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { api } from "../../convex/_generated/api";
 import { useQuery, useMutation } from "convex/react";
 import ReleaseTicket from "./ReleaseTicket";
@@ -20,17 +20,17 @@ declare global {
 
 export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
   const router = useRouter();
-  const { user } = useUser();
+  const { user, isAuthenticated } = useAuth();
 
   const event = useQuery(api.events.getById, { eventId });
   const queuePosition = useQuery(api.waitingList.getQueuePosition, {
     eventId,
-    userId: user?.id ?? "",
+    userId: user?._id ?? "",
   });
   const availability = useQuery(api.events.checkAvailability, { eventId });
   const userTicket = useQuery(api.tickets.getUserTicketForEvent, {
     eventId,
-    userId: user?.id ?? "",
+    userId: user?._id ?? "",
   });
   const joinWaitingList = useMutation(api.events.joinWaitingList);
 

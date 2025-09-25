@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   HelpCircle, 
   X, 
@@ -13,10 +13,10 @@ import {
 } from "lucide-react";
 
 export default function QuickHelpPopup() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
-  if (!isLoaded || !user) {
+  if (isLoading || !user) {
     return null;
   }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PaymentSessionService } from "@/lib/paymentSessionService";
+import { getConvexClient } from "@/lib/convex";
+import { api } from "../../../../convex/_generated/api";
 
 // POST - Create payment session
 export async function POST(req: NextRequest) {
@@ -27,7 +28,8 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const session = await PaymentSessionService.createSession({
+    const convex = getConvexClient();
+    const session = await convex.mutation(api.paymentSessions.createPaymentSession, {
       sessionId,
       userId,
       eventId,
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      sessionId: session._id,
+      sessionId: session,
       message: "Payment session created successfully"
     });
 
@@ -68,7 +70,8 @@ export async function GET(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const session = await PaymentSessionService.getSessionWithEvent(sessionId);
+    const convex = getConvexClient();
+    const session = await convex.query(api.paymentSessions.getPaymentSessionWithEvent, { sessionId });
 
     if (!session) {
       return NextResponse.json({
@@ -103,7 +106,12 @@ export async function PUT(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const session = await PaymentSessionService.updateSessionStatus(sessionId, status, metadata);
+    const convex = getConvexClient();
+    const session = await convex.mutation(api.paymentSessions.updatePaymentSessionStatus, {
+      sessionId,
+      status,
+      metadata
+    });
 
     if (!session) {
       return NextResponse.json({

@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { Check, ArrowLeft, Tag } from "lucide-react";
 import Spinner from "@/components/Spinner";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import DateSelector from "@/components/DateSelector";
 
 export default function PassSelectionPage() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
   const eventId = params.id as Id<"events">;

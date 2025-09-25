@@ -53,12 +53,15 @@ export async function POST(req: NextRequest) {
 
         // Update payment session status
         try {
-          const { PaymentSessionService } = await import("@/lib/paymentSessionService");
-          await PaymentSessionService.updateSessionStatus(event.payload.payment.entity.id, "completed", {
-            ticketIds: result,
-            completedAt: Date.now(),
-            razorpayOrderId: event.payload.payment.entity.order_id,
-            amount: event.payload.payment.entity.amount
+          await convex.mutation(api.paymentSessions.updatePaymentSessionStatus, {
+            sessionId: event.payload.payment.entity.id,
+            status: "completed",
+            metadata: {
+              ticketIds: result,
+              completedAt: Date.now(),
+              razorpayOrderId: event.payload.payment.entity.order_id,
+              amount: event.payload.payment.entity.amount
+            }
           });
           console.log("✅ Payment session status updated to completed");
         } catch (sessionError) {

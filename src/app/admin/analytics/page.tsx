@@ -1,28 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { isAuthorizedAdmin } from "@/lib/admin-config";
 import AdminNavigation from "@/components/AdminNavigation";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import { Lock, BarChart3 } from "lucide-react";
 
 export default function AdminAnalyticsPage() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoading } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
-    if (isLoaded && user) {
-      const userEmail = user.emailAddresses[0]?.emailAddress || '';
+    if (!isLoading && user) {
+      const userEmail = user.email || '';
       const authorized = isAuthorizedAdmin(userEmail);
       setIsAuthorized(authorized);
       setIsCheckingAuth(false);
     }
-  }, [isLoaded, user]);
+  }, [isLoading, user]);
 
   // Show loading state
-  if (!isLoaded || isCheckingAuth) {
+  if (isLoading || isCheckingAuth) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

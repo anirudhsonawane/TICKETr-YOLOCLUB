@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Ticket, Calendar, MapPin, Clock, Download, Tag } from "lucide-react";
@@ -8,9 +8,9 @@ import Link from "next/link";
 import Spinner from "@/components/Spinner";
 
 export default function MyTicketsPage() {
-  const { user, isLoaded } = useUser();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const tickets = useQuery(api.tickets.getUserTickets, 
-    user ? { userId: user.id } : "skip"
+    user ? { userId: user._id } : "skip"
   );
   
   // Get passes for all tickets
@@ -18,7 +18,7 @@ export default function MyTicketsPage() {
     tickets?.[0]?.eventId ? { eventId: tickets[0].eventId } : "skip"
   );
 
-  if (!isLoaded) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spinner />
@@ -26,10 +26,13 @@ export default function MyTicketsPage() {
     );
   }
 
-  if (!user) {
+  if (!isAuthenticated || !user) {
     return (
       <div className="max-w-2xl mx-auto p-8 text-center">
         <h1 className="text-2xl font-bold mb-4">Please sign in to view your tickets</h1>
+        <Link href="/auth" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+          Sign In
+        </Link>
       </div>
     );
   }

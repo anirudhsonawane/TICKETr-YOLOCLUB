@@ -1,11 +1,11 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { redirect } from "next/navigation";
 import SellerEventList from "@/components/SellerEventList";
 
 export default function SellerEventsPage() {
-  const { user } = useUser();
+  const { user } = useAuth();
   
   if (!user) {
     redirect("/");

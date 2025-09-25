@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { api } from "../../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,7 @@ export default function CouponInput({
   const [error, setError] = useState<string | null>(null);
 
   // Get current user
-  const { user } = useUser();
+  const { user } = useAuth();
   
   // Ensure coupon exists (useful for dev/demo codes like YOLO15)
   const ensureCouponExists = useMutation(api.coupons.ensureCouponExists);

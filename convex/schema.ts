@@ -121,8 +121,20 @@ export default defineSchema({
     userId: v.string(),
     email: v.string(),
     name: v.string(),
+    googleId: v.optional(v.string()),
+    facebookId: v.optional(v.string()),
+    password: v.optional(v.string()),
+    avatar: v.optional(v.string()),
+    role: v.optional(v.union(v.literal("user"), v.literal("admin"), v.literal("seller"))),
+    isEmailVerified: v.optional(v.boolean()),
+    lastLogin: v.optional(v.number()),
+    createdAt: v.optional(v.number()),
+    updatedAt: v.optional(v.number()),
     stripeConnectId: v.optional(v.string()),
-  }).index("by_user_id", ["userId"]),
+  }).index("by_user_id", ["userId"])
+    .index("by_email", ["email"])
+    .index("by_google_id", ["googleId"])
+    .index("by_facebook_id", ["facebookId"]),
 
   coupons: defineTable({
     userId: v.optional(v.string()),
@@ -153,58 +165,4 @@ export default defineSchema({
     timestamp: v.number(),
   }).index("by_uid", ["uid"]),
 
-  paymentVerifications: defineTable({
-    eventId: v.id("events"),
-    userId: v.string(),
-    userEmail: v.string(),
-    userName: v.string(),
-    mobileNumber: v.string(),
-    uid: v.string(),
-    amount: v.number(),
-    quantity: v.number(),
-    passId: v.optional(v.id("passes")),
-    selectedDate: v.optional(v.string()),
-    paymentScreenshotUrl: v.optional(v.string()),
-    paymentScreenshotStorageId: v.optional(v.id("_storage")),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("approved"),
-      v.literal("rejected")
-    ),
-    submittedAt: v.number(),
-    reviewedAt: v.optional(v.number()),
-    reviewedBy: v.optional(v.string()),
-    reviewNotes: v.optional(v.string()),
-    ticketIds: v.optional(v.array(v.id("tickets"))), // Created after approval
-  })
-    .index("by_event", ["eventId"])
-    .index("by_user", ["userId"])
-    .index("by_status", ["status"])
-    .index("by_uid", ["uid"]),
-
-  paymentNotifications: defineTable({
-    eventId: v.id("events"),
-    userId: v.string(),
-    amount: v.number(),
-    quantity: v.number(),
-    passId: v.optional(v.id("passes")),
-    upiTransactionId: v.string(),
-    payeeName: v.string(),
-    payeeMobileNumber: v.string(),
-    userInfo: v.optional(v.object({
-      name: v.optional(v.string()),
-      email: v.optional(v.string()),
-    })),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("verified"),
-      v.literal("rejected")
-    ),
-    ticketCreated: v.boolean(),
-    verifiedAt: v.optional(v.number()),
-  })
-    .index("by_event", ["eventId"])
-    .index("by_user", ["userId"])
-    .index("by_status", ["status"])
-    .index("by_event_status", ["eventId", "status"]),
 });

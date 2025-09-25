@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Shield, 
   DollarSign, 
@@ -15,15 +15,9 @@ import {
 
 export default function AdminNavigation() {
   const pathname = usePathname();
-  const { user } = useUser();
+  const { user, isAuthenticated } = useAuth();
 
   const navigationItems = [
-    {
-      name: "Payment Verification",
-      href: "/admin/payments",
-      icon: DollarSign,
-      description: "Verify UPI payments and create tickets"
-    },
     {
       name: "Events Management",
       href: "/admin/events",

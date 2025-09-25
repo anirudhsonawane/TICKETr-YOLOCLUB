@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Mail, Shield } from "lucide-react";
@@ -14,21 +14,21 @@ const AUTHORIZED_CREATORS: string[] = [
 ];
 
 export default function SellerPage() {
-  const { user, isLoaded } = useUser();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoaded && !user) {
+    if (isAuthenticated && !user) {
       router.push("/");
       return;
     }
 
-    if (isLoaded && user && AUTHORIZED_CREATORS.includes(user.id)) {
+    if (isAuthenticated && user && AUTHORIZED_CREATORS.includes(user._id)) {
       router.push("/seller/new-event");
     }
-  }, [isLoaded, user, router]);
+  }, [isAuthenticated, user, router]);
 
-  if (!isLoaded) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">Loading...</div>
