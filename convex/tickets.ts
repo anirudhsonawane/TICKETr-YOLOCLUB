@@ -366,3 +366,16 @@ export const getTicketStatus = query({
     };
   },
 });
+
+// Get tickets by payment intent ID
+export const getTicketsByPaymentIntent = query({
+  args: { paymentIntentId: v.string() },
+  handler: async (ctx, { paymentIntentId }) => {
+    const tickets = await ctx.db
+      .query("tickets")
+      .withIndex("by_payment_intent", (q) => q.eq("paymentIntentId", paymentIntentId))
+      .collect();
+    
+    return tickets;
+  },
+});

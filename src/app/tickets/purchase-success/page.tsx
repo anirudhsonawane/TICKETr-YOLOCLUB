@@ -105,6 +105,17 @@ function PurchaseSuccessContent() {
       if (sessionData.success && sessionData.session) {
         setPaymentSession(sessionData.session);
         
+        // Check if tickets already exist for this payment (webhook might have created them)
+        const existingTicketsResponse = await fetch(`/api/tickets/by-payment?paymentId=${paymentId}`);
+        const existingTicketsData = await existingTicketsResponse.json();
+        
+        if (existingTicketsData.success && existingTicketsData.tickets && existingTicketsData.tickets.length > 0) {
+          // Tickets already exist, mark as created
+          setTicketCreated(true);
+          console.log('Tickets already exist:', existingTicketsData.tickets);
+          return;
+        }
+        
         // Create ticket using session data
         const ticketResponse = await fetch('/api/manual-ticket', {
           method: 'POST',

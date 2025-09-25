@@ -146,6 +146,17 @@ function PaymentResultContent() {
       if (sessionData.success && sessionData.session) {
         setPaymentSession(sessionData.session);
         
+        // Check if tickets already exist for this payment (webhook might have created them)
+        const existingTicketsResponse = await fetch(`/api/tickets/by-payment?paymentId=${orderId}`);
+        const existingTicketsData = await existingTicketsResponse.json();
+        
+        if (existingTicketsData.success && existingTicketsData.tickets && existingTicketsData.tickets.length > 0) {
+          // Tickets already exist, mark as created
+          setTicketCreated(true);
+          console.log('✅ Tickets already exist:', existingTicketsData.tickets);
+          return;
+        }
+        
         console.log('Creating ticket with session data:', {
           paymentId: orderId,
           eventId: sessionData.session.eventId,
@@ -195,11 +206,11 @@ function PaymentResultContent() {
   const isPaymentSuccessful = (paymentStatus === 'COMPLETED' || 
                               paymentStatus === 'SUCCESS' || 
                               paymentStatus === 'PAYMENT_SUCCESS') && 
-                             ticketCreated && !error;
+                             (ticketCreated || showNotifyOrganizer) && !error;
   const isPaymentFailed = (paymentStatus && 
                           paymentStatus !== 'COMPLETED' && 
                           paymentStatus !== 'SUCCESS' && 
-                          paymentStatus !== 'PAYMENT_SUCCESS') || error;
+                          paymentStatus !== 'PAYMENT_SUCCESS') || (error && !isPaymentSuccessful);
   const isPaymentPending = isLoading;
 
   // Show NotifyOrganizer component for UPI payments
