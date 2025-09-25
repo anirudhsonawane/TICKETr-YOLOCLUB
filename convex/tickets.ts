@@ -269,13 +269,21 @@ export const issueAfterPayment = mutation({
     
     for (let i = 0; i < ticketQuantity; i++) {
       try {
+        // Ensure amount is a valid number
+        const ticketAmount = Number(amount) / ticketQuantity;
+        if (isNaN(ticketAmount) || ticketAmount <= 0) {
+          throw new Error(`Invalid ticket amount: ${ticketAmount} (original amount: ${amount})`);
+        }
+        
+        console.log(`🎫 Creating ticket ${i + 1}/${ticketQuantity} with amount: ${ticketAmount}`);
+        
         const ticketId = await ctx.db.insert("tickets", {
           eventId,
           userId,
           purchasedAt: baseTime + i,
           status: TICKET_STATUS.VALID,
           paymentIntentId,
-          amount: amount / ticketQuantity,
+          amount: ticketAmount,
           passId,
           selectedDate,
         });
@@ -283,6 +291,7 @@ export const issueAfterPayment = mutation({
         console.log(`✅ Created ticket ${i + 1}/${ticketQuantity}:`, ticketId);
       } catch (error) {
         console.error(`❌ Failed to create ticket ${i + 1}/${ticketQuantity}:`, error);
+        console.error(`❌ Ticket data:`, { eventId, userId, amount, ticketQuantity, passId, selectedDate });
         throw new ConvexError(`Failed to create ticket ${i + 1}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }

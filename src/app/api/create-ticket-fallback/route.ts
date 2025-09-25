@@ -71,8 +71,8 @@ export async function POST(req: NextRequest) {
       eventId,
       userId,
       paymentIntentId: paymentId,
-      amount: amount || 0,
-      quantity,
+      amount: Number(amount) || 0,
+      quantity: Number(quantity) || 1,
       passId: undefined, // No pass information available
       selectedDate: undefined, // No date information available
     });
