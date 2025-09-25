@@ -64,19 +64,23 @@ export async function GET(req: NextRequest) {
 
     // Check if user exists in our database
     const convex = getConvexClient();
+    console.log('Checking for existing user with Google ID:', googleUser.id);
     let user = await convex.query(api.auth.getUserByGoogleId, { googleId: googleUser.id });
 
     if (!user) {
+      console.log('No user found with Google ID, checking by email:', googleUser.email);
       // Check if user exists by email
       user = await convex.query(api.auth.getUserByEmail, { email: googleUser.email });
       
       if (user) {
+        console.log('Found existing user by email, linking Google account');
         // Update existing user with Google ID
         await convex.mutation(api.auth.updateUserGoogleId, {
           userId: user.userId,
           googleId: googleUser.id
         });
       } else {
+        console.log('Creating new user with Google account');
         // Create new user
         const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
@@ -91,7 +95,10 @@ export async function GET(req: NextRequest) {
         });
 
         user = await convex.query(api.auth.getUserByGoogleId, { googleId: googleUser.id });
+        console.log('Successfully created new user:', user?.email);
       }
+    } else {
+      console.log('Found existing user with Google ID:', user.email);
     }
 
     if (!user) {
@@ -103,13 +110,17 @@ export async function GET(req: NextRequest) {
     await convex.mutation(api.auth.updateLastLogin, { userId: user.userId });
 
     // Generate JWT token
+    console.log('Generating JWT token for user:', user.email);
+    console.log('JWT_SECRET available:', !!process.env.JWT_SECRET);
+    console.log('JWT_EXPIRE:', process.env.JWT_EXPIRE || '30d');
+    
     const token = jwt.sign(
       { id: user.userId },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: process.env.JWT_EXPIRE || '30d' }
     );
 
-    console.log('Generated token for user:', user.email);
+    console.log('Successfully generated token for user:', user.email);
 
     // Redirect to frontend with token
     const redirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`;
@@ -117,6 +128,13 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     console.error('Google OAuth callback error:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Missing',
+      jwtExpire: process.env.JWT_EXPIRE ? 'Set' : 'Missing',
+      convexUrl: process.env.CONVEX_URL ? 'Set' : 'Missing'
+    });
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/auth?error=callback_error`);
   }
 }
