@@ -37,6 +37,9 @@ export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
   const [timeRemaining, setTimeRemaining] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [selectedPass, setSelectedPass] = useState<Id<"passes"> | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
 
   const offerExpiresAt = queuePosition?.offerExpiresAt ?? 0;
   const isExpired = Date.now() > offerExpiresAt;
@@ -156,14 +159,14 @@ export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
               },
               body: JSON.stringify({
                 sessionId: response.razorpay_payment_id,
-                userId: user.id,
+                userId: user.userId || user._id,
                 eventId,
                 amount: totalAmount,
                 quantity,
-                passId: selectedPass?._id,
+                passId: selectedPass,
                 selectedDate: selectedDate,
                 couponCode: appliedCoupon?.code,
-                waitingListId: queuePosition?.waitingListId,
+                waitingListId: queuePosition?._id,
                 paymentMethod: 'razorpay',
                 metadata: {
                   orderId: order.orderId,
@@ -179,14 +182,14 @@ export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
               // Store payment details in localStorage as fallback
               localStorage.setItem('razorpay_payment_fallback', JSON.stringify({
                 sessionId: response.razorpay_payment_id,
-                userId: user.id,
+                userId: user.userId || user._id,
                 eventId,
                 amount: totalAmount,
                 quantity,
-                passId: selectedPass?._id,
+                passId: selectedPass,
                 selectedDate: selectedDate,
                 couponCode: appliedCoupon?.code,
-                waitingListId: queuePosition?.waitingListId,
+                waitingListId: queuePosition?._id,
                 timestamp: Date.now()
               }));
             } else {
@@ -201,10 +204,10 @@ export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
               eventId,
               amount: totalAmount,
               quantity,
-              passId: selectedPass?._id,
+              passId: selectedPass,
               selectedDate: selectedDate,
               couponCode: appliedCoupon?.code,
-              waitingListId: queuePosition?.waitingListId,
+              waitingListId: queuePosition?._id,
               timestamp: Date.now()
             }));
           }

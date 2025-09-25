@@ -212,7 +212,7 @@ export default function PurchasePage() {
               <PhonePePayment
                 eventId={eventId}
                 amount={totalAmount}
-                userId={user._id}
+                userId={user.userId || user._id}
                 quantity={quantity}
                 passId={selectedPass?._id}
                 couponCode={appliedCoupon?.code}

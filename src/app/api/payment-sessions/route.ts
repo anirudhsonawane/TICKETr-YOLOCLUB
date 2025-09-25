@@ -40,33 +40,16 @@ export async function POST(req: NextRequest) {
     const convex = getConvexClient();
     
     // First, verify the user exists
-    let user = await convex.query(api.users.getUserById, { userId });
+    const user = await convex.query(api.users.getUserById, { userId });
     if (!user) {
       console.error("❌ User not found during payment session creation:", userId);
-      console.log("🔄 Attempting to create temporary user for payment session...");
-      
-      // Try to create a temporary user for this payment session
-      try {
-        const tempUserId = await convex.mutation(api.auth.createUser, {
-          userId: userId,
-          email: `temp_${userId}@ticketr.com`,
-          name: `User ${userId.substring(0, 8)}`,
-          role: "user",
-          isEmailVerified: false,
-          lastLogin: Date.now(),
-        });
-        
-        console.log("✅ Temporary user created for payment session:", tempUserId);
-        user = await convex.query(api.users.getUserById, { userId });
-      } catch (createUserError) {
-        console.error("❌ Failed to create temporary user for payment session:", createUserError);
-        return NextResponse.json({
-          error: "User not found and cannot create temporary user",
-          details: `User with ID ${userId} does not exist in the database and temporary user creation failed: ${createUserError instanceof Error ? createUserError.message : String(createUserError)}`
-        }, { status: 404 });
-      }
+      return NextResponse.json({
+        success: false,
+        error: "User not found",
+        details: `User with ID ${userId} does not exist in the database. Please ensure you are logged in with a valid account.`
+      }, { status: 404 });
     }
-    console.log("✅ User verified/created for payment session:", user.name || user.email);
+    console.log("✅ User verified for payment session:", user.name || user.email);
     
     try {
       const session = await convex.mutation(api.paymentSessions.createPaymentSession, {
