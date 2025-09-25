@@ -23,6 +23,19 @@ export const createPaymentSession = mutation({
   },
   handler: async (ctx, args) => {
     console.log("🔧 Creating payment session with args:", args);
+    console.log("🔧 Detailed args breakdown:", {
+      sessionId: args.sessionId,
+      userId: args.userId,
+      eventId: args.eventId,
+      amount: args.amount,
+      quantity: args.quantity,
+      passId: args.passId,
+      selectedDate: args.selectedDate,
+      couponCode: args.couponCode,
+      waitingListId: args.waitingListId,
+      paymentMethod: args.paymentMethod,
+      metadata: args.metadata
+    });
     
     try {
       const now = Date.now();
@@ -118,10 +131,19 @@ export const createPaymentSession = mutation({
       }
       
       console.log("💾 Attempting database insert with sessionData:", sessionData);
-      const sessionId = await ctx.db.insert("paymentSessions", sessionData);
-
-      console.log("✅ Payment session created successfully:", sessionId);
-      return sessionId;
+      
+      try {
+        const sessionId = await ctx.db.insert("paymentSessions", sessionData);
+        console.log("✅ Database insert successful:", sessionId);
+        return sessionId;
+      } catch (dbError) {
+        console.error("❌ Database insert failed:", dbError);
+        console.error("❌ Database error details:", {
+          message: dbError instanceof Error ? dbError.message : String(dbError),
+          sessionData: sessionData
+        });
+        throw dbError;
+      }
     } catch (error) {
       console.error("❌ Payment session creation failed:", error);
       console.error("❌ Error details:", {
