@@ -21,35 +21,57 @@ export const createPaymentSession = mutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
-    const expiresAt = now + (30 * 60 * 1000); // 30 minutes from now
+    console.log("🔧 Creating payment session with args:", args);
+    
+    try {
+      const now = Date.now();
+      const expiresAt = now + (30 * 60 * 1000); // 30 minutes from now
 
-    // Check if session already exists
-    const existingSession = await ctx.db
-      .query("paymentSessions")
-      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
-      .first();
+      // Validate required fields
+      if (!args.sessionId || !args.userId || !args.eventId || !args.amount || !args.paymentMethod) {
+        console.error("❌ Missing required fields:", {
+          sessionId: !!args.sessionId,
+          userId: !!args.userId,
+          eventId: !!args.eventId,
+          amount: !!args.amount,
+          paymentMethod: !!args.paymentMethod
+        });
+        throw new Error("Missing required fields for payment session creation");
+      }
 
-    if (existingSession) {
-      // Update existing session
-      await ctx.db.patch(existingSession._id, {
+      // Check if session already exists
+      const existingSession = await ctx.db
+        .query("paymentSessions")
+        .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
+        .first();
+
+      if (existingSession) {
+        console.log("🔄 Updating existing payment session:", existingSession._id);
+        // Update existing session
+        await ctx.db.patch(existingSession._id, {
+          ...args,
+          createdAt: now,
+          expiresAt,
+          status: "pending",
+        });
+        return existingSession._id;
+      }
+
+      console.log("🆕 Creating new payment session...");
+      // Create new session
+      const sessionId = await ctx.db.insert("paymentSessions", {
         ...args,
+        status: "pending",
         createdAt: now,
         expiresAt,
-        status: "pending",
       });
-      return existingSession._id;
+
+      console.log("✅ Payment session created successfully:", sessionId);
+      return sessionId;
+    } catch (error) {
+      console.error("❌ Payment session creation failed:", error);
+      throw error;
     }
-
-    // Create new session
-    const sessionId = await ctx.db.insert("paymentSessions", {
-      ...args,
-      status: "pending",
-      createdAt: now,
-      expiresAt,
-    });
-
-    return sessionId;
   },
 });
 
