@@ -42,9 +42,9 @@ function GroupTicketsContent({
   const event = useQuery(api.events.getById, { eventId: eventId as Id<"events"> });
   const passInfo = useQuery(api.passes.getPassById, { passId: passId as Id<"passes"> });
   const userTickets = useQuery(api.tickets.getUserTicketsForEvent, 
-    user?.id ? {
+    user ? {
       eventId: eventId as Id<"events">,
-      userId: user.id,
+      userId: user.userId || user._id,
     } : "skip"
   );
 

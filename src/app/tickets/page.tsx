@@ -32,7 +32,7 @@ export default function MyTicketsPage() {
 function MyTicketsContent() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const tickets = useQuery(api.tickets.getUserTickets, 
-    user ? { userId: user._id } : "skip"
+    user ? { userId: user.userId || user._id } : "skip"
   );
   
   // Get passes for all tickets

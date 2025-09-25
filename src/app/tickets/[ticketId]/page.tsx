@@ -69,10 +69,10 @@ function TicketPageContent() {
 
   const userTickets = useQuery(
     api.tickets.getUserTicketsForEvent,
-    ticket?.eventId && user?.id
+    ticket?.eventId && user
       ? {
           eventId: ticket.eventId as Id<"events">,
-          userId: user.id,
+          userId: user.userId || user._id,
         }
       : "skip"
   );

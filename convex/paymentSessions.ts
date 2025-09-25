@@ -39,6 +39,14 @@ export const createPaymentSession = mutation({
         throw new Error("Missing required fields for payment session creation");
       }
 
+      // Validate that the event exists
+      const event = await ctx.db.get(args.eventId);
+      if (!event) {
+        console.error("❌ Event not found:", args.eventId);
+        throw new Error(`Invalid event ID for payment session: ${args.eventId}`);
+      }
+      console.log("✅ Event validated:", event.name);
+
       // Check if session already exists
       const existingSession = await ctx.db
         .query("paymentSessions")
@@ -58,13 +66,37 @@ export const createPaymentSession = mutation({
       }
 
       console.log("🆕 Creating new payment session...");
-      // Create new session
-      const sessionId = await ctx.db.insert("paymentSessions", {
-        ...args,
-        status: "pending",
+      
+      // Prepare the session data with proper types
+      const sessionData = {
+        sessionId: args.sessionId,
+        userId: args.userId,
+        eventId: args.eventId,
+        amount: Number(args.amount),
+        quantity: Number(args.quantity),
+        passId: args.passId || undefined,
+        selectedDate: args.selectedDate || undefined,
+        couponCode: args.couponCode || undefined,
+        waitingListId: args.waitingListId || undefined,
+        paymentMethod: args.paymentMethod,
+        metadata: args.metadata || undefined,
+        status: "pending" as const,
         createdAt: now,
         expiresAt,
-      });
+      };
+      
+      console.log("📋 Payment session data to insert:", sessionData);
+      
+      // Validate data types before insert
+      if (typeof sessionData.amount !== 'number' || sessionData.amount <= 0) {
+        throw new Error(`Invalid amount: ${sessionData.amount}`);
+      }
+      if (typeof sessionData.quantity !== 'number' || sessionData.quantity <= 0) {
+        throw new Error(`Invalid quantity: ${sessionData.quantity}`);
+      }
+      
+      // Create new session
+      const sessionId = await ctx.db.insert("paymentSessions", sessionData);
 
       console.log("✅ Payment session created successfully:", sessionId);
       return sessionId;
