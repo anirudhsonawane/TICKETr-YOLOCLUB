@@ -22,8 +22,23 @@ export async function GET(req: NextRequest) {
 
     // Check if Google OAuth is configured
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      console.error('Google OAuth not configured - missing CLIENT_ID or CLIENT_SECRET');
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/auth?error=not_configured`);
     }
+
+    // Check if JWT is configured
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET not configured');
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/auth?error=jwt_not_configured`);
+    }
+
+    console.log('Environment check passed:', {
+      googleClientId: !!process.env.GOOGLE_CLIENT_ID,
+      googleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+      jwtSecret: !!process.env.JWT_SECRET,
+      jwtExpire: process.env.JWT_EXPIRE || '30d',
+      convexUrl: !!process.env.CONVEX_URL
+    });
 
     // Exchange code for access token
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -84,18 +99,23 @@ export async function GET(req: NextRequest) {
         // Create new user
         const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
-        await convex.mutation(api.auth.createGoogleUser, {
-          userId,
-          googleId: googleUser.id,
-          email: googleUser.email,
-          name: googleUser.name,
-          avatar: googleUser.picture,
-          isEmailVerified: true,
-          createdAt: Date.now(),
-        });
+        try {
+          await convex.mutation(api.auth.createGoogleUser, {
+            userId,
+            googleId: googleUser.id,
+            email: googleUser.email,
+            name: googleUser.name,
+            avatar: googleUser.picture,
+            isEmailVerified: true,
+            createdAt: Date.now(),
+          });
 
-        user = await convex.query(api.auth.getUserByGoogleId, { googleId: googleUser.id });
-        console.log('Successfully created new user:', user?.email);
+          user = await convex.query(api.auth.getUserByGoogleId, { googleId: googleUser.id });
+          console.log('Successfully created new user:', user?.email);
+        } catch (createError) {
+          console.error('Error creating new user:', createError);
+          throw new Error(`Failed to create user: ${createError instanceof Error ? createError.message : String(createError)}`);
+        }
       }
     } else {
       console.log('Found existing user with Google ID:', user.email);
