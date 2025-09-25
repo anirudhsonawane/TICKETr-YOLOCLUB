@@ -228,11 +228,11 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
         <SimpleChart
           title="Revenue Trend (Last 7 Days)"
           description="Daily revenue from ticket sales"
-          data={dayWiseAnalytics.slice(-7).map(day => ({
+          data={dayWiseAnalytics?.slice(-7).map(day => ({
             label: formatDate(day.date),
             value: day.revenue,
             color: "bg-blue-500"
-          }))}
+          })) || []}
           type="line"
         />
       </div>
@@ -250,7 +250,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {dayWiseAnalytics.slice(-7).map((day, index) => (
+            {dayWiseAnalytics?.slice(-7).map((day, index) => (
               <div key={day.date} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg flex-col sm:flex-row gap-3">
                 <div className="flex items-center gap-3">
                   <div className="text-sm font-medium">{formatDate(day.date)}</div>
@@ -292,7 +292,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {dayWiseAnalytics.slice(-7).map((day, index) => (
+            {dayWiseAnalytics?.slice(-7).map((day, index) => (
               <div key={day.date} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg flex-col sm:flex-row gap-3">
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                   <div className="text-sm font-medium">{formatDate(day.date)}</div>
@@ -352,7 +352,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {eventAnalytics.slice(0, 5).map((event) => (
+            {eventAnalytics?.slice(0, 5).map((event) => (
               <div key={event.eventId} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="space-y-1">
                   <div className="font-medium">{event.eventName}</div>
@@ -396,7 +396,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {recentActivity.slice(0, 10).map((activity, index) => (
+            {recentActivity?.slice(0, 10).map((activity, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg flex-col sm:flex-row gap-3">
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                   <div className={`w-2 h-2 rounded-full ${

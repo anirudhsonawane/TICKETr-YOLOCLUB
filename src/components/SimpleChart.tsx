@@ -21,7 +21,23 @@ export default function SimpleChart({
   type = "bar", 
   className 
 }: SimpleChartProps) {
-  const maxValue = Math.max(...data.map(d => d.value));
+  const maxValue = data.length > 0 ? Math.max(...data.map(d => d.value)) : 0;
+  
+  if (data.length === 0) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="text-lg">{title}</CardTitle>
+          {description && <CardDescription>{description}</CardDescription>}
+        </CardHeader>
+        <CardContent>
+          <div className="text-center text-gray-500 py-8">
+            No data available
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   
   if (type === "bar") {
     return (
