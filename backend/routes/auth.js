@@ -143,10 +143,9 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 } else {
   router.get('/google', (req, res) => {
-    res.status(400).json({
-      success: false,
-      message: 'Google OAuth is not configured. Please use email/password login.'
-    });
+    console.log('Google OAuth not configured - redirecting to frontend');
+    const frontendUrl = process.env.FRONTEND_URL || 'https://ticketr-yoloclub.in';
+    res.redirect(`${frontendUrl}/auth?error=oauth_not_configured`);
   });
 }
 
@@ -155,15 +154,15 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 // @access  Public
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   router.get('/google/callback', passport.authenticate('google', {
-    failureRedirect: `${process.env.FRONTEND_URL}/auth?error=google_auth_failed`,
+    failureRedirect: `${process.env.FRONTEND_URL || 'https://ticketr-yoloclub.in'}/auth?error=google_auth_failed`,
     session: false
-  }), (req, res) => {
+  }), async (req, res) => {
     try {
       console.log('Google OAuth callback - User:', req.user);
       
       if (!req.user) {
         console.error('No user found in request');
-        return res.redirect(`${process.env.FRONTEND_URL}/auth?error=no_user`);
+        return res.redirect(`${process.env.FRONTEND_URL || 'https://ticketr-yoloclub.in'}/auth?error=no_user`);
       }
       
       const token = generateToken(req.user.userId);
@@ -171,18 +170,19 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       console.log('Generated token for user:', req.user.email);
       
       // Redirect to frontend with token
-      res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify(req.user))}`);
+      const frontendUrl = process.env.FRONTEND_URL || 'https://ticketr-yoloclub.in';
+      res.redirect(`${frontendUrl}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify(req.user))}`);
     } catch (error) {
       console.error('Google OAuth callback error:', error);
-      res.redirect(`${process.env.FRONTEND_URL}/auth?error=callback_error`);
+      const frontendUrl = process.env.FRONTEND_URL || 'https://ticketr-yoloclub.in';
+      res.redirect(`${frontendUrl}/auth?error=callback_error`);
     }
   });
 } else {
   router.get('/google/callback', (req, res) => {
-    res.status(400).json({
-      success: false,
-      message: 'Google OAuth is not configured. Please use email/password login.'
-    });
+    console.log('Google OAuth not configured - redirecting to frontend');
+    const frontendUrl = process.env.FRONTEND_URL || 'https://ticketr-yoloclub.in';
+    res.redirect(`${frontendUrl}/auth?error=oauth_not_configured`);
   });
 }
 

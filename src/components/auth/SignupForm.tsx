@@ -63,8 +63,8 @@ export default function SignupForm({ onToggleMode }: SignupFormProps) {
   };
 
   const handleGoogleLogin = () => {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
-    window.location.href = `${backendUrl}/api/auth/google`;
+    // Redirect to Next.js API route for Google OAuth
+    window.location.href = '/api/auth/google';
   };
 
   return (
