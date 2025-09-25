@@ -4,10 +4,11 @@ import { api } from "../../../../convex/_generated/api";
 
 export async function POST(req: NextRequest) {
   console.log("=== FALLBACK TICKET CREATION ===");
+  console.log("📋 Request URL:", req.url);
   
   try {
     const body = await req.json();
-    console.log("Fallback ticket request body:", body);
+    console.log("📦 Fallback ticket request body:", body);
     
     const { 
       paymentId, 

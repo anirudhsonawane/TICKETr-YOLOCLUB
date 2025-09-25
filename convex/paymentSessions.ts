@@ -122,6 +122,19 @@ export const getUserPaymentSessions = query({
   },
 });
 
+// Get all payment sessions (for debugging)
+export const getAllPaymentSessions = query({
+  args: {},
+  handler: async (ctx) => {
+    const sessions = await ctx.db
+      .query("paymentSessions")
+      .order("desc")
+      .collect();
+
+    return sessions;
+  },
+});
+
 // Clean up expired sessions
 export const cleanupExpiredSessions = mutation({
   args: {},

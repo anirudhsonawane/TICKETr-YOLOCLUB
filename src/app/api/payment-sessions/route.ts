@@ -61,34 +61,52 @@ export async function POST(req: NextRequest) {
 // GET - Get payment session
 export async function GET(req: NextRequest) {
   try {
+    console.log("🔍 Payment session GET request received");
     const { searchParams } = new URL(req.url);
     const sessionId = searchParams.get('sessionId');
+    
+    console.log("📋 Request URL:", req.url);
+    console.log("🆔 Session ID:", sessionId);
 
     if (!sessionId) {
+      console.log("❌ Missing sessionId parameter");
       return NextResponse.json({
         error: "Missing sessionId parameter"
       }, { status: 400 });
     }
 
+    console.log("🔗 Getting Convex client...");
     const convex = getConvexClient();
+    
+    console.log("🔍 Querying payment session from database...");
     const session = await convex.query(api.paymentSessions.getPaymentSessionWithEvent, { sessionId });
+    
+    console.log("📊 Session query result:", session);
 
     if (!session) {
+      console.log("❌ Payment session not found in database");
       return NextResponse.json({
-        error: "Payment session not found"
+        success: false,
+        error: "Payment session not found",
+        sessionId: sessionId,
+        message: "This payment session does not exist in the database. This could happen if the session was never created or has expired.",
+        suggestion: "Try using the fallback ticket creation endpoint with the payment details"
       }, { status: 404 });
     }
 
+    console.log("✅ Payment session found:", session);
     return NextResponse.json({
       success: true,
       session
     });
 
   } catch (error) {
-    console.error("Payment session retrieval error:", error);
+    console.error("❌ Payment session retrieval error:", error);
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
     return NextResponse.json({
       error: "Failed to retrieve payment session",
-      details: error instanceof Error ? error.message : "Unknown error"
+      details: error instanceof Error ? error.message : "Unknown error",
+      sessionId: new URL(req.url).searchParams.get('sessionId')
     }, { status: 500 });
   }
 }
