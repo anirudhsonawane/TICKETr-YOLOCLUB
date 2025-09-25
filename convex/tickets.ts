@@ -207,8 +207,26 @@ export const issueAfterPayment = mutation({
     selectedDate: v.optional(v.string()),
   },
   handler: async (ctx, { eventId, userId, paymentIntentId, amount, quantity = 1, passId, selectedDate }) => {
+    console.log("🎫 Starting ticket creation process:", { eventId, userId, paymentIntentId, amount, quantity });
+    
+    // Validate event exists
     const event = await ctx.db.get(eventId);
-    if (!event) throw new ConvexError("Event not found");
+    if (!event) {
+      console.error("❌ Event not found:", eventId);
+      throw new ConvexError("Event not found");
+    }
+    console.log("✅ Event found:", event.name);
+    
+    // Validate user exists
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .first();
+    if (!user) {
+      console.error("❌ User not found:", userId);
+      throw new ConvexError("User not found");
+    }
+    console.log("✅ User found:", user.name || user.email);
 
     // Idempotency: if tickets already exist for this payment, return existing
     const existingByPayment = await ctx.db
@@ -216,8 +234,10 @@ export const issueAfterPayment = mutation({
       .withIndex("by_payment_intent", (q) => q.eq("paymentIntentId", paymentIntentId))
       .collect();
     if (existingByPayment.length > 0) {
+      console.log("✅ Tickets already exist for this payment:", existingByPayment.map(t => t._id));
       return existingByPayment.map(t => t._id);
     }
+    console.log("🔄 No existing tickets found, proceeding with creation...");
 
     // Mark ALL user's waiting list entries as purchased
     const waitingListEntries = await ctx.db
@@ -245,26 +265,31 @@ export const issueAfterPayment = mutation({
     const baseTime = Date.now();
     const ticketQuantity = Math.max(1, quantity || 1); // Ensure at least 1 ticket
     
+    console.log(`🎫 Creating ${ticketQuantity} ticket(s) for user ${userId}...`);
+    
     for (let i = 0; i < ticketQuantity; i++) {
-      const ticketId = await ctx.db.insert("tickets", {
-        eventId,
-        userId,
-        purchasedAt: baseTime + i,
-        status: TICKET_STATUS.VALID,
-        paymentIntentId,
-        amount: amount / ticketQuantity,
-        passId,
-        selectedDate,
-      });
-      ticketIds.push(ticketId);
+      try {
+        const ticketId = await ctx.db.insert("tickets", {
+          eventId,
+          userId,
+          purchasedAt: baseTime + i,
+          status: TICKET_STATUS.VALID,
+          paymentIntentId,
+          amount: amount / ticketQuantity,
+          passId,
+          selectedDate,
+        });
+        ticketIds.push(ticketId);
+        console.log(`✅ Created ticket ${i + 1}/${ticketQuantity}:`, ticketId);
+      } catch (error) {
+        console.error(`❌ Failed to create ticket ${i + 1}/${ticketQuantity}:`, error);
+        throw new ConvexError(`Failed to create ticket ${i + 1}: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
     
+    console.log("🎉 All tickets created successfully:", ticketIds);
+    
     // After successfully issuing tickets, send an email to the user
-    const user = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("userId"), userId))
-      .first();
-
     if (user && user.email) {
       const eventDetails = await ctx.db.get(eventId);
       const subject = `Your Ticketr purchase for ${eventDetails?.name || "an event"}!`;

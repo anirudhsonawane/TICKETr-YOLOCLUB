@@ -219,8 +219,8 @@ export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
           }
         },
         prefill: {
-          name: user.fullName || "",
-          email: user.emailAddresses[0]?.emailAddress || "",
+          name: user.name || "",
+          email: user.email || "",
         },
         theme: {
           color: "#f59e0b",

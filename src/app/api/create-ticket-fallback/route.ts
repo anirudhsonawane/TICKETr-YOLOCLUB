@@ -38,11 +38,14 @@ export async function POST(req: NextRequest) {
     // Get user details to ensure user exists
     const user = await convex.query(api.users.getUserById, { userId });
     if (!user) {
+      console.error("❌ User not found in fallback ticket creation:", userId);
       return NextResponse.json({ 
         success: false,
-        error: "User not found"
+        error: "User not found",
+        details: `User with ID ${userId} does not exist in the database`
       }, { status: 404 });
     }
+    console.log("✅ User found in fallback:", user.name || user.email);
     
     // Create ticket with minimal information
     const result = await convex.mutation(api.tickets.issueAfterPayment, {
@@ -56,6 +59,10 @@ export async function POST(req: NextRequest) {
     });
     
     console.log("✅ Fallback ticket creation successful:", result);
+    
+    if (!result || (Array.isArray(result) && result.length === 0)) {
+      throw new Error("Fallback ticket creation returned empty result");
+    }
     
     return NextResponse.json({ 
       success: true, 

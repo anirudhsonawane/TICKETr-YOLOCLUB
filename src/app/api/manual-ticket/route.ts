@@ -54,6 +54,10 @@ export async function POST(req: NextRequest) {
     
     console.log("✅ Manual ticket creation successful:", result);
     
+    if (!result || (Array.isArray(result) && result.length === 0)) {
+      throw new Error("Ticket creation returned empty result");
+    }
+    
     return NextResponse.json({ 
       success: true, 
       ticketId: result,
