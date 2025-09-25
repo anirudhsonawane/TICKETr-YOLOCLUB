@@ -9,10 +9,11 @@ import EventForm from "@/components/EventForm";
 // Force dynamic rendering to prevent SSR issues
 export const dynamic = 'force-dynamic';
 
-// Authorized event creators (add developer-approved user IDs here)
-const AUTHORIZED_CREATORS: string[] = [
-  // Add authorized user IDs here
-  "user_30vHGOIpgMB2gXYCo6fEAxQzA0W",
+// Authorized event creators (add developer-approved email addresses here)
+const AUTHORIZED_CREATOR_EMAILS: string[] = [
+  'anirudhsonawane111@gmail.com',
+  'gauravbhagwat999@gmail.com',
+  // Add more authorized creator emails here
 ];
 
 export default function NewEventPage() {
@@ -43,6 +44,10 @@ function NewEventContent() {
     if (!isLoading && !user) {
       router.push("/");
       return;
+    }
+    
+    if (user && !AUTHORIZED_CREATOR_EMAILS.includes(user.email?.toLowerCase() || '')) {
+      router.push("/");
     }
   }, [isLoading, user, router]);
 

@@ -9,11 +9,11 @@ import EventForm from "@/components/EventForm";
 // Force dynamic rendering to prevent SSR issues
 export const dynamic = 'force-dynamic';
 
-// Authorized event creators (add developer-approved user IDs here)
-const AUTHORIZED_CREATORS: string[] = [
-  // Add authorized user IDs here
-  "user_30vHGOIpgMB2gXYCo6fEAxQzA0W",
-  // Also update in seller page.tsx
+// Authorized event creators (add developer-approved email addresses here)
+const AUTHORIZED_CREATOR_EMAILS: string[] = [
+  'anirudhsonawane111@gmail.com',
+  'gauravbhagwat999@gmail.com',
+  // Add more authorized creator emails here
 ];
 
 export default function SellerPage() {
@@ -44,7 +44,7 @@ function SellerContent() {
       return;
     }
 
-    if (isAuthenticated && user && AUTHORIZED_CREATORS.includes(user._id)) {
+    if (isAuthenticated && user && AUTHORIZED_CREATOR_EMAILS.includes(user.email?.toLowerCase() || '')) {
       router.push("/seller/new-event");
     }
   }, [isAuthenticated, user, router]);
@@ -61,7 +61,7 @@ function SellerContent() {
     return null;
   }
 
-  const isAuthorized = AUTHORIZED_CREATORS.includes(user.id);
+  const isAuthorized = AUTHORIZED_CREATOR_EMAILS.includes(user.email?.toLowerCase() || '');
 
   if (!isAuthorized) {
     return (

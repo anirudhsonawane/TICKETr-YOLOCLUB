@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import SearchBar from "./SearchBar";
 import { isAuthorizedAdmin } from "@/lib/admin-config";
-import { Shield, User, LogOut, Menu, X, Ticket, Plus } from "lucide-react";
+import { Shield, User, LogOut, Ticket, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
 function Header() {
@@ -38,27 +38,27 @@ function Header() {
 
 function HeaderContent() {
   const { user, isAuthenticated, logout } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   
   // Check if user is authorized admin
   const isAdmin = user && isAuthorizedAdmin(user.email || '');
 
-  // Close mobile menu when clicking outside
+  // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isMobileMenuOpen) {
+      if (isProfileOpen) {
         const target = event.target as Element;
-        if (!target.closest('.mobile-menu-container')) {
-          setIsMobileMenuOpen(false);
+        if (!target.closest('.profile-dropdown-container')) {
+          setIsProfileOpen(false);
         }
       }
     };
 
-    if (isMobileMenuOpen) {
+    if (isProfileOpen) {
       document.addEventListener('click', handleClickOutside);
       return () => document.removeEventListener('click', handleClickOutside);
     }
-  }, [isMobileMenuOpen]);
+  }, [isProfileOpen]);
 
   return (
     <div className="border-b relative z-40">
@@ -78,21 +78,37 @@ function HeaderContent() {
 
           <div className="lg:hidden flex items-center gap-2 relative z-50 mobile-menu-container">
             {isAuthenticated ? (
-              <>
-                <div className="flex items-center gap-2">
+              <div className="relative profile-dropdown-container">
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                >
                   <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                     <User className="w-4 h-4 text-blue-600" />
                   </div>
                   <span className="text-sm font-medium text-gray-700 hidden sm:block">{user?.name}</span>
-                </div>
-                <button
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                  title="Menu"
-                >
-                  {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </button>
-              </>
+                
+                {/* Profile Dropdown */}
+                {isProfileOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <div className="text-sm font-medium text-gray-900">{user?.name}</div>
+                      <div className="text-xs text-gray-500">{user?.email}</div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsProfileOpen(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <Link href="/auth">
                 <button className="bg-gray-100 text-gray-800 px-3 py-1.5 text-sm rounded-lg hover:bg-gray-200 transition border border-gray-300">
@@ -137,18 +153,36 @@ function HeaderContent() {
                 </button>
               </Link>
 
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <User className="w-4 h-4 text-blue-600" />
-                </div>
-                <span className="text-sm font-medium text-gray-700">{user?.name}</span>
+              <div className="relative profile-dropdown-container">
                 <button
-                  onClick={logout}
-                  className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                  title="Logout"
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                    <User className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">{user?.name}</span>
                 </button>
+                
+                {/* Profile Dropdown */}
+                {isProfileOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <div className="text-sm font-medium text-gray-900">{user?.name}</div>
+                      <div className="text-xs text-gray-500">{user?.email}</div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsProfileOpen(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -161,54 +195,36 @@ function HeaderContent() {
           )}
         </div>
 
-        {/* Mobile Menu */}
-        {isAuthenticated && isMobileMenuOpen && (
-          <div className="lg:hidden w-full bg-white border-t border-gray-200 shadow-lg mobile-menu-container">
-            <div className="p-4 space-y-3">
+        {/* Mobile Action Buttons - Always Visible */}
+        {isAuthenticated && (
+          <div className="lg:hidden w-full bg-white border-t border-gray-200 px-4 py-3">
+            <div className="flex flex-col gap-2">
               {/* Admin Panel Button - Only for authorized admins */}
               {isAdmin && (
-                <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
-                  <button className="w-full bg-green-600 text-white px-4 py-3 text-sm rounded-lg hover:bg-green-700 transition flex items-center gap-3 justify-center">
+                <Link href="/admin">
+                  <button className="w-full bg-green-600 text-white px-4 py-2 text-sm rounded-lg hover:bg-green-700 transition flex items-center gap-2 justify-center">
                     <Shield className="w-4 h-4" />
                     Admin Panel
                   </button>
                 </Link>
               )}
               
-              <Link href="/seller/new-event" onClick={() => setIsMobileMenuOpen(false)}>
-                <button className="w-full bg-blue-600 text-white px-4 py-3 text-sm rounded-lg hover:bg-blue-700 transition flex items-center gap-3 justify-center">
-                  <Plus className="w-4 h-4" />
-                  Sell Tickets
-                </button>
-              </Link>
-
-              <Link href="/tickets" onClick={() => setIsMobileMenuOpen(false)}>
-                <button className="w-full bg-gray-100 text-gray-800 px-4 py-3 text-sm rounded-lg hover:bg-gray-200 transition border border-gray-300 flex items-center gap-3 justify-center">
-                  <Ticket className="w-4 h-4" />
-                  My Tickets
-                </button>
-              </Link>
-
-              <div className="pt-2 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                      <User className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-700">{user?.name}</span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      logout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                    title="Logout"
-                  >
-                    <LogOut className="w-4 h-4" />
+              <div className="flex gap-2">
+                <Link href="/seller/new-event" className="flex-1">
+                  <button className="w-full bg-blue-600 text-white px-3 py-2 text-sm rounded-lg hover:bg-blue-700 transition flex items-center gap-2 justify-center">
+                    <Plus className="w-4 h-4" />
+                    Sell Tickets
                   </button>
-                </div>
+                </Link>
+
+                <Link href="/tickets" className="flex-1">
+                  <button className="w-full bg-gray-100 text-gray-800 px-3 py-2 text-sm rounded-lg hover:bg-gray-200 transition border border-gray-300 flex items-center gap-2 justify-center">
+                    <Ticket className="w-4 h-4" />
+                    My Tickets
+                  </button>
+                </Link>
               </div>
+
             </div>
           </div>
         )}
