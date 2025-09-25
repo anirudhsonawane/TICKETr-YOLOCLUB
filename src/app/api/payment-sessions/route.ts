@@ -28,7 +28,46 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
+    console.log("🔧 Payment session creation data:", {
+      sessionId,
+      userId,
+      eventId,
+      amount,
+      quantity: quantity || 1,
+      paymentMethod
+    });
+
     const convex = getConvexClient();
+    
+    // First, verify the user exists
+    let user = await convex.query(api.users.getUserById, { userId });
+    if (!user) {
+      console.error("❌ User not found during payment session creation:", userId);
+      console.log("🔄 Attempting to create temporary user for payment session...");
+      
+      // Try to create a temporary user for this payment session
+      try {
+        const tempUserId = await convex.mutation(api.auth.createUser, {
+          userId: userId,
+          email: `temp_${userId}@ticketr.com`,
+          name: `User ${userId.substring(0, 8)}`,
+          role: "user",
+          isEmailVerified: false,
+          lastLogin: Date.now(),
+        });
+        
+        console.log("✅ Temporary user created for payment session:", tempUserId);
+        user = await convex.query(api.users.getUserById, { userId });
+      } catch (createUserError) {
+        console.error("❌ Failed to create temporary user for payment session:", createUserError);
+        return NextResponse.json({
+          error: "User not found and cannot create temporary user",
+          details: `User with ID ${userId} does not exist in the database and temporary user creation failed: ${createUserError instanceof Error ? createUserError.message : String(createUserError)}`
+        }, { status: 404 });
+      }
+    }
+    console.log("✅ User verified/created for payment session:", user.name || user.email);
+    
     const session = await convex.mutation(api.paymentSessions.createPaymentSession, {
       sessionId,
       userId,
