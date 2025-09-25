@@ -34,6 +34,10 @@ export async function POST(req: NextRequest) {
       eventId,
       amount,
       quantity: quantity || 1,
+      passId,
+      selectedDate,
+      couponCode,
+      waitingListId,
       paymentMethod
     });
 

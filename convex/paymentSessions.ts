@@ -62,8 +62,8 @@ export const createPaymentSession = mutation({
       }
       console.log("✅ Event validated:", event.name, "Event ID:", event._id);
 
-      // Validate passId if provided
-      if (args.passId) {
+      // Validate passId if provided and not empty
+      if (args.passId && args.passId !== 'undefined' && args.passId !== 'null' && args.passId.trim() !== '') {
         console.log("🔍 Checking if pass exists:", args.passId);
         const pass = await ctx.db.get(args.passId);
         if (!pass) {
@@ -71,6 +71,8 @@ export const createPaymentSession = mutation({
           throw new Error(`Invalid pass ID for payment session: ${args.passId}`);
         }
         console.log("✅ Pass validated:", pass.name, "Pass ID:", pass._id);
+      } else {
+        console.log("ℹ️ No passId provided or passId is empty, skipping pass validation");
       }
 
       // Check if session already exists
@@ -87,10 +89,10 @@ export const createPaymentSession = mutation({
           eventId: args.eventId,
           amount: Number(args.amount),
           quantity: Number(args.quantity),
-          passId: args.passId || undefined,
-          selectedDate: args.selectedDate || undefined,
-          couponCode: args.couponCode || undefined,
-          waitingListId: args.waitingListId || undefined,
+          passId: (args.passId && args.passId !== 'undefined' && args.passId !== 'null' && args.passId.trim() !== '') ? args.passId : undefined,
+          selectedDate: (args.selectedDate && args.selectedDate.trim() !== '') ? args.selectedDate : undefined,
+          couponCode: (args.couponCode && args.couponCode.trim() !== '') ? args.couponCode : undefined,
+          waitingListId: (args.waitingListId && args.waitingListId !== 'undefined' && args.waitingListId !== 'null' && args.waitingListId.trim() !== '') ? args.waitingListId : undefined,
           paymentMethod: args.paymentMethod,
           metadata: args.metadata || undefined,
           createdAt: now,
@@ -109,10 +111,10 @@ export const createPaymentSession = mutation({
         eventId: args.eventId,
         amount: Number(args.amount),
         quantity: Number(args.quantity),
-        passId: args.passId || undefined,
-        selectedDate: args.selectedDate || undefined,
-        couponCode: args.couponCode || undefined,
-        waitingListId: args.waitingListId || undefined,
+        passId: (args.passId && args.passId !== 'undefined' && args.passId !== 'null' && args.passId.trim() !== '') ? args.passId : undefined,
+        selectedDate: (args.selectedDate && args.selectedDate.trim() !== '') ? args.selectedDate : undefined,
+        couponCode: (args.couponCode && args.couponCode.trim() !== '') ? args.couponCode : undefined,
+        waitingListId: (args.waitingListId && args.waitingListId !== 'undefined' && args.waitingListId !== 'null' && args.waitingListId.trim() !== '') ? args.waitingListId : undefined,
         paymentMethod: args.paymentMethod,
         metadata: args.metadata || undefined,
         status: "pending" as const,
