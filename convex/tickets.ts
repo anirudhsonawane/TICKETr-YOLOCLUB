@@ -302,27 +302,58 @@ export const issueAfterPayment = mutation({
     if (user && user.email) {
       const eventDetails = await ctx.db.get(eventId);
       const subject = `Your Ticketr purchase for ${eventDetails?.name || "an event"}!`;
-      const body = `Dear ${user.name || "customer"},
+      
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #333; text-align: center;">🎫 Your Tickets Are Ready!</h2>
+          
+          <p>Dear ${user.name || "Valued Customer"},</p>
+          
+          <p>Thank you for your purchase! We're excited to have you join us for <strong>${eventDetails?.name || "the event"}</strong>.</p>
+          
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #495057; margin-top: 0;">📋 Your Ticket Details</h3>
+            <p><strong>Event:</strong> ${eventDetails?.name || "Event"}</p>
+            <p><strong>Date:</strong> ${eventDetails?.eventDate ? new Date(eventDetails.eventDate).toLocaleDateString() : "TBD"}</p>
+            <p><strong>Location:</strong> ${eventDetails?.location || "TBD"}</p>
+            <p><strong>Ticket IDs:</strong> ${ticketIds.join(", ")}</p>
+            <p><strong>Quantity:</strong> ${ticketQuantity}</p>
+            <p><strong>Total Amount:</strong> ₹${amount}</p>
+          </div>
+          
+          <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="color: #1976d2; margin-top: 0;">📱 Important Instructions</h4>
+            <ul>
+              <li>Please bring a valid ID and this email confirmation</li>
+              <li>Arrive 15 minutes before the event starts</li>
+              <li>Keep your ticket IDs safe - you'll need them for entry</li>
+            </ul>
+          </div>
+          
+          <p>We look forward to seeing you there!</p>
+          
+          <p>Best regards,<br>
+          <strong>The Ticketr Team</strong></p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+          <p style="font-size: 12px; color: #666; text-align: center;">
+            This is an automated email. Please do not reply to this message.
+          </p>
+        </div>
+      `;
 
-Thank you for your purchase! Here are your ticket details for ${eventDetails?.name || "an event"}.
-
-Your Ticket IDs: ${ticketIds.join(", ")}
-
-We look forward to seeing you there!
-
-Best regards,
-The Ticketr Team`;
-
-      // Note: Email sending is commented out as the action doesn't exist
-      // await ctx.runAction(internal.actions.sendEmail.sendEmail, {
-      //   to: user.email,
-      //   subject,
-      //   body,
-      //   userId: user.userId,
-      //   ticketIds,
-      //   eventId,
-      //   purchaseId: paymentIntentId,
-      // });
+      try {
+        console.log("📧 Scheduling ticket email to:", user.email);
+        await ctx.scheduler.runAfter(0, internal.actions.email.sendTicketEmailAction, {
+          to: user.email,
+          subject,
+          htmlContent,
+        });
+        console.log("✅ Ticket email scheduled successfully");
+      } catch (emailError) {
+        console.error("❌ Failed to schedule ticket email:", emailError);
+        // Don't throw error - ticket creation should still succeed even if email fails
+      }
     }
 
     // Update pass sold quantity if passId is provided
