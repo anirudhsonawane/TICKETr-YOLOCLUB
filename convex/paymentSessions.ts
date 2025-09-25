@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { ConvexError, v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 
 // Create a payment session
 export const createPaymentSession = mutation({
@@ -40,12 +41,24 @@ export const createPaymentSession = mutation({
       }
 
       // Validate that the event exists
-      const event = await ctx.db.get(args.eventId);
-      if (!event) {
-        console.error("❌ Event not found:", args.eventId);
-        throw new Error(`Invalid event ID for payment session: ${args.eventId}`);
+      console.log("🔍 Checking if event exists:", args.eventId);
+      console.log("🔍 EventId type:", typeof args.eventId);
+      
+      // Ensure eventId is properly formatted as a Convex ID
+      let eventId: Id<"events">;
+      try {
+        eventId = args.eventId as Id<"events">;
+      } catch (error) {
+        console.error("❌ Invalid eventId format:", args.eventId);
+        throw new Error(`Invalid eventId format: ${args.eventId}`);
       }
-      console.log("✅ Event validated:", event.name);
+      
+      const event = await ctx.db.get(eventId);
+      if (!event) {
+        console.error("❌ Event not found:", eventId);
+        throw new Error(`Invalid event ID for payment session: ${eventId}`);
+      }
+      console.log("✅ Event validated:", event.name, "Event ID:", event._id);
 
       // Check if session already exists
       const existingSession = await ctx.db
@@ -55,9 +68,18 @@ export const createPaymentSession = mutation({
 
       if (existingSession) {
         console.log("🔄 Updating existing payment session:", existingSession._id);
-        // Update existing session
+        // Update existing session with only valid fields
         await ctx.db.patch(existingSession._id, {
-          ...args,
+          userId: args.userId,
+          eventId: eventId, // Use the validated eventId
+          amount: Number(args.amount),
+          quantity: Number(args.quantity),
+          passId: args.passId || undefined,
+          selectedDate: args.selectedDate || undefined,
+          couponCode: args.couponCode || undefined,
+          waitingListId: args.waitingListId || undefined,
+          paymentMethod: args.paymentMethod,
+          metadata: args.metadata || undefined,
           createdAt: now,
           expiresAt,
           status: "pending",
@@ -71,7 +93,7 @@ export const createPaymentSession = mutation({
       const sessionData = {
         sessionId: args.sessionId,
         userId: args.userId,
-        eventId: args.eventId,
+        eventId: eventId, // Use the validated eventId
         amount: Number(args.amount),
         quantity: Number(args.quantity),
         passId: args.passId || undefined,
@@ -94,6 +116,16 @@ export const createPaymentSession = mutation({
       if (typeof sessionData.quantity !== 'number' || sessionData.quantity <= 0) {
         throw new Error(`Invalid quantity: ${sessionData.quantity}`);
       }
+      
+      console.log("💾 Attempting to insert payment session into database...");
+      console.log("📊 Session data validation passed, inserting:", {
+        sessionId: sessionData.sessionId,
+        userId: sessionData.userId,
+        eventId: sessionData.eventId,
+        amount: sessionData.amount,
+        quantity: sessionData.quantity,
+        paymentMethod: sessionData.paymentMethod
+      });
       
       // Create new session
       const sessionId = await ctx.db.insert("paymentSessions", sessionData);
