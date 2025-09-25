@@ -12,6 +12,7 @@ import { useStorageUrl } from "@/lib/utils";
 import { CalendarDays, Check, CircleArrowRight, LoaderCircle, MapPin, PencilIcon, QrCode, StarIcon, Ticket, XCircle } from "lucide-react";
 import Link from "next/link";
 import PurchaseTicket from "./PurchaseTicket";
+import { isAuthorizedAdmin } from "@/lib/admin-config";
 
 function EventCardSkeleton() {
   return (
@@ -75,6 +76,7 @@ function EventCardContent({ eventId, hideBuyButton = false }: { eventId: Id<"eve
   const isPastEvent = event.eventDate < Date.now();
 
   const isEventOwner = user?._id === event?.userId;
+  const isAuthorizedUser = user?.email && isAuthorizedAdmin(user.email);
 
   const renderQueuePosition = () => {
     if (!queuePosition || queuePosition.status !== "waiting") return null;
@@ -133,7 +135,7 @@ function EventCardContent({ eventId, hideBuyButton = false }: { eventId: Id<"eve
       );
     }
 
-    if (isEventOwner) {
+    if (isEventOwner || isAuthorizedUser) {
       return (
         <div className="mt-4 space-y-3">
           <button
@@ -146,21 +148,23 @@ function EventCardContent({ eventId, hideBuyButton = false }: { eventId: Id<"eve
             <QrCode className="w-5 h-5" />
             Scan Tickets
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/seller/events/${eventId}/edit`);
-            }}
-            className="w-full bg-gray-100 text-gray-700 px-4 py-3 rounded-lg text-base font-medium hover:bg-gray-200 transition-colors duration-200 shadow-sm flex items-center justify-center gap-2"
-          >
-            <PencilIcon className="w-5 h-5" />
-            Edit Event
-          </button>
+          {isEventOwner && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/seller/events/${eventId}/edit`);
+              }}
+              className="w-full bg-gray-100 text-gray-700 px-4 py-3 rounded-lg text-base font-medium hover:bg-gray-200 transition-colors duration-200 shadow-sm flex items-center justify-center gap-2"
+            >
+              <PencilIcon className="w-5 h-5" />
+              Edit Event
+            </button>
+          )}
         </div>
       );
     }
 
-    if (userTicket && !isEventOwner) {
+    if (userTicket && !isEventOwner && !isAuthorizedUser) {
       return (
         <div className="mt-4">
           <div className="bg-green-50 rounded-lg border border-green-100 p-4">
@@ -216,7 +220,7 @@ function EventCardContent({ eventId, hideBuyButton = false }: { eventId: Id<"eve
       );
     }
 
-    if (queuePosition && !isEventOwner) {
+    if (queuePosition && !isEventOwner && !isAuthorizedUser) {
       return (
         <div className="mt-4">
           {queuePosition.status === "offered" && (
@@ -235,8 +239,8 @@ function EventCardContent({ eventId, hideBuyButton = false }: { eventId: Id<"eve
       );
     }
 
-    // For non-owners - show buy button or purchase component
-    if (!isEventOwner && !isPastEvent && availability.purchasedCount < availability.totalTickets && !hideBuyButton) {
+    // For non-owners and non-authorized users - show buy button or purchase component
+    if (!isEventOwner && !isAuthorizedUser && !isPastEvent && availability.purchasedCount < availability.totalTickets && !hideBuyButton) {
       if (!queuePosition) {
         return (
           <div className="mt-4">
