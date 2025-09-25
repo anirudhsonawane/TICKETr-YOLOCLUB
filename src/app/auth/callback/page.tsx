@@ -11,7 +11,7 @@ function AuthCallbackContent() {
   const { setToken, setUser } = useAuth();
 
   useEffect(() => {
-    const handleCallback = () => {
+    const handleCallback = async () => {
       const token = searchParams.get('token');
       const userParam = searchParams.get('user');
       const error = searchParams.get('error');
@@ -31,7 +31,11 @@ function AuthCallbackContent() {
           setUser({ ...user, id: user._id || user.userId }); // Add id for compatibility
 
           toast.success('Authentication successful!');
-          router.push('/');
+          
+          // Add a small delay to ensure state is properly set before redirect
+          setTimeout(() => {
+            router.push('/');
+          }, 1000);
         } catch (error) {
           console.error('Error parsing user data:', error);
           toast.error('Authentication failed. Please try again.');

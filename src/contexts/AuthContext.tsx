@@ -35,14 +35,24 @@ interface AuthContextType {
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Simple JWT-like token generation for local storage
-const generateSimpleToken = (userId: string) => {
-  return btoa(JSON.stringify({ userId, timestamp: Date.now() }));
-};
-
-const parseSimpleToken = (token: string) => {
+// JWT token validation
+const parseJWTToken = (token: string) => {
   try {
-    return JSON.parse(atob(token));
+    // JWT tokens have 3 parts separated by dots
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      return null;
+    }
+    
+    // Decode the payload (second part)
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    
+    // Check if token is expired
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      return null;
+    }
+    
+    return payload;
   } catch {
     return null;
   }
@@ -74,10 +84,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (storedToken && storedUser) {
           const userData = JSON.parse(storedUser);
-          const tokenData = parseSimpleToken(storedToken);
+          const tokenData = parseJWTToken(storedToken);
           
           // Check if token is valid and matches user (using userId or _id)
-          if (tokenData && (tokenData.userId === userData.userId || tokenData.userId === userData._id)) {
+          if (tokenData && (tokenData.id === userData.userId || tokenData.id === userData._id)) {
             setToken(storedToken);
             setUser({ ...userData, id: userData.userId || userData._id }); // Ensure id exists
           } else {
@@ -122,9 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }).then(res => res.json());
 
       if (user.success) {
-        const newToken = generateSimpleToken(user.user.userId);
-        
-        setTokenWithPersistence(newToken);
+        // Use the JWT token from the backend
+        setTokenWithPersistence(user.token);
         setUserWithPersistence({ ...user.user, id: user.user.userId });
 
         return { success: true };
@@ -150,9 +159,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }).then(res => res.json());
 
       if (user.success) {
-        const newToken = generateSimpleToken(user.user.userId);
-        
-        setTokenWithPersistence(newToken);
+        // Use the JWT token from the backend
+        setTokenWithPersistence(user.token);
         setUserWithPersistence({ ...user.user, id: user.user.userId });
 
         return { success: true };
