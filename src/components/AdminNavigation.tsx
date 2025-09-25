@@ -98,7 +98,7 @@ export default function AdminNavigation() {
                 {user?.fullName || 'Admin'}
               </p>
               <p className="text-xs text-gray-500">
-                {user?.emailAddresses[0]?.emailAddress}
+                {user?.emailAddresses?.[0]?.emailAddress || user?.email || 'No email'}
               </p>
             </div>
             <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">

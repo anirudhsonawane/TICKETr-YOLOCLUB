@@ -37,7 +37,7 @@ function MyTicketsContent() {
   
   // Get passes for all tickets
   const passes = useQuery(api.passes.getEventPasses, 
-    tickets?.[0]?.eventId ? { eventId: tickets[0].eventId } : "skip"
+    tickets && tickets.length > 0 && tickets[0]?.eventId ? { eventId: tickets[0].eventId } : "skip"
   );
 
   if (isLoading) {

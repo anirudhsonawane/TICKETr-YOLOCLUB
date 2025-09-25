@@ -4,6 +4,7 @@ export const ADMIN_CONFIG = {
   authorizedAdmins: [
     'anirudhsonawane111@gmail.com',
     'gauravbhagwat999@gmail.com',
+    'bunty959596@gmail.com',
     // Add more admin emails here as needed
     // 'admin2@example.com',
     // 'admin3@example.com',

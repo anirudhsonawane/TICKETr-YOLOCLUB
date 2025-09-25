@@ -233,7 +233,7 @@ export default function SellerDashboard() {
                         Action Required:
                       </p>
                       <ul className="list-disc pl-5 text-yellow-700 text-sm">
-                        {accountStatus.requirements.currently_due.map((req) => (
+                        {accountStatus.requirements.currently_due?.map((req) => (
                           <li key={req}>{req.replace(/_/g, " ")}</li>
                         ))}
                       </ul>
@@ -245,7 +245,7 @@ export default function SellerDashboard() {
                         Eventually Needed:
                       </p>
                       <ul className="list-disc pl-5 text-yellow-700 text-sm">
-                        {accountStatus.requirements.eventually_due.map(
+                        {accountStatus.requirements.eventually_due?.map(
                           (req) => (
                             <li key={req}>{req.replace(/_/g, " ")}</li>
                           )
