@@ -12,8 +12,8 @@ const AUTHORIZED_ADMIN_EMAILS = [
   't37823467@gmail.com',
 ];
 
-// Helper function to check if email is authorized admin
-async function checkIfAuthorizedAdmin(ctx: any, email: string): Promise<boolean> {
+// Helper function to check if email is authorized admin (simplified)
+function isAuthorizedAdmin(email: string): boolean {
   return AUTHORIZED_ADMIN_EMAILS.includes(email.toLowerCase());
 }
 
@@ -113,7 +113,7 @@ export const scanTicket = mutation({
     
     // Check if user is event owner OR authorized admin
     const isEventOwner = event.userId === scannerId;
-    const isAuthorizedAdmin = scannerEmail && await checkIfAuthorizedAdmin(ctx, scannerEmail);
+    const isAuthorizedAdmin = scannerEmail && AUTHORIZED_ADMIN_EMAILS.includes(scannerEmail.toLowerCase());
     
     console.log("🔍 Ticket scanning authorization check:", {
       ticketId,
@@ -194,92 +194,82 @@ export const getEventTickets = query({
     userEmail: v.optional(v.string()) // Optional email for admin verification
   },
   handler: async (ctx, { eventId, ownerId, userEmail }) => {
-    try {
-      console.log("🔍 getEventTickets called with:", { eventId, ownerId, userEmail });
-      
-      // Verify event exists
-      const event = await ctx.db.get(eventId);
-      if (!event) {
-        console.error("❌ Event not found:", eventId);
-        throw new Error("Event not found");
-      }
-      
-      console.log("✅ Event found:", event.name, "Owner:", event.userId);
-      
-      // Check if user is event owner
-      const isEventOwner = event.userId === ownerId;
-      console.log("🔍 Event owner check:", { isEventOwner, eventOwner: event.userId, currentUser: ownerId });
-      
-      // Check if user is authorized admin (with error handling)
-      let isAuthorizedAdmin = false;
-      if (userEmail) {
-        try {
-          isAuthorizedAdmin = await checkIfAuthorizedAdmin(ctx, userEmail);
-          console.log("🔍 Admin check:", { userEmail, isAuthorizedAdmin, authorizedEmails: AUTHORIZED_ADMIN_EMAILS });
-        } catch (adminCheckError) {
-          console.error("❌ Admin check failed:", adminCheckError);
-          isAuthorizedAdmin = false;
-        }
-      }
-      
-      console.log("🔍 Final authorization check:", {
-        eventId,
-        ownerId,
-        userEmail,
-        eventOwnerId: event.userId,
-        isEventOwner,
-        isAuthorizedAdmin
-      });
-      
-      if (!isEventOwner && !isAuthorizedAdmin) {
-        console.error("❌ Unauthorized getEventTickets access:", { ownerId, userEmail, eventOwnerId: event.userId });
-        throw new Error("Access denied - Only event owner or authorized admin can view tickets");
-      }
-      
-      console.log("✅ getEventTickets authorization successful:", { isEventOwner, isAuthorizedAdmin });
-      
-      // Query tickets for the event
-      console.log("🔍 Querying tickets for event:", eventId);
-      
-      const tickets = await ctx.db
-        .query("tickets")
-        .withIndex("by_event", (q) => q.eq("eventId", eventId))
-        .filter((q) => q.or(
-          q.eq(q.field("status"), TICKET_STATUS.VALID),
-          q.eq(q.field("status"), TICKET_STATUS.USED)
-        ))
-        .collect();
-      
-      console.log("✅ Found tickets:", tickets.length);
-      
-      // Get user details for each ticket
-      const ticketsWithUsers = await Promise.all(
-        tickets.map(async (ticket) => {
-          try {
-            const user = await ctx.db
-              .query("users")
-              .withIndex("by_user_id", (q) => q.eq("userId", ticket.userId))
-              .first();
-            return {
-              ...ticket,
-              user: user || { name: "Unknown", email: "Unknown" }
-            };
-          } catch (userError) {
-            console.error("❌ Error fetching user for ticket:", ticket._id, userError);
-            return {
-              ...ticket,
-              user: { name: "Unknown", email: "Unknown" }
-            };
-          }
-        })
-      );
-      
-      console.log("✅ Returning tickets with users:", ticketsWithUsers.length);
-      return ticketsWithUsers;
-    } catch (error) {
-      console.error("❌ getEventTickets error:", error);
-      throw error;
+    console.log("🔍 getEventTickets called with:", { eventId, ownerId, userEmail });
+    
+    // Verify event exists
+    const event = await ctx.db.get(eventId);
+    if (!event) {
+      console.error("❌ Event not found:", eventId);
+      throw new Error("Event not found");
     }
+    
+    console.log("✅ Event found:", event.name, "Owner:", event.userId);
+    
+    // Check if user is event owner
+    const isEventOwner = event.userId === ownerId;
+    console.log("🔍 Event owner check:", { isEventOwner, eventOwner: event.userId, currentUser: ownerId });
+    
+    // Check if user is authorized admin (simplified)
+    let isAuthorizedAdmin = false;
+    if (userEmail && AUTHORIZED_ADMIN_EMAILS.includes(userEmail.toLowerCase())) {
+      isAuthorizedAdmin = true;
+      console.log("🔍 Admin check:", { userEmail, isAuthorizedAdmin });
+    }
+    
+    console.log("🔍 Final authorization check:", {
+      eventId,
+      ownerId,
+      userEmail,
+      eventOwnerId: event.userId,
+      isEventOwner,
+      isAuthorizedAdmin
+    });
+    
+    if (!isEventOwner && !isAuthorizedAdmin) {
+      console.error("❌ Unauthorized getEventTickets access:", { ownerId, userEmail, eventOwnerId: event.userId });
+      throw new Error("Access denied - Only event owner or authorized admin can view tickets");
+    }
+    
+    console.log("✅ getEventTickets authorization successful:", { isEventOwner, isAuthorizedAdmin });
+    
+    // Query tickets for the event
+    console.log("🔍 Querying tickets for event:", eventId);
+    
+    const tickets = await ctx.db
+      .query("tickets")
+      .withIndex("by_event", (q) => q.eq("eventId", eventId))
+      .filter((q) => q.or(
+        q.eq(q.field("status"), TICKET_STATUS.VALID),
+        q.eq(q.field("status"), TICKET_STATUS.USED)
+      ))
+      .collect();
+    
+    console.log("✅ Found tickets:", tickets.length);
+    
+    // Get user details for each ticket
+    const ticketsWithUsers = await Promise.all(
+      tickets.map(async (ticket) => {
+        try {
+          const user = await ctx.db
+            .query("users")
+            .withIndex("by_user_id", (q) => q.eq("userId", ticket.userId))
+            .first();
+          return {
+            ...ticket,
+            user: user || { name: "Unknown", email: "Unknown" }
+          };
+        } catch (userError) {
+          console.error("❌ Error fetching user for ticket:", ticket._id, userError);
+          return {
+            ...ticket,
+            user: { name: "Unknown", email: "Unknown" }
+          };
+        }
+      })
+    );
+    
+    console.log("✅ Returning tickets with users:", ticketsWithUsers.length);
+    return ticketsWithUsers;
   },
 });
 
