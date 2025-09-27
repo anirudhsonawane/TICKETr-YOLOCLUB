@@ -95,7 +95,7 @@ export const createPaymentSession = mutation({
           eventId: args.eventId,
           amount: Number(args.amount),
           quantity: Number(args.quantity),
-          passId: args.passId || undefined,
+          passId: (args.passId && args.passId !== 'undefined' && args.passId !== 'null' && String(args.passId).trim()) || undefined,
           selectedDate: (args.selectedDate && args.selectedDate.trim() !== '') ? args.selectedDate : undefined,
           couponCode: (args.couponCode && args.couponCode.trim() !== '') ? args.couponCode : undefined,
           waitingListId: (args.waitingListId && args.waitingListId !== 'undefined' && args.waitingListId !== 'null' && args.waitingListId.trim() !== '') ? args.waitingListId : undefined,

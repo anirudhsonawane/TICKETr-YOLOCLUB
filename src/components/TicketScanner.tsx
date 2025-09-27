@@ -44,7 +44,8 @@ export default function TicketScanner({ eventId }: TicketScannerProps) {
 
   // Convex queries and mutations (always run in the same order)
   const event = useQuery(api.events.getById, { eventId });
-  const tickets = useQuery(
+  // Safe query with error handling
+  const ticketsQuery = useQuery(
     api.tickets.getEventTickets,
     user?.id ? { 
       eventId, 
@@ -52,7 +53,22 @@ export default function TicketScanner({ eventId }: TicketScannerProps) {
       userEmail: user.emailAddresses?.[0]?.emailAddress || user.email || undefined 
     } : "skip"
   );
+  
+  // Handle query errors gracefully
+  const tickets = ticketsQuery || [];
   const scanTicket = useMutation(api.tickets.scanTicket);
+  
+  // Show loading state
+  if (ticketsQuery === undefined) {
+    return (
+      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+        <div className="text-center">
+          <Spinner />
+          <p className="text-gray-600 mt-2">Loading tickets...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Derived values
   const ticketsByPass =
