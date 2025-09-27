@@ -7,7 +7,9 @@ import { internal } from "./_generated/api";
 const AUTHORIZED_ADMIN_EMAILS = [
   'anirudhsonawane111@gmail.com',
   'gauravbhagwat999@gmail.com',
-  'bunty959596@gmail.com',
+  'testmailsforweb@gmail.com',
+  'helloworldforweb@gmail.com',
+  't37823467@gmail.com',
 ];
 
 // Helper function to check if email is authorized admin
