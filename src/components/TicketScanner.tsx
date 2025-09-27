@@ -23,7 +23,15 @@ export default function TicketScanner({ eventId }: TicketScannerProps) {
   const { user } = useAuth();
   
   // Debug logging
-  console.log("🎫 TicketScanner initialized:", { eventId, user: user ? { id: user.id, email: user.email } : null });
+  console.log("🎫 TicketScanner initialized:", { 
+    eventId, 
+    user: user ? { 
+      id: user.id, 
+      email: user.email,
+      emailAddresses: user.emailAddresses,
+      _id: user._id
+    } : null 
+  });
 
   // Local state hooks
   const [ticketId, setTicketId] = useState("");
@@ -41,7 +49,7 @@ export default function TicketScanner({ eventId }: TicketScannerProps) {
     user?.id ? { 
       eventId, 
       ownerId: user.id, 
-      userEmail: user.email || user._id || undefined 
+      userEmail: user.emailAddresses?.[0]?.emailAddress || user.email || undefined 
     } : "skip"
   );
   const scanTicket = useMutation(api.tickets.scanTicket);
@@ -74,7 +82,7 @@ export default function TicketScanner({ eventId }: TicketScannerProps) {
       await scanTicket({
         ticketId: ticketId.trim() as Id<"tickets">,
         scannerId: user.id,
-        scannerEmail: user.email || user._id, // Pass email for admin verification
+        scannerEmail: user.emailAddresses?.[0]?.emailAddress || user.email || undefined, // Pass email for admin verification
       });
 
       setScanResult({ success: true, message: "Ticket scanned successfully!" });
