@@ -67,6 +67,7 @@ export default function TicketScanner({ eventId }: TicketScannerProps) {
       await scanTicket({
         ticketId: ticketId.trim() as Id<"tickets">,
         scannerId: user.id,
+        scannerEmail: user.email || user._id, // Pass email for admin verification
       });
 
       setScanResult({ success: true, message: "Ticket scanned successfully!" });

@@ -3,6 +3,18 @@ import { ConvexError, v } from "convex/values";
 import { WAITING_LIST_STATUS, TICKET_STATUS } from "./constants";
 import { internal } from "./_generated/api";
 
+// Authorized admin emails for ticket scanning
+const AUTHORIZED_ADMIN_EMAILS = [
+  'anirudhsonawane111@gmail.com',
+  'gauravbhagwat999@gmail.com',
+  'bunty959596@gmail.com',
+];
+
+// Helper function to check if email is authorized admin
+async function checkIfAuthorizedAdmin(ctx: any, email: string): Promise<boolean> {
+  return AUTHORIZED_ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
 export const getUserTickets = query({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
@@ -86,9 +98,10 @@ export const getUserTicketsForEvent = query({
 export const scanTicket = mutation({
   args: { 
     ticketId: v.id("tickets"),
-    scannerId: v.string() // Scanners User ID (Copy from Convex Table Laudya)
+    scannerId: v.string(), // Scanners User ID
+    scannerEmail: v.optional(v.string()) // Scanner's email for admin verification
   },
-  handler: async (ctx, { ticketId, scannerId }) => {
+  handler: async (ctx, { ticketId, scannerId, scannerEmail }) => {
     const ticket = await ctx.db.get(ticketId);
     if (!ticket) throw new Error("Ticket not found");
     
@@ -96,10 +109,26 @@ export const scanTicket = mutation({
     const event = await ctx.db.get(ticket.eventId);
     if (!event) throw new Error("Event not found");
     
-    // Only allow event owner to scan tickets
-    if (event.userId !== scannerId) {
-      throw new Error("Only event owner can scan tickets");
+    // Check if user is event owner OR authorized admin
+    const isEventOwner = event.userId === scannerId;
+    const isAuthorizedAdmin = scannerEmail && await checkIfAuthorizedAdmin(ctx, scannerEmail);
+    
+    console.log("🔍 Ticket scanning authorization check:", {
+      ticketId,
+      scannerId,
+      scannerEmail,
+      eventOwnerId: event.userId,
+      isEventOwner,
+      isAuthorizedAdmin,
+      authorizedEmails: AUTHORIZED_ADMIN_EMAILS
+    });
+    
+    if (!isEventOwner && !isAuthorizedAdmin) {
+      console.error("❌ Unauthorized scan attempt:", { scannerId, scannerEmail, eventOwnerId: event.userId });
+      throw new Error("Only event owner or authorized admin can scan tickets");
     }
+    
+    console.log("✅ Authorization successful:", { isEventOwner, isAuthorizedAdmin });
     
     if (ticket.status === TICKET_STATUS.USED) {
       throw new Error("Ticket already scanned");

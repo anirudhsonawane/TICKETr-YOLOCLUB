@@ -18,7 +18,13 @@ declare global {
   }
 }
 
-export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
+export default function PurchaseTicket({ 
+  eventId, 
+  passId 
+}: { 
+  eventId: Id<"events">;
+  passId?: Id<"passes">;
+}) {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
 
@@ -32,20 +38,33 @@ export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
     eventId,
     userId: user?._id ?? "",
   });
+  const eventPasses = useQuery(api.passes.getEventPasses, { eventId });
   const joinWaitingList = useMutation(api.events.joinWaitingList);
 
   const [timeRemaining, setTimeRemaining] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [selectedPass, setSelectedPass] = useState<Id<"passes"> | undefined>(undefined);
+  const [selectedPass, setSelectedPass] = useState<Id<"passes"> | undefined>(passId);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
 
   const offerExpiresAt = queuePosition?.offerExpiresAt ?? 0;
   const isExpired = Date.now() > offerExpiresAt;
-  const totalAmount = event ? event.price * quantity : 0;
+  // Calculate total amount based on pass price or event price
+  const selectedPassData = eventPasses?.find(p => p._id === selectedPass);
+  const pricePerTicket = selectedPassData ? selectedPassData.price : (event?.price || 0);
+  const totalAmount = pricePerTicket * quantity;
   const isEventOwner = user?.id === event?.userId;
   const isPastEvent = event ? event.eventDate < Date.now() : false;
+
+  // Set default pass if no passId provided
+  useEffect(() => {
+    if (!passId && eventPasses && eventPasses.length > 0 && !selectedPass) {
+      // Set the first available pass as default
+      setSelectedPass(eventPasses[0]._id);
+      console.log("🎫 Set default pass:", eventPasses[0]._id, eventPasses[0].name);
+    }
+  }, [passId, eventPasses, selectedPass]);
 
   useEffect(() => {
     const calculateTimeRemaining = () => {
@@ -115,23 +134,36 @@ export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
     try {
       setIsLoading(true);
       
+      console.log("🛒 Purchase initiated with details:", {
+        eventId,
+        userId: user.id,
+        quantity,
+        selectedPass,
+        selectedDate,
+        totalAmount
+      });
+      
       if (typeof window.Razorpay === 'undefined') {
         alert('Payment system not loaded. Please refresh the page.');
         return;
       }
       
+      const orderData = {
+        amount: totalAmount,
+        eventId: eventId,
+        userId: user.id,
+        waitingListId: queuePosition._id,
+        quantity: quantity,
+        passId: selectedPass,
+        selectedDate: selectedDate,
+      };
+      
+      console.log("📤 Sending order creation request:", orderData);
+      
       const response = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          amount: totalAmount,
-          eventId: eventId,
-          userId: user.id,
-          waitingListId: queuePosition._id,
-          quantity: quantity,
-          passId: selectedPass,
-          selectedDate: selectedDate,
-        }),
+        body: JSON.stringify(orderData),
       });
       
       if (!response.ok) {
@@ -154,28 +186,32 @@ export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
           
           // Create payment session in database
           try {
+            const sessionData = {
+              sessionId: response.razorpay_payment_id,
+              userId: user.userId || user._id,
+              eventId,
+              amount: totalAmount,
+              quantity,
+              passId: selectedPass,
+              selectedDate: selectedDate,
+              couponCode: appliedCoupon?.code,
+              waitingListId: queuePosition?._id,
+              paymentMethod: 'razorpay',
+              metadata: {
+                orderId: order.orderId,
+                currency: order.currency,
+                razorpayOrderId: order.orderId
+              }
+            };
+            
+            console.log("💾 Creating payment session with data:", sessionData);
+            
             const sessionResponse = await fetch('/api/payment-sessions', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({
-                sessionId: response.razorpay_payment_id,
-                userId: user.userId || user._id,
-                eventId,
-                amount: totalAmount,
-                quantity,
-                passId: selectedPass,
-                selectedDate: selectedDate,
-                couponCode: appliedCoupon?.code,
-                waitingListId: queuePosition?._id,
-                paymentMethod: 'razorpay',
-                metadata: {
-                  orderId: order.orderId,
-                  currency: order.currency,
-                  razorpayOrderId: order.orderId
-                }
-              }),
+              body: JSON.stringify(sessionData),
             });
 
             if (!sessionResponse.ok) {

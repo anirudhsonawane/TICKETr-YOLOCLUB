@@ -63,9 +63,9 @@ export const createPaymentSession = mutation({
       console.log("✅ Event validated:", event.name, "Event ID:", event._id);
 
       // Validate passId if provided and not empty
-      if (args.passId && args.passId !== 'undefined' && args.passId !== 'null' && args.passId.trim() !== '') {
+      if (args.passId && typeof args.passId === 'string' && args.passId !== 'undefined' && args.passId !== 'null' && args.passId.trim() !== '') {
         console.log("🔍 Checking if pass exists:", args.passId);
-        const pass = await ctx.db.get(args.passId);
+        const pass = await ctx.db.get(args.passId as Id<"passes">);
         if (!pass) {
           console.error("❌ Pass not found:", args.passId);
           throw new Error(`Invalid pass ID for payment session: ${args.passId}`);
@@ -73,6 +73,13 @@ export const createPaymentSession = mutation({
         console.log("✅ Pass validated:", pass.name, "Pass ID:", pass._id);
       } else {
         console.log("ℹ️ No passId provided or passId is empty, skipping pass validation");
+        console.log("ℹ️ PassId details:", { 
+          passId: args.passId, 
+          type: typeof args.passId,
+          isEmpty: args.passId === '',
+          isUndefined: args.passId === undefined,
+          isNull: args.passId === null
+        });
       }
 
       // Check if session already exists
