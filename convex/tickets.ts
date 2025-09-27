@@ -186,18 +186,40 @@ export const getUserTicketCount = query({
   },
 });
 
-// Get tickets for event owner to scan
+// Get tickets for event owner or authorized admin to scan
 export const getEventTickets = query({
   args: { 
     eventId: v.id("events"),
-    ownerId: v.string()
+    ownerId: v.string(),
+    userEmail: v.optional(v.string()) // Optional email for admin verification
   },
-  handler: async (ctx, { eventId, ownerId }) => {
-    // Verify event ownership
+  handler: async (ctx, { eventId, ownerId, userEmail }) => {
+    // Verify event exists
     const event = await ctx.db.get(eventId);
-    if (!event || event.userId !== ownerId) {
-      throw new Error("Access denied");
+    if (!event) {
+      throw new Error("Event not found");
     }
+    
+    // Check if user is event owner OR authorized admin
+    const isEventOwner = event.userId === ownerId;
+    const isAuthorizedAdmin = userEmail && await checkIfAuthorizedAdmin(ctx, userEmail);
+    
+    console.log("🔍 getEventTickets authorization check:", {
+      eventId,
+      ownerId,
+      userEmail,
+      eventOwnerId: event.userId,
+      isEventOwner,
+      isAuthorizedAdmin,
+      authorizedEmails: AUTHORIZED_ADMIN_EMAILS
+    });
+    
+    if (!isEventOwner && !isAuthorizedAdmin) {
+      console.error("❌ Unauthorized getEventTickets access:", { ownerId, userEmail, eventOwnerId: event.userId });
+      throw new Error("Access denied - Only event owner or authorized admin can view tickets");
+    }
+    
+    console.log("✅ getEventTickets authorization successful:", { isEventOwner, isAuthorizedAdmin });
     
     const tickets = await ctx.db
       .query("tickets")

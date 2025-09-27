@@ -35,7 +35,7 @@ export default function TicketScanner({ eventId }: TicketScannerProps) {
   const event = useQuery(api.events.getById, { eventId });
   const tickets = useQuery(
     api.tickets.getEventTickets,
-    user?.id ? { eventId, ownerId: user.id } : "skip"
+    user?.id ? { eventId, ownerId: user.id, userEmail: user.email || user._id } : "skip"
   );
   const scanTicket = useMutation(api.tickets.scanTicket);
 
