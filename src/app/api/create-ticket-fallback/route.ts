@@ -15,8 +15,20 @@ export async function POST(req: NextRequest) {
       eventId, 
       userId, 
       amount,
-      quantity = 1
+      quantity = 1,
+      passId,
+      selectedDate
     } = body;
+
+    console.log("📦 Fallback ticket data:", { 
+      paymentId, 
+      eventId, 
+      userId, 
+      amount, 
+      quantity, 
+      passId: passId || 'UNDEFINED',
+      selectedDate: selectedDate || 'UNDEFINED'
+    });
     
     if (!paymentId || !eventId || !userId) {
       return NextResponse.json({ 
@@ -66,15 +78,15 @@ export async function POST(req: NextRequest) {
     }
     console.log("✅ User found/created in fallback:", user.name || user.email);
     
-    // Create ticket with minimal information
+    // Create ticket with available information
     const result = await convex.mutation(api.tickets.issueAfterPayment, {
       eventId,
       userId,
       paymentIntentId: paymentId,
       amount: Number(amount) || 0,
       quantity: Number(quantity) || 1,
-      passId: undefined, // No pass information available
-      selectedDate: undefined, // No date information available
+      passId: passId || undefined,
+      selectedDate: selectedDate || undefined,
     });
     
     console.log("✅ Fallback ticket creation successful:", result);

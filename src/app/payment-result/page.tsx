@@ -204,7 +204,14 @@ function PaymentResultContent() {
           const storedData = localStorage.getItem('phonepe_payment_fallback');
           if (storedData) {
             fallbackData = JSON.parse(storedData);
-            console.log('Found fallback data in localStorage:', fallbackData);
+            console.log('🎫 Found fallback data in localStorage:', {
+              ...fallbackData,
+              passId: fallbackData.passId || 'UNDEFINED',
+              passIdType: typeof fallbackData.passId,
+              selectedDate: fallbackData.selectedDate || 'UNDEFINED'
+            });
+          } else {
+            console.log('❌ No fallback data found in localStorage');
           }
         } catch (error) {
           console.warn('Error reading localStorage fallback data:', error);
@@ -221,6 +228,8 @@ function PaymentResultContent() {
               userId: fallbackData?.userId || searchParams.get('userId'),
               amount: fallbackData?.amount || searchParams.get('amount'),
               quantity: fallbackData?.quantity || searchParams.get('quantity') || 1,
+              passId: fallbackData?.passId || searchParams.get('passId'),
+              selectedDate: fallbackData?.selectedDate || searchParams.get('selectedDate'),
             }),
           });
           
