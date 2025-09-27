@@ -207,7 +207,7 @@ export const issueAfterPayment = mutation({
     selectedDate: v.optional(v.string()),
   },
   handler: async (ctx, { eventId, userId, paymentIntentId, amount, quantity = 1, passId, selectedDate }) => {
-    console.log("🎫 Starting ticket creation process:", { eventId, userId, paymentIntentId, amount, quantity });
+    console.log("🎫 Starting ticket creation process:", { eventId, userId, paymentIntentId, amount, quantity, passId, selectedDate });
     
     // Validate event exists
     const event = await ctx.db.get(eventId);
@@ -275,9 +275,9 @@ export const issueAfterPayment = mutation({
           throw new Error(`Invalid ticket amount: ${ticketAmount} (original amount: ${amount})`);
         }
         
-        console.log(`🎫 Creating ticket ${i + 1}/${ticketQuantity} with amount: ${ticketAmount}`);
+        console.log(`🎫 Creating ticket ${i + 1}/${ticketQuantity} with amount: ${ticketAmount}, passId: ${passId}`);
         
-        const ticketId = await ctx.db.insert("tickets", {
+        const ticketData = {
           eventId,
           userId,
           purchasedAt: baseTime + i,
@@ -286,7 +286,11 @@ export const issueAfterPayment = mutation({
           amount: ticketAmount,
           passId,
           selectedDate,
-        });
+        };
+        
+        console.log(`🎫 Ticket data for ${i + 1}/${ticketQuantity}:`, ticketData);
+        
+        const ticketId = await ctx.db.insert("tickets", ticketData);
         ticketIds.push(ticketId);
         console.log(`✅ Created ticket ${i + 1}/${ticketQuantity}:`, ticketId);
       } catch (error) {

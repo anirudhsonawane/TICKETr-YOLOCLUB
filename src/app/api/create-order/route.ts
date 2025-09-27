@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
         userId: String(userId),
         waitingListId: String(waitingListId),
         quantity: String(quantity),
-        passId: passId ? String(passId) : "",
+        passId: passId ? String(passId) : undefined,
         couponCode: couponCode || "",
         selectedDate: selectedDate || "",
       },

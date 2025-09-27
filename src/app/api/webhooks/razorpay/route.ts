@@ -38,6 +38,15 @@ export async function POST(req: NextRequest) {
       const { notes } = event.payload.payment.entity;
       console.log("Payment notes received:", notes);
       
+      // Handle passId properly - ensure it's a valid ID or undefined
+      let passId = undefined;
+      if (notes.passId && notes.passId !== "" && notes.passId !== "undefined") {
+        passId = notes.passId;
+        console.log("✅ PassId found in notes:", passId);
+      } else {
+        console.log("⚠️ No valid passId found in notes");
+      }
+      
       try {
         const result = await convex.mutation(api.tickets.issueAfterPayment, {
           eventId: notes.eventId,
@@ -45,7 +54,7 @@ export async function POST(req: NextRequest) {
           paymentIntentId: event.payload.payment.entity.id,
           amount: event.payload.payment.entity.amount,
           quantity: notes.quantity ? parseInt(notes.quantity) : 1,
-          passId: notes.passId || undefined,
+          passId: passId,
           selectedDate: notes.selectedDate || undefined,
         });
         

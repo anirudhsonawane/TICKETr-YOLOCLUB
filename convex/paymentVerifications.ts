@@ -136,6 +136,9 @@ export const approvePaymentVerification = mutation({
     const baseTime = Date.now();
     
     for (let i = 0; i < verification.quantity; i++) {
+      // Divide amount by quantity to get per-ticket amount
+      const ticketAmount = verification.amount / verification.quantity;
+      
       const ticketId = await ctx.db.insert("tickets", {
         eventId: verification.eventId,
         userId: verification.userId,
@@ -143,7 +146,7 @@ export const approvePaymentVerification = mutation({
         purchasedAt: baseTime + i,
         status: "valid",
         paymentIntentId: `verification_${verification._id}`,
-        amount: verification.amount,
+        amount: ticketAmount,
         passId: verification.passId,
         selectedDate: verification.selectedDate,
       });

@@ -129,6 +129,8 @@ export default function PurchaseTicket({ eventId }: { eventId: Id<"events"> }) {
           userId: user.id,
           waitingListId: queuePosition._id,
           quantity: quantity,
+          passId: selectedPass,
+          selectedDate: selectedDate,
         }),
       });
       
