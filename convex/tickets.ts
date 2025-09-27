@@ -538,6 +538,32 @@ export const getTicketStatus = query({
   },
 });
 
+// Debug query to check recent tickets and their passId values
+export const getRecentTickets = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit = 10 }) => {
+    const tickets = await ctx.db
+      .query("tickets")
+      .order("desc")
+      .take(limit);
+    
+    const ticketsWithPassInfo = await Promise.all(
+      tickets.map(async (ticket) => {
+        let pass = null;
+        if (ticket.passId) {
+          pass = await ctx.db.get(ticket.passId);
+        }
+        return {
+          ...ticket,
+          passInfo: pass ? { name: pass.name, id: pass._id } : null
+        };
+      })
+    );
+    
+    return ticketsWithPassInfo;
+  },
+});
+
 // Get tickets by payment intent ID
 export const getTicketsByPaymentIntent = query({
   args: { paymentIntentId: v.string() },

@@ -157,14 +157,17 @@ function PaymentResultContent() {
           return;
         }
         
-        console.log('Creating ticket with session data:', {
+        console.log('🎫 Creating ticket with session data:', {
           paymentId: orderId,
           eventId: sessionData.session.eventId,
           userId: sessionData.session.userId,
           quantity: sessionData.session.quantity,
           amount: sessionData.session.amount,
-          passId: sessionData.session.passId,
+          passId: sessionData.session.passId || 'UNDEFINED',
+          passIdType: typeof sessionData.session.passId,
+          passIdValid: !!sessionData.session.passId,
           selectedDate: sessionData.session.selectedDate,
+          fullSessionData: sessionData.session
         });
         
         // Create ticket using session data
