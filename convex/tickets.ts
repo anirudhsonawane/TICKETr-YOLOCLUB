@@ -237,12 +237,8 @@ export const getEventTickets = query({
       }
       
       console.log("✅ getEventTickets authorization successful:", { isEventOwner, isAuthorizedAdmin });
-    } catch (error) {
-      console.error("❌ getEventTickets error:", error);
-      throw error;
-    }
-    
-    try {
+      
+      // Query tickets for the event
       console.log("🔍 Querying tickets for event:", eventId);
       
       const tickets = await ctx.db
@@ -280,9 +276,9 @@ export const getEventTickets = query({
       
       console.log("✅ Returning tickets with users:", ticketsWithUsers.length);
       return ticketsWithUsers;
-    } catch (queryError) {
-      console.error("❌ Error querying tickets:", queryError);
-      throw new Error(`Failed to fetch tickets: ${queryError instanceof Error ? queryError.message : String(queryError)}`);
+    } catch (error) {
+      console.error("❌ getEventTickets error:", error);
+      throw error;
     }
   },
 });

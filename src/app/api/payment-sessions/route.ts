@@ -34,7 +34,9 @@ export async function POST(req: NextRequest) {
       eventId,
       amount,
       quantity: quantity || 1,
-      passId,
+      passId: passId || 'UNDEFINED',
+      passIdType: typeof passId,
+      passIdValid: !!passId,
       selectedDate,
       couponCode,
       waitingListId,
@@ -121,6 +123,14 @@ export async function GET(req: NextRequest) {
     const session = await convex.query(api.paymentSessions.getPaymentSessionWithEvent, { sessionId });
     
     console.log("📊 Session query result:", session);
+    if (session) {
+      console.log("📊 Session passId details:", {
+        passId: session.passId || 'UNDEFINED',
+        passIdType: typeof session.passId,
+        passIdValid: !!session.passId,
+        selectedDate: session.selectedDate || 'UNDEFINED'
+      });
+    }
 
     if (!session) {
       console.log("❌ Payment session not found in database");
