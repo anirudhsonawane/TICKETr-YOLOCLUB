@@ -63,7 +63,7 @@ export default function PhonePePayment({
           eventId,
           userId,
           quantity,
-          passId: passId || 'UNDEFINED',
+          passId,
           couponCode,
           selectedDate,
           waitingListId,
@@ -124,7 +124,23 @@ export default function PhonePePayment({
           throw new Error('Invalid response from payment service');
         }
 
-        // Create payment session in database
+        // Create payment session in database - ALWAYS store in localStorage as backup
+        const paymentData = {
+          sessionId: data.merchantOrderId,
+          userId,
+          eventId,
+          amount,
+          quantity,
+          passId,
+          selectedDate,
+          couponCode,
+          waitingListId,
+          timestamp: Date.now()
+        };
+        
+        // Store in localStorage first as backup
+        localStorage.setItem('phonepe_payment_fallback', JSON.stringify(paymentData));
+        
         try {
           const sessionResponse = await fetch('/api/payment-sessions', {
             method: 'POST',
@@ -151,40 +167,13 @@ export default function PhonePePayment({
             }),
           });
 
-          if (!sessionResponse.ok) {
-            const errorText = await sessionResponse.text();
-            console.warn('Failed to create payment session:', errorText);
-            // Store payment details in localStorage as fallback
-            localStorage.setItem('phonepe_payment_fallback', JSON.stringify({
-              sessionId: data.merchantOrderId,
-              userId,
-              eventId,
-              amount,
-              quantity,
-              passId,
-              selectedDate,
-              couponCode,
-              waitingListId,
-              timestamp: Date.now()
-            }));
-          } else {
+          if (sessionResponse.ok) {
             console.log('Payment session created successfully');
+          } else {
+            console.warn('Payment session creation failed, using localStorage backup');
           }
         } catch (sessionError) {
-          console.warn('Error creating payment session:', sessionError);
-          // Store payment details in localStorage as fallback
-          localStorage.setItem('phonepe_payment_fallback', JSON.stringify({
-            sessionId: data.merchantOrderId,
-            userId,
-            eventId,
-            amount,
-            quantity,
-            passId,
-            selectedDate,
-            couponCode,
-            waitingListId,
-            timestamp: Date.now()
-          }));
+          console.warn('Payment session creation error, using localStorage backup:', sessionError);
         }
 
         // Check if we have a payment interface (mock mode) or redirect URL (real mode)
