@@ -58,15 +58,17 @@ export default function PhonePePayment({
 
       // Payment window logic with error boundaries
       try {
-        console.log('Initiating PhonePe payment...', {
+        console.log('🎫 Initiating PhonePe payment with data:', {
           amount,
           eventId,
           userId,
           quantity,
-          passId,
+          passId: passId || 'UNDEFINED',
           couponCode,
           selectedDate,
           waitingListId,
+          passIdType: typeof passId,
+          passIdValid: !!passId,
           timestamp: new Date().toISOString()
         });
 

@@ -39,8 +39,16 @@ function PurchasePageContent() {
   const searchParams = useSearchParams();
 
   const eventId = params.id as Id<"events">;
-  const currentPassId = searchParams.get("passId") as Id<"passes">;
+  const currentPassId = searchParams.get("passId") as Id<"passes"> | null;
   const urlSelectedDates = searchParams.get("selectedDates");
+
+  // Debug logging
+  console.log("🎫 Purchase page URL params:", { 
+    eventId, 
+    currentPassId, 
+    urlSelectedDates,
+    allSearchParams: Object.fromEntries(searchParams.entries())
+  });
 
   const event = useQuery(api.events.getById, eventId ? { eventId } : "skip");
   const allPasses = useQuery(api.passes.getEventPasses, eventId ? { eventId } : "skip");

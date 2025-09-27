@@ -12,7 +12,7 @@ import {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    console.log("PhonePe order creation request:", body);
+    console.log("🎫 PhonePe order creation request:", body);
     
     const { 
       amount, 
@@ -24,6 +24,19 @@ export async function POST(req: NextRequest) {
       selectedDate,
       waitingListId 
     } = body;
+
+    console.log("🎫 PhonePe order data extracted:", {
+      amount,
+      eventId,
+      userId,
+      quantity,
+      passId: passId || 'UNDEFINED',
+      passIdType: typeof passId,
+      passIdValid: !!passId,
+      couponCode,
+      selectedDate,
+      waitingListId
+    });
     
     // Convert amount to number if it's a string
     const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
