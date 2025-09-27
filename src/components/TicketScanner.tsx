@@ -22,16 +22,16 @@ interface TicketScannerProps {
 export default function TicketScanner({ eventId }: TicketScannerProps) {
   const { user } = useAuth();
   
-  // Debug logging
-  console.log("🎫 TicketScanner initialized:", { 
-    eventId, 
-    user: user ? { 
-      id: user.id, 
-      email: user.email,
-      emailAddresses: user.emailAddresses,
-      _id: user._id
-    } : null 
-  });
+  // Debug logging (commented out to prevent console spam)
+  // console.log("🎫 TicketScanner initialized:", { 
+  //   eventId, 
+  //   user: user ? { 
+  //     id: user.id, 
+  //     email: user.email,
+  //     emailAddresses: user.emailAddresses,
+  //     _id: user._id
+  //   } : null 
+  // });
 
   // Local state hooks
   const [ticketId, setTicketId] = useState("");
