@@ -179,8 +179,8 @@ function EventCardContent({ eventId, hideBuyButton = false }: { eventId: Id<"eve
                     <div className="mt-1 text-xs text-green-600">
                       {(() => {
                         const passCounts: Record<string, number> = {};
-                        userTickets.forEach(ticket => {
-                          const passInfo = passes?.find(p => p._id === ticket.passId);
+                        userTickets.forEach((ticket: any) => {
+                          const passInfo = passes?.find((p: any) => p._id === ticket.passId);
                           const passName = passInfo?.name || 'General';
                           passCounts[passName] = (passCounts[passName] || 0) + 1;
                         });
@@ -224,7 +224,13 @@ function EventCardContent({ eventId, hideBuyButton = false }: { eventId: Id<"eve
       return (
         <div className="mt-4">
           {queuePosition.status === "offered" && (
-            <PurchaseTicket eventId={eventId} />
+            <button
+              onClick={() => router.push(`/event/${eventId}/passes`)}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <Ticket className="w-5 h-5" />
+              Select Pass & Buy Tickets
+            </button>
           )}
           {renderQueuePosition()}
           {queuePosition.status === "expired" && (
@@ -244,7 +250,13 @@ function EventCardContent({ eventId, hideBuyButton = false }: { eventId: Id<"eve
       if (!queuePosition) {
         return (
           <div className="mt-4">
-            <PurchaseTicket eventId={eventId} />
+            <button
+              onClick={() => router.push(`/event/${eventId}/passes`)}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <Ticket className="w-5 h-5" />
+              Select Pass & Buy Tickets
+            </button>
           </div>
         );
       }

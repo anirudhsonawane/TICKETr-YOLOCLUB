@@ -21,6 +21,9 @@ interface TicketScannerProps {
 
 export default function TicketScanner({ eventId }: TicketScannerProps) {
   const { user } = useAuth();
+  
+  // Debug logging
+  console.log("🎫 TicketScanner initialized:", { eventId, user: user ? { id: user.id, email: user.email } : null });
 
   // Local state hooks
   const [ticketId, setTicketId] = useState("");
@@ -35,7 +38,11 @@ export default function TicketScanner({ eventId }: TicketScannerProps) {
   const event = useQuery(api.events.getById, { eventId });
   const tickets = useQuery(
     api.tickets.getEventTickets,
-    user?.id ? { eventId, ownerId: user.id, userEmail: user.email || user._id } : "skip"
+    user?.id ? { 
+      eventId, 
+      ownerId: user.id, 
+      userEmail: user.email || user._id || undefined 
+    } : "skip"
   );
   const scanTicket = useMutation(api.tickets.scanTicket);
 

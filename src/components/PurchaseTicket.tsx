@@ -48,6 +48,21 @@ export default function PurchaseTicket({
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
 
+  // Debug logging
+  console.log("🎫 PurchaseTicket initialized:", { eventId, passId, user: user ? { id: user.id, email: user.email } : null });
+  
+  // Don't render if no passId is provided (will redirect to pass selection)
+  if (!passId) {
+    return (
+      <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to pass selection...</p>
+        </div>
+      </div>
+    );
+  }
+
   const offerExpiresAt = queuePosition?.offerExpiresAt ?? 0;
   const isExpired = Date.now() > offerExpiresAt;
   // Calculate total amount based on pass price or event price
@@ -57,14 +72,14 @@ export default function PurchaseTicket({
   const isEventOwner = user?.id === event?.userId;
   const isPastEvent = event ? event.eventDate < Date.now() : false;
 
-  // Set default pass if no passId provided
+  // Ensure passId is provided - if not, redirect to pass selection
   useEffect(() => {
-    if (!passId && eventPasses && eventPasses.length > 0 && !selectedPass) {
-      // Set the first available pass as default
-      setSelectedPass(eventPasses[0]._id);
-      console.log("🎫 Set default pass:", eventPasses[0]._id, eventPasses[0].name);
+    if (!passId && eventPasses && eventPasses.length > 0) {
+      console.log("🎫 No passId provided, redirecting to pass selection");
+      router.push(`/event/${eventId}/passes`);
+      return;
     }
-  }, [passId, eventPasses, selectedPass]);
+  }, [passId, eventPasses, eventId, router]);
 
   useEffect(() => {
     const calculateTimeRemaining = () => {
